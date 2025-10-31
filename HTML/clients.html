@@ -1,0 +1,1347 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GrantFlow CRM | Client Management</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root {
+            --primary: #1a472a; /* Forest Green */
+            --primary-light: #2e8b57; /* Medium Sea Green */
+            --secondary: #daa520; /* Gold */
+            --success: #228b22; /* Forest Green variant */
+            --warning: #b8860b; /* Dark Goldenrod */
+            --light: #f8f9fa;
+            --dark: #212529;
+            --gray: #6c757d;
+            --light-gray: #e9ecef;
+            --border-radius: 8px;
+            --box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+            --transition: all 0.3s ease;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            background-color: #f5f7fb;
+            color: var(--dark);
+            line-height: 1.6;
+        }
+
+        .container {
+            display: flex;
+            min-height: 100vh;
+        }
+
+        /* Sidebar Styles */
+        .sidebar {
+            width: 250px;
+            background: white;
+            box-shadow: var(--box-shadow);
+            padding: 20px 0;
+            z-index: 100;
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            padding: 0 20px 20px;
+            border-bottom: 1px solid var(--light-gray);
+            margin-bottom: 20px;
+        }
+
+        .logo img {
+            height: 32px;
+            margin-right: 10px;
+        }
+
+        .logo h1 {
+            font-size: 20px;
+            font-weight: 700;
+            color: var(--dark);
+        }
+
+        .nav-links {
+            list-style: none;
+            padding: 0 15px;
+        }
+
+        .nav-links li {
+            margin-bottom: 5px;
+        }
+
+        .nav-links a {
+            display: flex;
+            align-items: center;
+            padding: 12px 15px;
+            text-decoration: none;
+            color: var(--gray);
+            border-radius: var(--border-radius);
+            transition: var(--transition);
+        }
+
+        .nav-links a:hover, .nav-links a.active {
+            background-color: rgba(26, 71, 42, 0.1);
+            color: var(--primary);
+        }
+
+        .nav-links i {
+            margin-right: 10px;
+            font-size: 18px;
+            width: 24px;
+            text-align: center;
+        }
+
+        /* Main Content Styles */
+        .main-content {
+            flex: 1;
+            padding: 20px;
+            overflow-y: auto;
+        }
+
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 30px;
+            padding-bottom: 15px;
+            border-bottom: 1px solid var(--light-gray);
+        }
+
+        .header h2 {
+            font-weight: 600;
+            color: var(--dark);
+        }
+
+        .header-actions {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .notification-icon {
+            position: relative;
+            font-size: 20px;
+            color: var(--gray);
+            cursor: pointer;
+        }
+
+        .notification-badge {
+            position: absolute;
+            top: -5px;
+            right: -5px;
+            background: var(--warning);
+            color: white;
+            border-radius: 50%;
+            width: 18px;
+            height: 18px;
+            font-size: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .user-profile {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            cursor: pointer;
+            padding: 5px 10px;
+            border-radius: var(--border-radius);
+            transition: var(--transition);
+        }
+
+        .user-profile:hover {
+            background: rgba(26, 71, 42, 0.1);
+        }
+
+        .user-profile img {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+        }
+
+        .user-info {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .user-name {
+            font-weight: 600;
+            font-size: 14px;
+        }
+
+        .user-role {
+            font-size: 12px;
+            color: var(--gray);
+        }
+
+        .dropdown-menu {
+            position: absolute;
+            top: 70px;
+            right: 20px;
+            background: white;
+            border-radius: var(--border-radius);
+            box-shadow: var(--box-shadow);
+            width: 200px;
+            padding: 10px 0;
+            z-index: 1000;
+            display: none;
+        }
+
+        .dropdown-menu.show {
+            display: block;
+        }
+
+        .dropdown-item {
+            display: flex;
+            align-items: center;
+            padding: 10px 20px;
+            text-decoration: none;
+            color: var(--dark);
+            transition: var(--transition);
+        }
+
+        .dropdown-item:hover {
+            background: rgba(26, 71, 42, 0.1);
+        }
+
+        .dropdown-item i {
+            margin-right: 10px;
+            width: 20px;
+            text-align: center;
+        }
+
+        /* Section Styles */
+        .section {
+            background: white;
+            border-radius: var(--border-radius);
+            box-shadow: var(--box-shadow);
+            padding: 25px;
+            margin-bottom: 30px;
+        }
+
+        .section-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .section-header h3 {
+            font-weight: 600;
+            color: var(--dark);
+        }
+
+        .btn {
+            padding: 8px 16px;
+            background: var(--primary);
+            color: white;
+            border: none;
+            border-radius: var(--border-radius);
+            cursor: pointer;
+            transition: var(--transition);
+            font-weight: 500;
+        }
+
+        .btn:hover {
+            background: var(--primary-light);
+        }
+
+        .btn-outline {
+            background: transparent;
+            border: 1px solid var(--primary);
+            color: var(--primary);
+        }
+
+        .btn-outline:hover {
+            background: rgba(26, 71, 42, 0.1);
+        }
+
+        .btn-success {
+            background: var(--success);
+        }
+
+        .btn-success:hover {
+            background: #1e7e34;
+        }
+
+        .btn-secondary {
+            background: var(--secondary);
+        }
+
+        .btn-secondary:hover {
+            background: #c69500;
+        }
+
+        /* Client Management Styles */
+        .client-actions {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        .search-box {
+            flex: 1;
+            position: relative;
+        }
+
+        .search-box input {
+            width: 100%;
+            padding: 10px 15px 10px 40px;
+            border: 1px solid var(--light-gray);
+            border-radius: var(--border-radius);
+            font-size: 16px;
+            transition: var(--transition);
+        }
+
+        .search-box input:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(26, 71, 42, 0.1);
+        }
+
+        .search-box i {
+            position: absolute;
+            left: 15px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--gray);
+        }
+
+        .filter-options {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        .filter-btn {
+            padding: 8px 16px;
+            background: white;
+            border: 1px solid var(--light-gray);
+            border-radius: var(--border-radius);
+            cursor: pointer;
+            transition: var(--transition);
+            font-size: 14px;
+        }
+
+        .filter-btn.active, .filter-btn:hover {
+            background: var(--primary);
+            color: white;
+            border-color: var(--primary);
+        }
+
+        /* Client Grid */
+        .clients-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 20px;
+        }
+
+        .client-card {
+            border: 1px solid var(--light-gray);
+            border-radius: var(--border-radius);
+            padding: 20px;
+            transition: var(--transition);
+            position: relative;
+        }
+
+        .client-card:hover {
+            box-shadow: var(--box-shadow);
+            transform: translateY(-5px);
+        }
+
+        .client-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 15px;
+        }
+
+        .client-avatar {
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            overflow: hidden;
+            margin-right: 15px;
+        }
+
+        .client-avatar img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .client-info {
+            flex: 1;
+        }
+
+        .client-name {
+            font-weight: 600;
+            font-size: 18px;
+            margin-bottom: 5px;
+        }
+
+        .client-organization {
+            color: var(--gray);
+            font-size: 14px;
+            margin-bottom: 5px;
+        }
+
+        .client-status {
+            display: inline-block;
+            padding: 4px 10px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 500;
+        }
+
+        .status-active {
+            background: rgba(26, 71, 42, 0.1);
+            color: var(--primary);
+        }
+
+        .status-inactive {
+            background: rgba(108, 117, 125, 0.1);
+            color: var(--gray);
+        }
+
+        .status-pending {
+            background: rgba(218, 165, 32, 0.1);
+            color: var(--secondary);
+        }
+
+        .client-details {
+            margin-bottom: 15px;
+        }
+
+        .client-detail {
+            display: flex;
+            margin-bottom: 8px;
+            font-size: 14px;
+        }
+
+        .client-detail i {
+            width: 20px;
+            margin-right: 10px;
+            color: var(--gray);
+        }
+
+        .client-actions-row {
+            display: flex;
+            justify-content: space-between;
+            gap: 10px;
+        }
+
+        .client-action-btn {
+            flex: 1;
+            padding: 8px;
+            background: transparent;
+            border: 1px solid var(--light-gray);
+            border-radius: var(--border-radius);
+            cursor: pointer;
+            transition: var(--transition);
+            font-size: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 5px;
+        }
+
+        .client-action-btn:hover {
+            background: rgba(26, 71, 42, 0.1);
+            border-color: var(--primary);
+        }
+
+        .client-action-btn.primary {
+            background: var(--primary);
+            color: white;
+            border-color: var(--primary);
+        }
+
+        .client-action-btn.primary:hover {
+            background: var(--primary-light);
+        }
+
+        /* Client Detail Modal */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal-content {
+            background: white;
+            border-radius: var(--border-radius);
+            width: 90%;
+            max-width: 800px;
+            padding: 30px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+            max-height: 90vh;
+            overflow-y: auto;
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding-bottom: 15px;
+            border-bottom: 1px solid var(--light-gray);
+        }
+
+        .modal-header h3 {
+            font-weight: 600;
+            color: var(--dark);
+        }
+
+        .close-modal {
+            background: none;
+            border: none;
+            font-size: 24px;
+            cursor: pointer;
+            color: var(--gray);
+        }
+
+        .client-detail-content {
+            display: flex;
+            gap: 30px;
+        }
+
+        .client-detail-sidebar {
+            width: 200px;
+            flex-shrink: 0;
+        }
+
+        .client-detail-avatar {
+            width: 150px;
+            height: 150px;
+            border-radius: 50%;
+            overflow: hidden;
+            margin-bottom: 20px;
+        }
+
+        .client-detail-avatar img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .client-detail-main {
+            flex: 1;
+        }
+
+        .detail-section {
+            margin-bottom: 25px;
+        }
+
+        .detail-section h4 {
+            margin-bottom: 15px;
+            padding-bottom: 8px;
+            border-bottom: 1px solid var(--light-gray);
+            color: var(--primary);
+        }
+
+        .detail-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 15px;
+        }
+
+        .detail-item {
+            margin-bottom: 10px;
+        }
+
+        .detail-label {
+            font-weight: 500;
+            color: var(--gray);
+            font-size: 14px;
+            margin-bottom: 5px;
+        }
+
+        .detail-value {
+            font-size: 16px;
+        }
+
+        .grants-list {
+            margin-top: 15px;
+        }
+
+        .grant-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 12px 15px;
+            border: 1px solid var(--light-gray);
+            border-radius: var(--border-radius);
+            margin-bottom: 10px;
+        }
+
+        .grant-info h5 {
+            margin-bottom: 5px;
+        }
+
+        .grant-info p {
+            font-size: 14px;
+            color: var(--gray);
+        }
+
+        .grant-status {
+            padding: 4px 10px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 500;
+        }
+
+        .status-draft {
+            background: rgba(108, 117, 125, 0.1);
+            color: var(--gray);
+        }
+
+        .status-submitted {
+            background: rgba(218, 165, 32, 0.1);
+            color: var(--secondary);
+        }
+
+        .status-approved {
+            background: rgba(26, 71, 42, 0.1);
+            color: var(--primary);
+        }
+
+        /* Add Client Form */
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 500;
+            color: var(--dark);
+        }
+
+        .form-control {
+            width: 100%;
+            padding: 10px 15px;
+            border: 1px solid var(--light-gray);
+            border-radius: var(--border-radius);
+            font-size: 16px;
+            transition: var(--transition);
+        }
+
+        .form-control:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(26, 71, 42, 0.1);
+        }
+
+        textarea.form-control {
+            min-height: 120px;
+            resize: vertical;
+        }
+
+        .form-row {
+            display: flex;
+            gap: 20px;
+        }
+
+        .form-row .form-group {
+            flex: 1;
+        }
+
+        /* Responsive */
+        @media (max-width: 992px) {
+            .container {
+                flex-direction: column;
+            }
+            
+            .sidebar {
+                width: 100%;
+                padding: 15px;
+            }
+            
+            .nav-links {
+                display: flex;
+                overflow-x: auto;
+            }
+            
+            .nav-links li {
+                margin-right: 10px;
+                margin-bottom: 0;
+            }
+
+            .clients-grid {
+                grid-template-columns: 1fr 1fr;
+            }
+
+            .client-detail-content {
+                flex-direction: column;
+            }
+
+            .client-detail-sidebar {
+                width: 100%;
+                display: flex;
+                align-items: center;
+                gap: 20px;
+            }
+
+            .client-detail-avatar {
+                width: 100px;
+                height: 100px;
+                margin-bottom: 0;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .clients-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .form-row {
+                flex-direction: column;
+                gap: 0;
+            }
+
+            .header {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 15px;
+            }
+
+            .header-actions {
+                width: 100%;
+                justify-content: space-between;
+            }
+
+            .detail-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        @media (max-width: 576px) {
+            .client-actions {
+                flex-direction: column;
+            }
+
+            .filter-options {
+                flex-wrap: wrap;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Main Application -->
+    <div class="container" id="app-container">
+        <!-- Sidebar -->
+        <div class="sidebar">
+            <div class="logo">
+                <img src="https://i.imgur.com/9R0mZJw.png" alt="GrantFlow Logo">
+                <h1>GrantFlow CRM</h1>
+            </div>
+            <ul class="nav-links">
+                <li><a href="#" data-page="dashboard"><i class="fas fa-home"></i> Dashboard</a></li>
+                <li><a href="#" class="active" data-page="clients"><i class="fas fa-users"></i> Clients</a></li>
+                <li><a href="#" data-page="grants"><i class="fas fa-file-alt"></i> Grants</a></li>
+                <li><a href="#" data-page="submissions"><i class="fas fa-paper-plane"></i> Submissions</a></li>
+                <li><a href="#" data-page="sources"><i class="fas fa-database"></i> Grant Sources</a></li>
+                <li><a href="#" data-page="matching"><i class="fas fa-robot"></i> AI Matching</a></li>
+                <li><a href="#" data-page="ai-writing"><i class="fas fa-pen-fancy"></i> AI Grant Writing</a></li>
+                <li><a href="#" data-page="profile"><i class="fas fa-user"></i> My Profile</a></li>
+                <li><a href="#" id="logout-btn"><i class="fas fa-sign-out-alt"></i> Logout</a></li>
+            </ul>
+        </div>
+
+        <!-- Main Content -->
+        <div class="main-content">
+            <!-- Header -->
+            <div class="header">
+                <h2 id="page-title">Client Management</h2>
+                <div class="header-actions">
+                    <div class="notification-icon">
+                        <i class="fas fa-bell"></i>
+                        <span class="notification-badge">3</span>
+                    </div>
+                    <div class="user-profile" id="user-profile-toggle">
+                        <img src="https://i.pravatar.cc/150?img=12" alt="User Avatar" id="user-avatar">
+                        <div class="user-info">
+                            <span class="user-name" id="user-display-name">Sarah Johnson</span>
+                            <span class="user-role">Grant Manager</span>
+                        </div>
+                        <i class="fas fa-chevron-down"></i>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Dropdown Menu -->
+            <div class="dropdown-menu" id="user-dropdown">
+                <a href="#" class="dropdown-item" data-page="profile">
+                    <i class="fas fa-user"></i> My Profile
+                </a>
+                <a href="#" class="dropdown-item">
+                    <i class="fas fa-cog"></i> Settings
+                </a>
+                <a href="#" class="dropdown-item">
+                    <i class="fas fa-question-circle"></i> Help & Support
+                </a>
+                <a href="#" class="dropdown-item" id="dropdown-logout">
+                    <i class="fas fa-sign-out-alt"></i> Logout
+                </a>
+            </div>
+
+            <!-- Client Management Content -->
+            <div id="clients-page" class="page-content">
+                <!-- Client Actions -->
+                <div class="client-actions">
+                    <div class="search-box">
+                        <i class="fas fa-search"></i>
+                        <input type="text" id="client-search" placeholder="Search clients...">
+                    </div>
+                    <button class="btn" id="add-client-btn">
+                        <i class="fas fa-plus"></i> Add New Client
+                    </button>
+                </div>
+
+                <!-- Filter Options -->
+                <div class="filter-options">
+                    <button class="filter-btn active">All Clients</button>
+                    <button class="filter-btn">Active</button>
+                    <button class="filter-btn">Pending</button>
+                    <button class="filter-btn">Inactive</button>
+                    <button class="filter-btn">High Priority</button>
+                </div>
+
+                <!-- Clients Grid -->
+                <div class="clients-grid" id="clients-grid">
+                    <!-- Client cards will be dynamically generated here -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Client Detail Modal -->
+    <div class="modal" id="client-detail-modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Client Details</h3>
+                <button class="close-modal">&times;</button>
+            </div>
+            <div class="client-detail-content" id="client-detail-content">
+                <!-- Client details will be dynamically generated here -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Add Client Modal -->
+    <div class="modal" id="add-client-modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Add New Client</h3>
+                <button class="close-modal">&times;</button>
+            </div>
+            <form id="add-client-form">
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="client-first-name">First Name</label>
+                        <input type="text" id="client-first-name" class="form-control" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="client-last-name">Last Name</label>
+                        <input type="text" id="client-last-name" class="form-control" required>
+                    </div>
+                </div>
+                
+                <div class="form-group">
+                    <label for="client-organization">Organization</label>
+                    <input type="text" id="client-organization" class="form-control" required>
+                </div>
+                
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="client-email">Email</label>
+                        <input type="email" id="client-email" class="form-control" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="client-phone">Phone</label>
+                        <input type="tel" id="client-phone" class="form-control">
+                    </div>
+                </div>
+                
+                <div class="form-group">
+                    <label for="client-address">Address</label>
+                    <textarea id="client-address" class="form-control"></textarea>
+                </div>
+                
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="client-city">City</label>
+                        <input type="text" id="client-city" class="form-control">
+                    </div>
+                    <div class="form-group">
+                        <label for="client-state">State</label>
+                        <input type="text" id="client-state" class="form-control">
+                    </div>
+                    <div class="form-group">
+                        <label for="client-zip">ZIP Code</label>
+                        <input type="text" id="client-zip" class="form-control">
+                    </div>
+                </div>
+                
+                <div class="form-group">
+                    <label for="client-notes">Notes</label>
+                    <textarea id="client-notes" class="form-control"></textarea>
+                </div>
+                
+                <div class="form-group">
+                    <label for="client-status">Status</label>
+                    <select id="client-status" class="form-control">
+                        <option value="active">Active</option>
+                        <option value="pending">Pending</option>
+                        <option value="inactive">Inactive</option>
+                    </select>
+                </div>
+                
+                <div class="form-group">
+                    <button type="submit" class="btn" style="width: 100%;">Add Client</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        // Sample client data
+        const clients = [
+            {
+                id: 1,
+                firstName: "Michael",
+                lastName: "Rodriguez",
+                organization: "GreenTech Initiative",
+                email: "m.rodriguez@greentech.org",
+                phone: "(555) 123-4567",
+                address: "123 Innovation Drive, Suite 400",
+                city: "San Francisco",
+                state: "CA",
+                zip: "94105",
+                status: "active",
+                avatar: "https://i.pravatar.cc/150?img=5",
+                notes: "Interested in renewable energy grants. Has previous success with DOE funding.",
+                grants: [
+                    { id: 101, title: "Solar Community Project", status: "submitted", amount: "$150,000", deadline: "2023-12-15" },
+                    { id: 102, title: "Energy Efficiency Program", status: "draft", amount: "$75,000", deadline: "2024-02-28" }
+                ]
+            },
+            {
+                id: 2,
+                firstName: "Sarah",
+                lastName: "Chen",
+                organization: "Youth Empowerment Network",
+                email: "s.chen@youthempower.org",
+                phone: "(555) 987-6543",
+                address: "456 Community Center Blvd",
+                city: "Chicago",
+                state: "IL",
+                zip: "60601",
+                status: "active",
+                avatar: "https://i.pravatar.cc/150?img=9",
+                notes: "Focus on after-school programs for at-risk youth. Strong community partnerships.",
+                grants: [
+                    { id: 201, title: "After-School STEM Program", status: "approved", amount: "$200,000", deadline: "2023-09-30" },
+                    { id: 202, title: "Mentorship Expansion", status: "submitted", amount: "$125,000", deadline: "2023-11-20" }
+                ]
+            },
+            {
+                id: 3,
+                firstName: "James",
+                lastName: "Wilson",
+                organization: "Urban Arts Collective",
+                email: "j.wilson@urbanarts.org",
+                phone: "(555) 456-7890",
+                address: "789 Creative Lane",
+                city: "New York",
+                state: "NY",
+                zip: "10001",
+                status: "pending",
+                avatar: "https://i.pravatar.cc/150?img=11",
+                notes: "New client. Needs assistance with first major grant application.",
+                grants: [
+                    { id: 301, title: "Public Art Installation", status: "draft", amount: "$80,000", deadline: "2024-01-15" }
+                ]
+            },
+            {
+                id: 4,
+                firstName: "Lisa",
+                lastName: "Garcia",
+                organization: "Health Access Alliance",
+                email: "l.garcia@healthaccess.org",
+                phone: "(555) 234-5678",
+                address: "321 Wellness Avenue",
+                city: "Austin",
+                state: "TX",
+                zip: "73301",
+                status: "active",
+                avatar: "https://i.pravatar.cc/150?img=8",
+                notes: "Focus on rural healthcare access. Multiple successful grants in past.",
+                grants: [
+                    { id: 401, title: "Mobile Health Clinic", status: "submitted", amount: "$300,000", deadline: "2023-10-30" },
+                    { id: 402, title: "Telemedicine Expansion", status: "approved", amount: "$175,000", deadline: "2023-08-15" }
+                ]
+            },
+            {
+                id: 5,
+                firstName: "Robert",
+                lastName: "Thompson",
+                organization: "Sustainable Agriculture Co-op",
+                email: "r.thompson@sustainableag.org",
+                phone: "(555) 345-6789",
+                address: "654 Farm Road",
+                city: "Portland",
+                state: "OR",
+                zip: "97205",
+                status: "inactive",
+                avatar: "https://i.pravatar.cc/150?img=15",
+                notes: "Client on hiatus. Planning to resume grant applications next fiscal year.",
+                grants: [
+                    { id: 501, title: "Organic Farming Initiative", status: "approved", amount: "$90,000", deadline: "2023-06-30" }
+                ]
+            }
+        ];
+
+        // DOM Elements
+        const appContainer = document.getElementById('app-container');
+        const logoutBtn = document.getElementById('logout-btn');
+        const dropdownLogout = document.getElementById('dropdown-logout');
+        const userProfileToggle = document.getElementById('user-profile-toggle');
+        const userDropdown = document.getElementById('user-dropdown');
+        const navLinks = document.querySelectorAll('.nav-links a');
+        const clientsGrid = document.getElementById('clients-grid');
+        const clientDetailModal = document.getElementById('client-detail-modal');
+        const addClientModal = document.getElementById('add-client-modal');
+        const addClientBtn = document.getElementById('add-client-btn');
+        const addClientForm = document.getElementById('add-client-form');
+        const closeModalBtns = document.querySelectorAll('.close-modal');
+        const filterBtns = document.querySelectorAll('.filter-btn');
+        const clientSearch = document.getElementById('client-search');
+
+        // Initialize the application
+        document.addEventListener('DOMContentLoaded', function() {
+            // Load user data
+            const userData = JSON.parse(localStorage.getItem('grantflow-user') || '{}');
+            if (userData.name) {
+                document.getElementById('user-display-name').textContent = userData.name;
+                document.getElementById('user-avatar').src = userData.avatar;
+            }
+            
+            // Render clients
+            renderClients(clients);
+            
+            // Navigation
+            navLinks.forEach(link => {
+                link.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    
+                    // Handle logout separately
+                    if (this.id === 'logout-btn') {
+                        return;
+                    }
+                    
+                    const page = this.getAttribute('data-page');
+                    if (page) {
+                        navigateToPage(page);
+                    }
+                    
+                    // Update active nav link
+                    navLinks.forEach(l => l.classList.remove('active'));
+                    this.classList.add('active');
+                });
+            });
+
+            // User profile dropdown toggle
+            userProfileToggle.addEventListener('click', function() {
+                userDropdown.classList.toggle('show');
+            });
+
+            // Close dropdown when clicking outside
+            document.addEventListener('click', function(e) {
+                if (!userProfileToggle.contains(e.target) && !userDropdown.contains(e.target)) {
+                    userDropdown.classList.remove('show');
+                }
+            });
+
+            // Add client button
+            addClientBtn.addEventListener('click', function() {
+                addClientModal.style.display = 'flex';
+            });
+
+            // Add client form submission
+            addClientForm.addEventListener('submit', function(e) {
+                e.preventDefault();
+                
+                // Create new client object
+                const newClient = {
+                    id: clients.length + 1,
+                    firstName: document.getElementById('client-first-name').value,
+                    lastName: document.getElementById('client-last-name').value,
+                    organization: document.getElementById('client-organization').value,
+                    email: document.getElementById('client-email').value,
+                    phone: document.getElementById('client-phone').value,
+                    address: document.getElementById('client-address').value,
+                    city: document.getElementById('client-city').value,
+                    state: document.getElementById('client-state').value,
+                    zip: document.getElementById('client-zip').value,
+                    status: document.getElementById('client-status').value,
+                    avatar: `https://i.pravatar.cc/150?img=${Math.floor(Math.random() * 70)}`,
+                    notes: document.getElementById('client-notes').value,
+                    grants: []
+                };
+                
+                // Add to clients array
+                clients.push(newClient);
+                
+                // Re-render clients
+                renderClients(clients);
+                
+                // Close modal and reset form
+                addClientModal.style.display = 'none';
+                addClientForm.reset();
+                
+                // Show success message
+                alert('Client added successfully!');
+            });
+
+            // Filter buttons
+            filterBtns.forEach(btn => {
+                btn.addEventListener('click', function() {
+                    filterBtns.forEach(b => b.classList.remove('active'));
+                    this.classList.add('active');
+                    
+                    const filter = this.textContent.toLowerCase();
+                    filterClients(filter);
+                });
+            });
+
+            // Search functionality
+            clientSearch.addEventListener('input', function() {
+                const searchTerm = this.value.toLowerCase();
+                searchClients(searchTerm);
+            });
+
+            // Close modals
+            closeModalBtns.forEach(btn => {
+                btn.addEventListener('click', function() {
+                    clientDetailModal.style.display = 'none';
+                    addClientModal.style.display = 'none';
+                });
+            });
+            
+            // Close modal when clicking outside
+            window.addEventListener('click', function(e) {
+                if (e.target === clientDetailModal) {
+                    clientDetailModal.style.display = 'none';
+                }
+                if (e.target === addClientModal) {
+                    addClientModal.style.display = 'none';
+                }
+            });
+        });
+
+        // Render clients to the grid
+        function renderClients(clientsArray) {
+            clientsGrid.innerHTML = '';
+            
+            clientsArray.forEach(client => {
+                const clientCard = document.createElement('div');
+                clientCard.className = 'client-card';
+                clientCard.innerHTML = `
+                    <div class="client-header">
+                        <div style="display: flex; align-items: flex-start;">
+                            <div class="client-avatar">
+                                <img src="${client.avatar}" alt="${client.firstName} ${client.lastName}">
+                            </div>
+                            <div class="client-info">
+                                <div class="client-name">${client.firstName} ${client.lastName}</div>
+                                <div class="client-organization">${client.organization}</div>
+                                <span class="client-status status-${client.status}">${client.status.charAt(0).toUpperCase() + client.status.slice(1)}</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="client-details">
+                        <div class="client-detail">
+                            <i class="fas fa-envelope"></i>
+                            <span>${client.email}</span>
+                        </div>
+                        <div class="client-detail">
+                            <i class="fas fa-phone"></i>
+                            <span>${client.phone}</span>
+                        </div>
+                        <div class="client-detail">
+                            <i class="fas fa-map-marker-alt"></i>
+                            <span>${client.city}, ${client.state}</span>
+                        </div>
+                    </div>
+                    <div class="client-actions-row">
+                        <button class="client-action-btn" data-client-id="${client.id}">
+                            <i class="fas fa-eye"></i> View
+                        </button>
+                        <button class="client-action-btn" data-client-id="${client.id}">
+                            <i class="fas fa-edit"></i> Edit
+                        </button>
+                        <button class="client-action-btn primary" data-client-id="${client.id}">
+                            <i class="fas fa-file-alt"></i> Grants
+                        </button>
+                    </div>
+                `;
+                
+                clientsGrid.appendChild(clientCard);
+            });
+            
+            // Add event listeners to view buttons
+            document.querySelectorAll('.client-action-btn').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    const clientId = parseInt(this.getAttribute('data-client-id'));
+                    const client = clients.find(c => c.id === clientId);
+                    
+                    if (client) {
+                        if (this.textContent.includes('View')) {
+                            showClientDetail(client);
+                        } else if (this.textContent.includes('Edit')) {
+                            // In a real app, this would open an edit form
+                            alert(`Edit functionality for ${client.firstName} ${client.lastName} would open here`);
+                        } else if (this.textContent.includes('Grants')) {
+                            // In a real app, this would navigate to grants page filtered by client
+                            alert(`Grants for ${client.firstName} ${client.lastName} would be shown here`);
+                        }
+                    }
+                });
+            });
+        }
+
+        // Show client detail in modal
+        function showClientDetail(client) {
+            const modalContent = document.getElementById('client-detail-content');
+            
+            let grantsHTML = '';
+            if (client.grants && client.grants.length > 0) {
+                grantsHTML = `
+                    <div class="grants-list">
+                        ${client.grants.map(grant => `
+                            <div class="grant-item">
+                                <div class="grant-info">
+                                    <h5>${grant.title}</h5>
+                                    <p>Amount: ${grant.amount} | Deadline: ${new Date(grant.deadline).toLocaleDateString()}</p>
+                                </div>
+                                <span class="grant-status status-${grant.status}">${grant.status.charAt(0).toUpperCase() + grant.status.slice(1)}</span>
+                            </div>
+                        `).join('')}
+                    </div>
+                `;
+            } else {
+                grantsHTML = '<p>No grants associated with this client.</p>';
+            }
+            
+            modalContent.innerHTML = `
+                <div class="client-detail-sidebar">
+                    <div class="client-detail-avatar">
+                        <img src="${client.avatar}" alt="${client.firstName} ${client.lastName}">
+                    </div>
+                    <div>
+                        <span class="client-status status-${client.status}">${client.status.charAt(0).toUpperCase() + client.status.slice(1)}</span>
+                    </div>
+                </div>
+                <div class="client-detail-main">
+                    <div class="detail-section">
+                        <h4>Contact Information</h4>
+                        <div class="detail-grid">
+                            <div class="detail-item">
+                                <div class="detail-label">Full Name</div>
+                                <div class="detail-value">${client.firstName} ${client.lastName}</div>
+                            </div>
+                            <div class="detail-item">
+                                <div class="detail-label">Organization</div>
+                                <div class="detail-value">${client.organization}</div>
+                            </div>
+                            <div class="detail-item">
+                                <div class="detail-label">Email</div>
+                                <div class="detail-value">${client.email}</div>
+                            </div>
+                            <div class="detail-item">
+                                <div class="detail-label">Phone</div>
+                                <div class="detail-value">${client.phone}</div>
+                            </div>
+                            <div class="detail-item">
+                                <div class="detail-label">Address</div>
+                                <div class="detail-value">${client.address}<br>${client.city}, ${client.state} ${client.zip}</div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="detail-section">
+                        <h4>Notes</h4>
+                        <p>${client.notes}</p>
+                    </div>
+                    
+                    <div class="detail-section">
+                        <h4>Active Grants</h4>
+                        ${grantsHTML}
+                    </div>
+                </div>
+            `;
+            
+            clientDetailModal.style.display = 'flex';
+        }
+
+        // Filter clients by status
+        function filterClients(filter) {
+            let filteredClients = clients;
+            
+            if (filter === 'active') {
+                filteredClients = clients.filter(client => client.status === 'active');
+            } else if (filter === 'pending') {
+                filteredClients = clients.filter(client => client.status === 'pending');
+            } else if (filter === 'inactive') {
+                filteredClients = clients.filter(client => client.status === 'inactive');
+            } else if (filter === 'high priority') {
+                // In a real app, this would filter by a priority field
+                filteredClients = clients.filter(client => 
+                    client.grants && client.grants.some(grant => grant.status === 'submitted')
+                );
+            }
+            
+            renderClients(filteredClients);
+        }
+
+        // Search clients by name or organization
+        function searchClients(searchTerm) {
+            if (searchTerm === '') {
+                renderClients(clients);
+                return;
+            }
+            
+            const filteredClients = clients.filter(client => 
+                client.firstName.toLowerCase().includes(searchTerm) ||
+                client.lastName.toLowerCase().includes(searchTerm) ||
+                client.organization.toLowerCase().includes(searchTerm) ||
+                client.email.toLowerCase().includes(searchTerm)
+            );
+            
+            renderClients(filteredClients);
+        }
+
+        // Navigate to different pages
+        function navigateToPage(page) {
+            // In a real app, this would load the appropriate page
+            alert(`Navigating to ${page} page...`);
+        }
+    </script>
+</body>
+</html>

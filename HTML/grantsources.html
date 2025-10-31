@@ -1,0 +1,1530 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GrantFlow CRM | Grant Sources</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root {
+            --primary: #1a472a; /* Forest Green */
+            --primary-light: #2e8b57; /* Medium Sea Green */
+            --secondary: #daa520; /* Gold */
+            --success: #228b22; /* Forest Green variant */
+            --warning: #b8860b; /* Dark Goldenrod */
+            --light: #f8f9fa;
+            --dark: #212529;
+            --gray: #6c757d;
+            --light-gray: #e9ecef;
+            --border-radius: 8px;
+            --box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+            --transition: all 0.3s ease;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            background-color: #f5f7fb;
+            color: var(--dark);
+            line-height: 1.6;
+        }
+
+        .container {
+            display: flex;
+            min-height: 100vh;
+        }
+
+        /* Sidebar Styles */
+        .sidebar {
+            width: 250px;
+            background: white;
+            box-shadow: var(--box-shadow);
+            padding: 20px 0;
+            z-index: 100;
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            padding: 0 20px 20px;
+            border-bottom: 1px solid var(--light-gray);
+            margin-bottom: 20px;
+        }
+
+        .logo img {
+            height: 32px;
+            margin-right: 10px;
+        }
+
+        .logo h1 {
+            font-size: 20px;
+            font-weight: 700;
+            color: var(--dark);
+        }
+
+        .nav-links {
+            list-style: none;
+            padding: 0 15px;
+        }
+
+        .nav-links li {
+            margin-bottom: 5px;
+        }
+
+        .nav-links a {
+            display: flex;
+            align-items: center;
+            padding: 12px 15px;
+            text-decoration: none;
+            color: var(--gray);
+            border-radius: var(--border-radius);
+            transition: var(--transition);
+        }
+
+        .nav-links a:hover, .nav-links a.active {
+            background-color: rgba(26, 71, 42, 0.1);
+            color: var(--primary);
+        }
+
+        .nav-links i {
+            margin-right: 10px;
+            font-size: 18px;
+            width: 24px;
+            text-align: center;
+        }
+
+        /* Main Content Styles */
+        .main-content {
+            flex: 1;
+            padding: 20px;
+            overflow-y: auto;
+        }
+
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 30px;
+            padding-bottom: 15px;
+            border-bottom: 1px solid var(--light-gray);
+        }
+
+        .header h2 {
+            font-weight: 600;
+            color: var(--dark);
+        }
+
+        .header-actions {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .notification-icon {
+            position: relative;
+            font-size: 20px;
+            color: var(--gray);
+            cursor: pointer;
+        }
+
+        .notification-badge {
+            position: absolute;
+            top: -5px;
+            right: -5px;
+            background: var(--warning);
+            color: white;
+            border-radius: 50%;
+            width: 18px;
+            height: 18px;
+            font-size: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .user-profile {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            cursor: pointer;
+            padding: 5px 10px;
+            border-radius: var(--border-radius);
+            transition: var(--transition);
+        }
+
+        .user-profile:hover {
+            background: rgba(26, 71, 42, 0.1);
+        }
+
+        .user-profile img {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+        }
+
+        .user-info {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .user-name {
+            font-weight: 600;
+            font-size: 14px;
+        }
+
+        .user-role {
+            font-size: 12px;
+            color: var(--gray);
+        }
+
+        .dropdown-menu {
+            position: absolute;
+            top: 70px;
+            right: 20px;
+            background: white;
+            border-radius: var(--border-radius);
+            box-shadow: var(--box-shadow);
+            width: 200px;
+            padding: 10px 0;
+            z-index: 1000;
+            display: none;
+        }
+
+        .dropdown-menu.show {
+            display: block;
+        }
+
+        .dropdown-item {
+            display: flex;
+            align-items: center;
+            padding: 10px 20px;
+            text-decoration: none;
+            color: var(--dark);
+            transition: var(--transition);
+        }
+
+        .dropdown-item:hover {
+            background: rgba(26, 71, 42, 0.1);
+        }
+
+        .dropdown-item i {
+            margin-right: 10px;
+            width: 20px;
+            text-align: center;
+        }
+
+        /* Section Styles */
+        .section {
+            background: white;
+            border-radius: var(--border-radius);
+            box-shadow: var(--box-shadow);
+            padding: 25px;
+            margin-bottom: 30px;
+        }
+
+        .section-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .section-header h3 {
+            font-weight: 600;
+            color: var(--dark);
+        }
+
+        .btn {
+            padding: 8px 16px;
+            background: var(--primary);
+            color: white;
+            border: none;
+            border-radius: var(--border-radius);
+            cursor: pointer;
+            transition: var(--transition);
+            font-weight: 500;
+        }
+
+        .btn:hover {
+            background: var(--primary-light);
+        }
+
+        .btn-outline {
+            background: transparent;
+            border: 1px solid var(--primary);
+            color: var(--primary);
+        }
+
+        .btn-outline:hover {
+            background: rgba(26, 71, 42, 0.1);
+        }
+
+        .btn-success {
+            background: var(--success);
+        }
+
+        .btn-success:hover {
+            background: #1e7e34;
+        }
+
+        .btn-secondary {
+            background: var(--secondary);
+        }
+
+        .btn-secondary:hover {
+            background: #c69500;
+        }
+
+        /* Grant Sources Management Styles */
+        .sources-actions {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        .search-box {
+            flex: 1;
+            position: relative;
+        }
+
+        .search-box input {
+            width: 100%;
+            padding: 10px 15px 10px 40px;
+            border: 1px solid var(--light-gray);
+            border-radius: var(--border-radius);
+            font-size: 16px;
+            transition: var(--transition);
+        }
+
+        .search-box input:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(26, 71, 42, 0.1);
+        }
+
+        .search-box i {
+            position: absolute;
+            left: 15px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--gray);
+        }
+
+        .filter-options {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+
+        .filter-btn {
+            padding: 8px 16px;
+            background: white;
+            border: 1px solid var(--light-gray);
+            border-radius: var(--border-radius);
+            cursor: pointer;
+            transition: var(--transition);
+            font-size: 14px;
+        }
+
+        .filter-btn.active, .filter-btn:hover {
+            background: var(--primary);
+            color: white;
+            border-color: var(--primary);
+        }
+
+        /* Grant Sources Grid */
+        .sources-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+            gap: 20px;
+        }
+
+        .source-card {
+            border: 1px solid var(--light-gray);
+            border-radius: var(--border-radius);
+            padding: 20px;
+            transition: var(--transition);
+            position: relative;
+        }
+
+        .source-card:hover {
+            box-shadow: var(--box-shadow);
+            transform: translateY(-5px);
+        }
+
+        .source-card.featured {
+            border-left: 4px solid var(--secondary);
+        }
+
+        .source-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 15px;
+        }
+
+        .source-name {
+            font-weight: 600;
+            font-size: 18px;
+            color: var(--primary);
+        }
+
+        .source-type {
+            background: rgba(26, 71, 42, 0.1);
+            color: var(--primary);
+            padding: 4px 10px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 500;
+        }
+
+        .source-details {
+            margin-bottom: 15px;
+        }
+
+        .source-detail {
+            display: flex;
+            margin-bottom: 8px;
+            font-size: 14px;
+        }
+
+        .source-detail i {
+            width: 20px;
+            margin-right: 10px;
+            color: var(--gray);
+        }
+
+        .source-tags {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 5px;
+            margin-bottom: 15px;
+        }
+
+        .tag {
+            background: rgba(218, 165, 32, 0.1);
+            color: var(--secondary);
+            padding: 4px 8px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: 500;
+        }
+
+        .source-stats {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 15px;
+            padding-top: 15px;
+            border-top: 1px solid var(--light-gray);
+        }
+
+        .stat {
+            text-align: center;
+        }
+
+        .stat-value {
+            font-weight: 600;
+            font-size: 18px;
+            color: var(--primary);
+        }
+
+        .stat-label {
+            font-size: 12px;
+            color: var(--gray);
+        }
+
+        .source-actions-row {
+            display: flex;
+            justify-content: space-between;
+            gap: 10px;
+        }
+
+        .source-action-btn {
+            flex: 1;
+            padding: 8px;
+            background: transparent;
+            border: 1px solid var(--light-gray);
+            border-radius: var(--border-radius);
+            cursor: pointer;
+            transition: var(--transition);
+            font-size: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 5px;
+        }
+
+        .source-action-btn:hover {
+            background: rgba(26, 71, 42, 0.1);
+            border-color: var(--primary);
+        }
+
+        .source-action-btn.primary {
+            background: var(--primary);
+            color: white;
+            border-color: var(--primary);
+        }
+
+        .source-action-btn.primary:hover {
+            background: var(--primary-light);
+        }
+
+        /* AI Matching Section */
+        .ai-matching-container {
+            background: linear-gradient(135deg, #1a472a 0%, #2e8b57 100%);
+            border-radius: var(--border-radius);
+            padding: 25px;
+            color: white;
+            margin-bottom: 30px;
+        }
+
+        .ai-matching-header {
+            display: flex;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+
+        .ai-matching-header i {
+            font-size: 24px;
+            margin-right: 10px;
+        }
+
+        .ai-matching-content {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .ai-matching-text {
+            flex: 1;
+        }
+
+        .ai-matching-text h3 {
+            margin-bottom: 10px;
+        }
+
+        /* Stats Section */
+        .stats-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .stat-card {
+            background: white;
+            border-radius: var(--border-radius);
+            padding: 20px;
+            box-shadow: var(--box-shadow);
+            display: flex;
+            align-items: center;
+        }
+
+        .stat-icon {
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-right: 15px;
+            font-size: 20px;
+        }
+
+        .stat-1 .stat-icon {
+            background: rgba(26, 71, 42, 0.1);
+            color: var(--primary);
+        }
+
+        .stat-2 .stat-icon {
+            background: rgba(218, 165, 32, 0.1);
+            color: var(--secondary);
+        }
+
+        .stat-3 .stat-icon {
+            background: rgba(34, 139, 34, 0.1);
+            color: var(--success);
+        }
+
+        .stat-4 .stat-icon {
+            background: rgba(184, 134, 11, 0.1);
+            color: var(--warning);
+        }
+
+        .stat-info h3 {
+            font-size: 24px;
+            margin-bottom: 5px;
+        }
+
+        .stat-info p {
+            color: var(--gray);
+            font-size: 14px;
+        }
+
+        /* Source Detail Modal */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal-content {
+            background: white;
+            border-radius: var(--border-radius);
+            width: 90%;
+            max-width: 800px;
+            padding: 30px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+            max-height: 90vh;
+            overflow-y: auto;
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding-bottom: 15px;
+            border-bottom: 1px solid var(--light-gray);
+        }
+
+        .modal-header h3 {
+            font-weight: 600;
+            color: var(--dark);
+        }
+
+        .close-modal {
+            background: none;
+            border: none;
+            font-size: 24px;
+            cursor: pointer;
+            color: var(--gray);
+        }
+
+        .source-detail-content {
+            display: flex;
+            gap: 30px;
+        }
+
+        .source-detail-main {
+            flex: 1;
+        }
+
+        .detail-section {
+            margin-bottom: 25px;
+        }
+
+        .detail-section h4 {
+            margin-bottom: 15px;
+            padding-bottom: 8px;
+            border-bottom: 1px solid var(--light-gray);
+            color: var(--primary);
+        }
+
+        .detail-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 15px;
+        }
+
+        .detail-item {
+            margin-bottom: 10px;
+        }
+
+        .detail-label {
+            font-weight: 500;
+            color: var(--gray);
+            font-size: 14px;
+            margin-bottom: 5px;
+        }
+
+        .detail-value {
+            font-size: 16px;
+        }
+
+        .eligibility-criteria {
+            margin-top: 15px;
+        }
+
+        .criteria-list {
+            list-style-type: none;
+        }
+
+        .criteria-list li {
+            margin-bottom: 8px;
+            padding-left: 20px;
+            position: relative;
+        }
+
+        .criteria-list li:before {
+            content: '•';
+            color: var(--primary);
+            position: absolute;
+            left: 0;
+        }
+
+        /* Add Source Form */
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 500;
+            color: var(--dark);
+        }
+
+        .form-control {
+            width: 100%;
+            padding: 10px 15px;
+            border: 1px solid var(--light-gray);
+            border-radius: var(--border-radius);
+            font-size: 16px;
+            transition: var(--transition);
+        }
+
+        .form-control:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(26, 71, 42, 0.1);
+        }
+
+        textarea.form-control {
+            min-height: 120px;
+            resize: vertical;
+        }
+
+        .form-row {
+            display: flex;
+            gap: 20px;
+        }
+
+        .form-row .form-group {
+            flex: 1;
+        }
+
+        /* Responsive */
+        @media (max-width: 992px) {
+            .container {
+                flex-direction: column;
+            }
+            
+            .sidebar {
+                width: 100%;
+                padding: 15px;
+            }
+            
+            .nav-links {
+                display: flex;
+                overflow-x: auto;
+            }
+            
+            .nav-links li {
+                margin-right: 10px;
+                margin-bottom: 0;
+            }
+
+            .sources-grid {
+                grid-template-columns: 1fr 1fr;
+            }
+
+            .source-detail-content {
+                flex-direction: column;
+            }
+
+            .ai-matching-content {
+                flex-direction: column;
+                gap: 20px;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .sources-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .form-row {
+                flex-direction: column;
+                gap: 0;
+            }
+
+            .header {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 15px;
+            }
+
+            .header-actions {
+                width: 100%;
+                justify-content: space-between;
+            }
+
+            .stats-container {
+                grid-template-columns: 1fr 1fr;
+            }
+
+            .sources-actions {
+                flex-direction: column;
+            }
+
+            .detail-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        @media (max-width: 576px) {
+            .filter-options {
+                flex-wrap: wrap;
+            }
+
+            .stats-container {
+                grid-template-columns: 1fr;
+            }
+
+            .source-actions-row {
+                flex-direction: column;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Main Application -->
+    <div class="container" id="app-container">
+        <!-- Sidebar -->
+        <div class="sidebar">
+            <div class="logo">
+                <img src="https://i.imgur.com/9R0mZJw.png" alt="GrantFlow Logo">
+                <h1>GrantFlow CRM</h1>
+            </div>
+            <ul class="nav-links">
+                <li><a href="#" data-page="dashboard"><i class="fas fa-home"></i> Dashboard</a></li>
+                <li><a href="#" data-page="clients"><i class="fas fa-users"></i> Clients</a></li>
+                <li><a href="#" data-page="grants"><i class="fas fa-file-alt"></i> Grants</a></li>
+                <li><a href="#" data-page="submissions"><i class="fas fa-paper-plane"></i> Submissions</a></li>
+                <li><a href="#" class="active" data-page="sources"><i class="fas fa-database"></i> Grant Sources</a></li>
+                <li><a href="#" data-page="matching"><i class="fas fa-robot"></i> AI Matching</a></li>
+                <li><a href="#" data-page="ai-writing"><i class="fas fa-pen-fancy"></i> AI Grant Writing</a></li>
+                <li><a href="#" data-page="profile"><i class="fas fa-user"></i> My Profile</a></li>
+                <li><a href="#" id="logout-btn"><i class="fas fa-sign-out-alt"></i> Logout</a></li>
+            </ul>
+        </div>
+
+        <!-- Main Content -->
+        <div class="main-content">
+            <!-- Header -->
+            <div class="header">
+                <h2 id="page-title">Grant Sources</h2>
+                <div class="header-actions">
+                    <div class="notification-icon">
+                        <i class="fas fa-bell"></i>
+                        <span class="notification-badge">3</span>
+                    </div>
+                    <div class="user-profile" id="user-profile-toggle">
+                        <img src="https://i.pravatar.cc/150?img=12" alt="User Avatar" id="user-avatar">
+                        <div class="user-info">
+                            <span class="user-name" id="user-display-name">Sarah Johnson</span>
+                            <span class="user-role">Grant Manager</span>
+                        </div>
+                        <i class="fas fa-chevron-down"></i>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Dropdown Menu -->
+            <div class="dropdown-menu" id="user-dropdown">
+                <a href="#" class="dropdown-item" data-page="profile">
+                    <i class="fas fa-user"></i> My Profile
+                </a>
+                <a href="#" class="dropdown-item">
+                    <i class="fas fa-cog"></i> Settings
+                </a>
+                <a href="#" class="dropdown-item">
+                    <i class="fas fa-question-circle"></i> Help & Support
+                </a>
+                <a href="#" class="dropdown-item" id="dropdown-logout">
+                    <i class="fas fa-sign-out-alt"></i> Logout
+                </a>
+            </div>
+
+            <!-- Grant Sources Content -->
+            <div id="sources-page" class="page-content">
+                <!-- AI Matching Section -->
+                <div class="ai-matching-container">
+                    <div class="ai-matching-header">
+                        <i class="fas fa-robot"></i>
+                        <h3>AI-Powered Grant Matching</h3>
+                    </div>
+                    <div class="ai-matching-content">
+                        <div class="ai-matching-text">
+                            <p>Our AI analyzes your clients' profiles and automatically matches them with the most suitable grant opportunities. Save time and increase success rates with intelligent recommendations.</p>
+                        </div>
+                        <button class="btn btn-secondary">
+                            <i class="fas fa-bolt"></i> Run AI Matching
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Sources Stats -->
+                <div class="stats-container">
+                    <div class="stat-card stat-1">
+                        <div class="stat-icon">
+                            <i class="fas fa-database"></i>
+                        </div>
+                        <div class="stat-info">
+                            <h3>142</h3>
+                            <p>Total Sources</p>
+                        </div>
+                    </div>
+                    <div class="stat-card stat-2">
+                        <div class="stat-icon">
+                            <i class="fas fa-sync"></i>
+                        </div>
+                        <div class="stat-info">
+                            <h3>28</h3>
+                            <p>Active Opportunities</p>
+                        </div>
+                    </div>
+                    <div class="stat-card stat-3">
+                        <div class="stat-icon">
+                            <i class="fas fa-check-circle"></i>
+                        </div>
+                        <div class="stat-info">
+                            <h3>64%</h3>
+                            <p>Match Rate</p>
+                        </div>
+                    </div>
+                    <div class="stat-card stat-4">
+                        <div class="stat-icon">
+                            <i class="fas fa-dollar-sign"></i>
+                        </div>
+                        <div class="stat-info">
+                            <h3>$18.5M</h3>
+                            <p>Available Funding</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Sources Actions -->
+                <div class="section">
+                    <div class="section-header">
+                        <h3>Grant Sources Database</h3>
+                        <button class="btn" id="add-source-btn">
+                            <i class="fas fa-plus"></i> Add New Source
+                        </button>
+                    </div>
+
+                    <div class="sources-actions">
+                        <div class="search-box">
+                            <i class="fas fa-search"></i>
+                            <input type="text" id="source-search" placeholder="Search grant sources...">
+                        </div>
+                        <button class="btn btn-outline">
+                            <i class="fas fa-filter"></i> Advanced Filters
+                        </button>
+                        <button class="btn btn-secondary">
+                            <i class="fas fa-download"></i> Export
+                        </button>
+                    </div>
+
+                    <!-- Filter Options -->
+                    <div class="filter-options">
+                        <button class="filter-btn active">All Sources</button>
+                        <button class="filter-btn">Government</button>
+                        <button class="filter-btn">Foundation</button>
+                        <button class="filter-btn">Corporate</button>
+                        <button class="filter-btn">Active</button>
+                        <button class="filter-btn">Featured</button>
+                        <button class="filter-btn">High Success Rate</button>
+                    </div>
+
+                    <!-- Sources Grid -->
+                    <div class="sources-grid" id="sources-grid">
+                        <!-- Source cards will be dynamically generated here -->
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Source Detail Modal -->
+    <div class="modal" id="source-detail-modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Grant Source Details</h3>
+                <button class="close-modal">&times;</button>
+            </div>
+            <div class="source-detail-content" id="source-detail-content">
+                <!-- Source details will be dynamically generated here -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Add Source Modal -->
+    <div class="modal" id="add-source-modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Add New Grant Source</h3>
+                <button class="close-modal">&times;</button>
+            </div>
+            <form id="add-source-form">
+                <div class="form-group">
+                    <label for="source-name">Source Name</label>
+                    <input type="text" id="source-name" class="form-control" required>
+                </div>
+                
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="source-type">Source Type</label>
+                        <select id="source-type" class="form-control" required>
+                            <option value="">Select Type</option>
+                            <option value="government">Government</option>
+                            <option value="foundation">Foundation</option>
+                            <option value="corporate">Corporate</option>
+                            <option value="community">Community</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="source-website">Website</label>
+                        <input type="url" id="source-website" class="form-control">
+                    </div>
+                </div>
+                
+                <div class="form-group">
+                    <label for="source-description">Description</label>
+                    <textarea id="source-description" class="form-control"></textarea>
+                </div>
+                
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="source-avg-award">Average Award Amount</label>
+                        <input type="number" id="source-avg-award" class="form-control">
+                    </div>
+                    <div class="form-group">
+                        <label for="source-deadline">Next Deadline</label>
+                        <input type="date" id="source-deadline" class="form-control">
+                    </div>
+                </div>
+                
+                <div class="form-group">
+                    <label for="source-eligibility">Eligibility Criteria</label>
+                    <textarea id="source-eligibility" class="form-control" placeholder="Enter one criteria per line"></textarea>
+                </div>
+                
+                <div class="form-group">
+                    <label for="source-tags">Tags</label>
+                    <input type="text" id="source-tags" class="form-control" placeholder="Enter tags separated by commas">
+                </div>
+                
+                <div class="form-group">
+                    <label for="source-notes">Notes</label>
+                    <textarea id="source-notes" class="form-control"></textarea>
+                </div>
+                
+                <div class="form-group">
+                    <button type="submit" class="btn" style="width: 100%;">Add Source</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        // Sample grant source data
+        const grantSources = [
+            {
+                id: 1,
+                name: "National Science Foundation",
+                type: "government",
+                website: "https://www.nsf.gov",
+                description: "Independent federal agency that supports fundamental research and education in all non-medical fields of science and engineering.",
+                avgAward: 250000,
+                nextDeadline: "2023-12-15",
+                eligibility: [
+                    "US-based educational institutions",
+                    "Non-profit organizations",
+                    "Must demonstrate scientific merit",
+                    "Principal investigator with PhD"
+                ],
+                tags: ["STEM", "Research", "Education", "Innovation"],
+                notes: "Highly competitive. Strong emphasis on innovation and broader impacts.",
+                successRate: 72,
+                submissions: 18,
+                featured: true
+            },
+            {
+                id: 2,
+                name: "Ford Foundation",
+                type: "foundation",
+                website: "https://www.fordfoundation.org",
+                description: "Private foundation with the mission to advance human welfare through support for visionary leaders and organizations.",
+                avgAward: 500000,
+                nextDeadline: "2024-02-28",
+                eligibility: [
+                    "Non-profit organizations",
+                    "Focus on social justice",
+                    "Must serve underserved communities",
+                    "Proven track record"
+                ],
+                tags: ["Social Justice", "Equity", "Community Development"],
+                notes: "Strong preference for organizations led by people of color. Multi-year grants available.",
+                successRate: 65,
+                submissions: 12,
+                featured: true
+            },
+            {
+                id: 3,
+                name: "Department of Energy",
+                type: "government",
+                website: "https://www.energy.gov",
+                description: "Federal department responsible for energy policy and nuclear safety, funding research in energy technology and environmental management.",
+                avgAward: 750000,
+                nextDeadline: "2023-11-30",
+                eligibility: [
+                    "US-based entities",
+                    "Focus on energy innovation",
+                    "Must address national energy priorities",
+                    "Partnerships encouraged"
+                ],
+                tags: ["Energy", "Environment", "Technology", "Clean Energy"],
+                notes: "Multiple funding programs available. ARPA-E for high-risk, high-reward projects.",
+                successRate: 58,
+                submissions: 24,
+                featured: false
+            },
+            {
+                id: 4,
+                name: "Google.org",
+                type: "corporate",
+                website: "https://www.google.org",
+                description: "Philanthropic arm of Google that supports nonprofits using technology and innovation to tackle complex global challenges.",
+                avgAward: 1000000,
+                nextDeadline: "2024-01-15",
+                eligibility: [
+                    "Registered non-profits",
+                    "Technology-focused solutions",
+                    "Global impact potential",
+                    "Scalable approach"
+                ],
+                tags: ["Technology", "Innovation", "Global Impact", "Digital Inclusion"],
+                notes: "Strong preference for projects using AI/ML. Also provides technical support.",
+                successRate: 45,
+                submissions: 8,
+                featured: true
+            },
+            {
+                id: 5,
+                name: "Robert Wood Johnson Foundation",
+                type: "foundation",
+                website: "https://www.rwjf.org",
+                description: "Nation's largest philanthropy dedicated solely to health, focusing on building a national Culture of Health.",
+                avgAward: 300000,
+                nextDeadline: "2023-12-01",
+                eligibility: [
+                    "Health-focused organizations",
+                    "Must address health equity",
+                    "Evidence-based approaches",
+                    "Community engagement"
+                ],
+                tags: ["Health", "Equity", "Community Health", "Wellness"],
+                notes: "Multiple funding streams. Strong focus on racial equity and community-led solutions.",
+                successRate: 68,
+                submissions: 15,
+                featured: false
+            },
+            {
+                id: 6,
+                name: "National Endowment for the Arts",
+                type: "government",
+                website: "https://www.arts.gov",
+                description: "Independent federal agency that funds, promotes, and strengthens the creative capacity of communities by providing all Americans with diverse opportunities for arts participation.",
+                avgAward: 25000,
+                nextDeadline: "2024-03-15",
+                eligibility: [
+                    "Non-profit arts organizations",
+                    "Must provide public benefit",
+                    "Artistic excellence",
+                    "Community impact"
+                ],
+                tags: ["Arts", "Culture", "Creative", "Community Arts"],
+                notes: "Multiple grant categories. Strong emphasis on accessibility and diversity.",
+                successRate: 52,
+                submissions: 32,
+                featured: false
+            }
+        ];
+
+        // DOM Elements
+        const appContainer = document.getElementById('app-container');
+        const logoutBtn = document.getElementById('logout-btn');
+        const dropdownLogout = document.getElementById('dropdown-logout');
+        const userProfileToggle = document.getElementById('user-profile-toggle');
+        const userDropdown = document.getElementById('user-dropdown');
+        const navLinks = document.querySelectorAll('.nav-links a');
+        const sourcesGrid = document.getElementById('sources-grid');
+        const sourceDetailModal = document.getElementById('source-detail-modal');
+        const addSourceModal = document.getElementById('add-source-modal');
+        const addSourceBtn = document.getElementById('add-source-btn');
+        const addSourceForm = document.getElementById('add-source-form');
+        const closeModalBtns = document.querySelectorAll('.close-modal');
+        const filterBtns = document.querySelectorAll('.filter-btn');
+        const sourceSearch = document.getElementById('source-search');
+
+        // Initialize the application
+        document.addEventListener('DOMContentLoaded', function() {
+            // Load user data
+            const userData = JSON.parse(localStorage.getItem('grantflow-user') || '{}');
+            if (userData.name) {
+                document.getElementById('user-display-name').textContent = userData.name;
+                document.getElementById('user-avatar').src = userData.avatar;
+            }
+            
+            // Render grant sources
+            renderGrantSources(grantSources);
+            
+            // Navigation
+            navLinks.forEach(link => {
+                link.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    
+                    // Handle logout separately
+                    if (this.id === 'logout-btn') {
+                        return;
+                    }
+                    
+                    const page = this.getAttribute('data-page');
+                    if (page) {
+                        navigateToPage(page);
+                    }
+                    
+                    // Update active nav link
+                    navLinks.forEach(l => l.classList.remove('active'));
+                    this.classList.add('active');
+                });
+            });
+
+            // User profile dropdown toggle
+            userProfileToggle.addEventListener('click', function() {
+                userDropdown.classList.toggle('show');
+            });
+
+            // Close dropdown when clicking outside
+            document.addEventListener('click', function(e) {
+                if (!userProfileToggle.contains(e.target) && !userDropdown.contains(e.target)) {
+                    userDropdown.classList.remove('show');
+                }
+            });
+
+            // Add source button
+            addSourceBtn.addEventListener('click', function() {
+                addSourceModal.style.display = 'flex';
+            });
+
+            // Add source form submission
+            addSourceForm.addEventListener('submit', function(e) {
+                e.preventDefault();
+                
+                // Create new source object
+                const newSource = {
+                    id: grantSources.length + 1,
+                    name: document.getElementById('source-name').value,
+                    type: document.getElementById('source-type').value,
+                    website: document.getElementById('source-website').value,
+                    description: document.getElementById('source-description').value,
+                    avgAward: parseInt(document.getElementById('source-avg-award').value) || 0,
+                    nextDeadline: document.getElementById('source-deadline').value,
+                    eligibility: document.getElementById('source-eligibility').value.split('\n').filter(line => line.trim() !== ''),
+                    tags: document.getElementById('source-tags').value.split(',').map(tag => tag.trim()),
+                    notes: document.getElementById('source-notes').value,
+                    successRate: Math.floor(Math.random() * 30) + 40, // Random between 40-70
+                    submissions: 0,
+                    featured: false
+                };
+                
+                // Add to grant sources array
+                grantSources.push(newSource);
+                
+                // Re-render grant sources
+                renderGrantSources(grantSources);
+                
+                // Close modal and reset form
+                addSourceModal.style.display = 'none';
+                addSourceForm.reset();
+                
+                // Show success message
+                alert('Grant source added successfully!');
+            });
+
+            // Filter buttons
+            filterBtns.forEach(btn => {
+                btn.addEventListener('click', function() {
+                    filterBtns.forEach(b => b.classList.remove('active'));
+                    this.classList.add('active');
+                    
+                    const filter = this.textContent.toLowerCase();
+                    filterSources(filter);
+                });
+            });
+
+            // Search functionality
+            sourceSearch.addEventListener('input', function() {
+                const searchTerm = this.value.toLowerCase();
+                searchSources(searchTerm);
+            });
+
+            // Close modals
+            closeModalBtns.forEach(btn => {
+                btn.addEventListener('click', function() {
+                    sourceDetailModal.style.display = 'none';
+                    addSourceModal.style.display = 'none';
+                });
+            });
+            
+            // Close modal when clicking outside
+            window.addEventListener('click', function(e) {
+                if (e.target === sourceDetailModal) {
+                    sourceDetailModal.style.display = 'none';
+                }
+                if (e.target === addSourceModal) {
+                    addSourceModal.style.display = 'none';
+                }
+            });
+        });
+
+        // Render grant sources to the grid
+        function renderGrantSources(sourcesArray) {
+            sourcesGrid.innerHTML = '';
+            
+            sourcesArray.forEach(source => {
+                const sourceCard = document.createElement('div');
+                sourceCard.className = `source-card ${source.featured ? 'featured' : ''}`;
+                sourceCard.innerHTML = `
+                    <div class="source-header">
+                        <div class="source-name">${source.name}</div>
+                        <span class="source-type">${source.type.charAt(0).toUpperCase() + source.type.slice(1)}</span>
+                    </div>
+                    <div class="source-details">
+                        <div class="source-detail">
+                            <i class="fas fa-globe"></i>
+                            <span>${source.website.replace('https://', '')}</span>
+                        </div>
+                        <div class="source-detail">
+                            <i class="fas fa-dollar-sign"></i>
+                            <span>Avg. Award: $${source.avgAward.toLocaleString()}</span>
+                        </div>
+                        <div class="source-detail">
+                            <i class="fas fa-calendar-alt"></i>
+                            <span>Next Deadline: ${new Date(source.nextDeadline).toLocaleDateString()}</span>
+                        </div>
+                    </div>
+                    <div class="source-tags">
+                        ${source.tags.map(tag => `<span class="tag">${tag}</span>`).join('')}
+                    </div>
+                    <div class="source-stats">
+                        <div class="stat">
+                            <div class="stat-value">${source.successRate}%</div>
+                            <div class="stat-label">Success Rate</div>
+                        </div>
+                        <div class="stat">
+                            <div class="stat-value">${source.submissions}</div>
+                            <div class="stat-label">Submissions</div>
+                        </div>
+                        <div class="stat">
+                            <div class="stat-value">${calculateDaysUntilDeadline(source.nextDeadline)}</div>
+                            <div class="stat-label">Days Left</div>
+                        </div>
+                    </div>
+                    <div class="source-actions-row">
+                        <button class="source-action-btn" data-source-id="${source.id}">
+                            <i class="fas fa-eye"></i> View
+                        </button>
+                        <button class="source-action-btn" data-source-id="${source.id}">
+                            <i class="fas fa-edit"></i> Edit
+                        </button>
+                        <button class="source-action-btn primary" data-source-id="${source.id}">
+                            <i class="fas fa-plus"></i> Match
+                        </button>
+                    </div>
+                `;
+                
+                sourcesGrid.appendChild(sourceCard);
+            });
+            
+            // Add event listeners to action buttons
+            document.querySelectorAll('.source-action-btn').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    const sourceId = parseInt(this.getAttribute('data-source-id'));
+                    const source = grantSources.find(s => s.id === sourceId);
+                    
+                    if (source) {
+                        if (this.textContent.includes('View')) {
+                            showSourceDetail(source);
+                        } else if (this.textContent.includes('Edit')) {
+                            // In a real app, this would open an edit form
+                            alert(`Edit functionality for "${source.name}" would open here`);
+                        } else if (this.textContent.includes('Match')) {
+                            // In a real app, this would open the AI matching for this source
+                            alert(`AI Matching for "${source.name}" would open here`);
+                        }
+                    }
+                });
+            });
+        }
+
+        // Show source detail in modal
+        function showSourceDetail(source) {
+            const modalContent = document.getElementById('source-detail-content');
+            
+            let eligibilityHTML = '';
+            if (source.eligibility && source.eligibility.length > 0) {
+                eligibilityHTML = `
+                    <ul class="criteria-list">
+                        ${source.eligibility.map(criteria => `<li>${criteria}</li>`).join('')}
+                    </ul>
+                `;
+            } else {
+                eligibilityHTML = '<p>No specific eligibility criteria listed.</p>';
+            }
+            
+            modalContent.innerHTML = `
+                <div class="source-detail-main">
+                    <div class="detail-section">
+                        <h4>Source Information</h4>
+                        <div class="detail-grid">
+                            <div class="detail-item">
+                                <div class="detail-label">Name</div>
+                                <div class="detail-value">${source.name}</div>
+                            </div>
+                            <div class="detail-item">
+                                <div class="detail-label">Type</div>
+                                <div class="detail-value">
+                                    <span class="source-type">${source.type.charAt(0).toUpperCase() + source.type.slice(1)}</span>
+                                </div>
+                            </div>
+                            <div class="detail-item">
+                                <div class="detail-label">Website</div>
+                                <div class="detail-value">
+                                    <a href="${source.website}" target="_blank">${source.website}</a>
+                                </div>
+                            </div>
+                            <div class="detail-item">
+                                <div class="detail-label">Average Award</div>
+                                <div class="detail-value">$${source.avgAward.toLocaleString()}</div>
+                            </div>
+                            <div class="detail-item">
+                                <div class="detail-label">Next Deadline</div>
+                                <div class="detail-value">${new Date(source.nextDeadline).toLocaleDateString()}</div>
+                            </div>
+                            <div class="detail-item">
+                                <div class="detail-label">Success Rate</div>
+                                <div class="detail-value">${source.successRate}%</div>
+                            </div>
+                            <div class="detail-item">
+                                <div class="detail-label">Total Submissions</div>
+                                <div class="detail-value">${source.submissions}</div>
+                            </div>
+                            <div class="detail-item">
+                                <div class="detail-label">Days Until Deadline</div>
+                                <div class="detail-value">${calculateDaysUntilDeadline(source.nextDeadline)} days</div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="detail-section">
+                        <h4>Description</h4>
+                        <p>${source.description}</p>
+                    </div>
+                    
+                    <div class="detail-section">
+                        <h4>Eligibility Criteria</h4>
+                        <div class="eligibility-criteria">
+                            ${eligibilityHTML}
+                        </div>
+                    </div>
+                    
+                    <div class="detail-section">
+                        <h4>Tags</h4>
+                        <div class="source-tags">
+                            ${source.tags.map(tag => `<span class="tag">${tag}</span>`).join('')}
+                        </div>
+                    </div>
+                    
+                    <div class="detail-section">
+                        <h4>Notes</h4>
+                        <p>${source.notes}</p>
+                    </div>
+                </div>
+            `;
+            
+            sourceDetailModal.style.display = 'flex';
+        }
+
+        // Filter sources by type or other criteria
+        function filterSources(filter) {
+            let filteredSources = grantSources;
+            
+            if (filter === 'government') {
+                filteredSources = grantSources.filter(source => source.type === 'government');
+            } else if (filter === 'foundation') {
+                filteredSources = grantSources.filter(source => source.type === 'foundation');
+            } else if (filter === 'corporate') {
+                filteredSources = grantSources.filter(source => source.type === 'corporate');
+            } else if (filter === 'active') {
+                filteredSources = grantSources.filter(source => 
+                    calculateDaysUntilDeadline(source.nextDeadline) > 0
+                );
+            } else if (filter === 'featured') {
+                filteredSources = grantSources.filter(source => source.featured);
+            } else if (filter === 'high success rate') {
+                filteredSources = grantSources.filter(source => source.successRate >= 60);
+            }
+            
+            renderGrantSources(filteredSources);
+        }
+
+        // Search sources by name, description, or tags
+        function searchSources(searchTerm) {
+            if (searchTerm === '') {
+                renderGrantSources(grantSources);
+                return;
+            }
+            
+            const filteredSources = grantSources.filter(source => 
+                source.name.toLowerCase().includes(searchTerm) ||
+                source.description.toLowerCase().includes(searchTerm) ||
+                source.tags.some(tag => tag.toLowerCase().includes(searchTerm)) ||
+                source.type.toLowerCase().includes(searchTerm)
+            );
+            
+            renderGrantSources(filteredSources);
+        }
+
+        // Helper function to calculate days until deadline
+        function calculateDaysUntilDeadline(deadline) {
+            const today = new Date();
+            const deadlineDate = new Date(deadline);
+            const diffTime = deadlineDate - today;
+            const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+            return diffDays;
+        }
+
+        // Navigate to different pages
+        function navigateToPage(page) {
+            // In a real app, this would load the appropriate page
+            alert(`Navigating to ${page} page...`);
+        }
+    </script>
+</body>
+</html>
