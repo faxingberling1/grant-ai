@@ -73,26 +73,24 @@ async function createDemoUsers() {
       if (!existingUser) {
         const user = new User(userData);
         await user.save(); // Password will be hashed by pre-save hook
-        console.log(`Demo user created: ${userData.email}`);
+        console.log(`✅ Demo user created: ${userData.email}`);
       }
     }
   } catch (error) {
-    console.error('Error creating demo users:', error);
+    console.error('❌ Error creating demo users:', error);
   }
 }
 
-// Routes
+// Authentication Routes
 app.post('/api/auth/register', async (req, res) => {
   try {
     const { name, email, password } = req.body;
 
-    // Check if user exists
     const existingUser = await User.findOne({ email });
     if (existingUser) {
       return res.status(400).json({ message: 'User already exists with this email' });
     }
 
-    // Create new user
     const newUser = await User.create({
       name,
       email,
@@ -100,7 +98,6 @@ app.post('/api/auth/register', async (req, res) => {
       avatar: `https://i.pravatar.cc/150?img=${Math.floor(Math.random() * 70)}`
     });
 
-    // Generate token
     const token = jwt.sign(
       { id: newUser._id }, 
       process.env.JWT_SECRET || 'your-secret-key',
@@ -127,13 +124,11 @@ app.post('/api/auth/login', async (req, res) => {
   try {
     const { email, password } = req.body;
 
-    // Check if user exists
     const user = await User.findOne({ email });
     if (!user || !(await user.correctPassword(password, user.password))) {
       return res.status(401).json({ message: 'Invalid email or password' });
     }
 
-    // Generate token
     const token = jwt.sign(
       { id: user._id }, 
       process.env.JWT_SECRET || 'your-secret-key',
@@ -156,7 +151,6 @@ app.post('/api/auth/login', async (req, res) => {
   }
 });
 
-// Protected route example
 app.get('/api/auth/me', async (req, res) => {
   try {
     const token = req.headers.authorization?.split(' ')[1];
@@ -177,13 +171,21 @@ app.get('/api/auth/me', async (req, res) => {
   }
 });
 
-// Create demo users when database connects
+// ✅ Health Check Route
+app.get('/api/health', (req, res) => {
+  res.status(200).json({
+    status: 'ok',
+    message: 'Grant AI backend is running successfully 🚀'
+  });
+});
+
+// MongoDB connection and demo users
 mongoose.connection.once('open', () => {
-  console.log('Connected to MongoDB');
+  console.log('✅ Connected to MongoDB');
   createDemoUsers();
 });
 
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => {
-  console.log(`Server running on port ${PORT}`);
+  console.log(`🚀 Server running on port ${PORT}`);
 });
