@@ -1,3 +1,4 @@
+// -------------------- IMPORTS --------------------
 const express = require('express');
 const mongoose = require('mongoose');
 const cors = require('cors');
@@ -9,19 +10,28 @@ const app = express();
 
 // -------------------- MIDDLEWARE --------------------
 app.use(cors({
-  origin: ['http://localhost:3000', 'https://grant-ai.onrender.com'], // Update if frontend is hosted elsewhere
+  origin: [
+    'http://localhost:3000',
+    'https://grant-ai-eight.vercel.app',   // ✅ Your Vercel frontend
+    'https://grant-ai.onrender.com'        // ✅ Your Render backend (for testing)
+  ],
   credentials: true,
 }));
 app.use(express.json());
 
 // -------------------- DATABASE CONNECTION --------------------
-const mongoURI = process.env.MONGODB_URI || 'mongodb://localhost:27017/grantflow-crm';
+const mongoURI = process.env.MONGO_URI;
+
+if (!mongoURI) {
+  console.error("❌ MONGO_URI not found. Please set it in Render Environment Variables.");
+  process.exit(1);
+}
 
 mongoose.connect(mongoURI, {
   useNewUrlParser: true,
   useUnifiedTopology: true,
 })
-.then(() => console.log('✅ Connected to MongoDB'))
+.then(() => console.log('✅ Connected to MongoDB Atlas'))
 .catch((err) => console.error('❌ MongoDB connection error:', err));
 
 // -------------------- USER MODEL --------------------
@@ -106,9 +116,7 @@ app.post('/api/auth/register', async (req, res) => {
       avatar: `https://i.pravatar.cc/150?img=${Math.floor(Math.random() * 70)}`
     });
 
-    const token = jwt.sign({ id: newUser._id }, process.env.JWT_SECRET || 'your-secret-key', {
-      expiresIn: '30d'
-    });
+    const token = jwt.sign({ id: newUser._id }, process.env.JWT_SECRET, { expiresIn: '30d' });
 
     res.status(201).json({
       success: true,
@@ -135,9 +143,7 @@ app.post('/api/auth/login', async (req, res) => {
     if (!user || !(await user.correctPassword(password, user.password)))
       return res.status(401).json({ message: 'Invalid email or password' });
 
-    const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET || 'your-secret-key', {
-      expiresIn: '30d'
-    });
+    const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET, { expiresIn: '30d' });
 
     res.json({
       success: true,
@@ -162,7 +168,7 @@ app.get('/api/auth/me', async (req, res) => {
     if (!token)
       return res.status(401).json({ message: 'No token provided' });
 
-    const decoded = jwt.verify(token, process.env.JWT_SECRET || 'your-secret-key');
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
     const user = await User.findById(decoded.id).select('-password');
 
     if (!user)
@@ -174,7 +180,7 @@ app.get('/api/auth/me', async (req, res) => {
   }
 });
 
-// Health Check
+// -------------------- HEALTH CHECK --------------------
 app.get('/api/health', (req, res) => {
   res.status(200).json({
     status: 'ok',
@@ -182,7 +188,7 @@ app.get('/api/health', (req, res) => {
   });
 });
 
-// -------------------- START SERVER --------------------
+// -------------------- SERVER START --------------------
 mongoose.connection.once('open', async () => {
   await createDemoUsers();
 });
