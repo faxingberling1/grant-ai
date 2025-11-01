@@ -1,4 +1,3 @@
-// frontend/src/context/AuthContext.js
 import React, { createContext, useState, useContext, useEffect } from 'react';
 
 const AuthContext = createContext();
@@ -12,8 +11,9 @@ export function AuthProvider({ children }) {
   const [loading, setLoading] = useState(true);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
 
-  // ✅ Automatically use environment variable
-  const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000';
+  // ✅ Automatically switch between local & production
+  const API_BASE_URL =
+    process.env.REACT_APP_API_URL?.replace(/\/$/, '') || 'http://localhost:5000';
 
   useEffect(() => {
     const token = localStorage.getItem('grantflow-token');
@@ -32,8 +32,8 @@ export function AuthProvider({ children }) {
     try {
       const response = await fetch(`${API_BASE_URL}/api/auth/me`, {
         headers: {
-          'Authorization': `Bearer ${token}`
-        }
+          Authorization: `Bearer ${token}`,
+        },
       });
 
       if (response.ok) {
@@ -116,12 +116,12 @@ export function AuthProvider({ children }) {
     loading,
     login,
     register,
-    logout
+    logout,
   };
 
   return (
     <AuthContext.Provider value={value}>
-      {children}
+      {!loading && children}
     </AuthContext.Provider>
   );
 }
