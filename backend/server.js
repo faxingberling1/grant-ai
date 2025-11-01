@@ -7,17 +7,24 @@ require('dotenv').config();
 
 const app = express();
 
-// Middleware
-app.use(cors());
+// -------------------- MIDDLEWARE --------------------
+app.use(cors({
+  origin: ['http://localhost:3000', 'https://grant-ai.onrender.com'], // Update if frontend is hosted elsewhere
+  credentials: true,
+}));
 app.use(express.json());
 
-// MongoDB Connection
-mongoose.connect(process.env.MONGODB_URI || 'mongodb://localhost:27017/grantflow-crm', {
+// -------------------- DATABASE CONNECTION --------------------
+const mongoURI = process.env.MONGODB_URI || 'mongodb://localhost:27017/grantflow-crm';
+
+mongoose.connect(mongoURI, {
   useNewUrlParser: true,
   useUnifiedTopology: true,
-});
+})
+.then(() => console.log('✅ Connected to MongoDB'))
+.catch((err) => console.error('❌ MongoDB connection error:', err));
 
-// User Schema
+// -------------------- USER MODEL --------------------
 const userSchema = new mongoose.Schema({
   name: { type: String, required: true },
   email: { type: String, required: true, unique: true },
@@ -41,7 +48,7 @@ userSchema.methods.correctPassword = async function(candidatePassword, userPassw
 
 const User = mongoose.model('User', userSchema);
 
-// Create demo users on startup
+// -------------------- CREATE DEMO USERS --------------------
 async function createDemoUsers() {
   try {
     const demoUsers = [
@@ -72,7 +79,7 @@ async function createDemoUsers() {
       const existingUser = await User.findOne({ email: userData.email });
       if (!existingUser) {
         const user = new User(userData);
-        await user.save(); // Password will be hashed by pre-save hook
+        await user.save();
         console.log(`✅ Demo user created: ${userData.email}`);
       }
     }
@@ -81,15 +88,16 @@ async function createDemoUsers() {
   }
 }
 
-// Authentication Routes
+// -------------------- AUTH ROUTES --------------------
+
+// Register new user
 app.post('/api/auth/register', async (req, res) => {
   try {
     const { name, email, password } = req.body;
 
     const existingUser = await User.findOne({ email });
-    if (existingUser) {
+    if (existingUser)
       return res.status(400).json({ message: 'User already exists with this email' });
-    }
 
     const newUser = await User.create({
       name,
@@ -98,11 +106,9 @@ app.post('/api/auth/register', async (req, res) => {
       avatar: `https://i.pravatar.cc/150?img=${Math.floor(Math.random() * 70)}`
     });
 
-    const token = jwt.sign(
-      { id: newUser._id }, 
-      process.env.JWT_SECRET || 'your-secret-key',
-      { expiresIn: '30d' }
-    );
+    const token = jwt.sign({ id: newUser._id }, process.env.JWT_SECRET || 'your-secret-key', {
+      expiresIn: '30d'
+    });
 
     res.status(201).json({
       success: true,
@@ -120,20 +126,18 @@ app.post('/api/auth/register', async (req, res) => {
   }
 });
 
+// Login
 app.post('/api/auth/login', async (req, res) => {
   try {
     const { email, password } = req.body;
 
     const user = await User.findOne({ email });
-    if (!user || !(await user.correctPassword(password, user.password))) {
+    if (!user || !(await user.correctPassword(password, user.password)))
       return res.status(401).json({ message: 'Invalid email or password' });
-    }
 
-    const token = jwt.sign(
-      { id: user._id }, 
-      process.env.JWT_SECRET || 'your-secret-key',
-      { expiresIn: '30d' }
-    );
+    const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET || 'your-secret-key', {
+      expiresIn: '30d'
+    });
 
     res.json({
       success: true,
@@ -151,19 +155,18 @@ app.post('/api/auth/login', async (req, res) => {
   }
 });
 
+// Get current user (protected)
 app.get('/api/auth/me', async (req, res) => {
   try {
     const token = req.headers.authorization?.split(' ')[1];
-    if (!token) {
+    if (!token)
       return res.status(401).json({ message: 'No token provided' });
-    }
 
     const decoded = jwt.verify(token, process.env.JWT_SECRET || 'your-secret-key');
     const user = await User.findById(decoded.id).select('-password');
-    
-    if (!user) {
+
+    if (!user)
       return res.status(404).json({ message: 'User not found' });
-    }
 
     res.json({ success: true, user });
   } catch (error) {
@@ -171,7 +174,7 @@ app.get('/api/auth/me', async (req, res) => {
   }
 });
 
-// ✅ Health Check Route
+// Health Check
 app.get('/api/health', (req, res) => {
   res.status(200).json({
     status: 'ok',
@@ -179,10 +182,9 @@ app.get('/api/health', (req, res) => {
   });
 });
 
-// MongoDB connection and demo users
-mongoose.connection.once('open', () => {
-  console.log('✅ Connected to MongoDB');
-  createDemoUsers();
+// -------------------- START SERVER --------------------
+mongoose.connection.once('open', async () => {
+  await createDemoUsers();
 });
 
 const PORT = process.env.PORT || 5000;
