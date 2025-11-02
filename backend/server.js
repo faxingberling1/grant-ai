@@ -64,7 +64,7 @@ async function createDemoUsers() {
     const demoUsers = [
       {
         name: "Demo User",
-        email: "demo@grantflow.com",
+        email: "demo@grantfunds.com",
         password: "demo123",
         role: "Grant Manager",
         avatar: "https://i.pravatar.cc/150?img=45"
