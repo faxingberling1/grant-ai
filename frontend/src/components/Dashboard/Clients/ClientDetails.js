@@ -1,176 +1,191 @@
-import React, { useState } from 'react';
-import CommunicationThread from './CommunicationThread';
+import React from 'react';
 
-const ClientDetails = ({ client, onEdit, onBack, onSendEmail }) => {
-  const [activeTab, setActiveTab] = useState('overview');
-
-  if (!client) return null;
-
-  const tabs = [
-    { id: 'overview', label: 'Overview', icon: 'fas fa-chart-bar' },
-    { id: 'communications', label: 'Communications', icon: 'fas fa-envelope' },
-    { id: 'grants', label: 'Grants', icon: 'fas fa-file-alt' },
-    { id: 'documents', label: 'Documents', icon: 'fas fa-folder' }
-  ];
-
-  return (
-    <div className="client-details">
-      <div className="details-header">
-        <button className="btn-back" onClick={onBack}>
-          <i className="fas fa-arrow-left"></i>
-          Back to Clients
-        </button>
-        <div className="header-actions">
-          <button className="btn btn-outline" onClick={() => onSendEmail(client)}>
-            <i className="fas fa-envelope"></i>
-            Send Email
-          </button>
-          <button className="btn btn-primary" onClick={onEdit}>
-            <i className="fas fa-edit"></i>
-            Edit Client
+const ClientDetails = ({ client, onEdit, onBack, onSendEmail, onCommunication, onViewHistory }) => {
+  if (!client) {
+    return (
+      <div className="no-clients">
+        <div className="empty-state">
+          <i className="fas fa-exclamation-circle"></i>
+          <h3>Client not found</h3>
+          <p>The requested client could not be found.</p>
+          <button className="btn btn-primary" onClick={onBack}>
+            Back to Clients
           </button>
         </div>
       </div>
+    );
+  }
 
-      <div className="client-profile">
-        <div className="profile-header">
-          <img src={client.avatar} alt={client.name} className="profile-avatar" />
-          <div className="profile-info">
-            <h1>{client.name}</h1>
-            <p className="profile-organization">{client.organization}</p>
-            <div className="profile-contacts">
-              <div className="contact-item">
-                <i className="fas fa-envelope"></i>
-                <span>{client.email}</span>
-              </div>
-              <div className="contact-item">
-                <i className="fas fa-phone"></i>
-                <span>{client.phone}</span>
-              </div>
-            </div>
-            <div className="profile-status">
-              <span className={`status-badge ${client.status}`}>
-                {client.status}
-              </span>
-              <span className="member-since">
-                Member since {new Date().getFullYear()}
-              </span>
-            </div>
+  const getStatusBadge = (status) => {
+    switch (status) {
+      case 'active':
+        return <span className="status-badge active">Active</span>;
+      case 'inactive':
+        return <span className="status-badge inactive">Inactive</span>;
+      case 'prospect':
+        return <span className="status-badge prospect">Prospect</span>;
+      default:
+        return <span className="status-badge active">Active</span>;
+    }
+  };
+
+  return (
+    <div className="clients-list">
+      <div className="clients-header">
+        <div className="header-content">
+          <div className="header-title">
+            <button className="btn btn-outline" onClick={onBack}>
+              <i className="fas fa-arrow-left"></i>
+              Back to Clients
+            </button>
+            <h1 style={{marginTop: '16px'}}>{client.name}</h1>
+            <p>{client.organization} • {getStatusBadge(client.status)}</p>
+          </div>
+          <div className="header-actions">
+            <button className="btn btn-outline" onClick={onViewHistory}>
+              <i className="fas fa-history"></i>
+              View History
+            </button>
+            <button className="btn btn-outline" onClick={onCommunication}>
+              <i className="fas fa-comments"></i>
+              Communication
+            </button>
+            <button className="btn btn-primary" onClick={onSendEmail}>
+              <i className="fas fa-paper-plane"></i>
+              Send Email
+            </button>
+            <button className="btn btn-secondary" onClick={onEdit}>
+              <i className="fas fa-edit"></i>
+              Edit Client
+            </button>
           </div>
         </div>
+      </div>
 
-        {/* Tabs */}
-        <div className="client-tabs">
-          <div className="tabs-header">
-            {tabs.map(tab => (
-              <button
-                key={tab.id}
-                className={`tab-button ${activeTab === tab.id ? 'active' : ''}`}
-                onClick={() => setActiveTab(tab.id)}
-              >
-                <i className={tab.icon}></i>
-                {tab.label}
-              </button>
-            ))}
+      <div className="clients-content">
+        <div className="content-grid" style={{gridTemplateColumns: '2fr 1fr'}}>
+          <div className="content-card">
+            <div className="card-header">
+              <h3>Client Information</h3>
+            </div>
+            <div className="client-details-grid">
+              <div className="detail-group">
+                <label>Full Name</label>
+                <div className="detail-value">{client.name}</div>
+              </div>
+              <div className="detail-group">
+                <label>Organization</label>
+                <div className="detail-value">{client.organization}</div>
+              </div>
+              <div className="detail-group">
+                <label>Email</label>
+                <div className="detail-value">
+                  <a href={`mailto:${client.email}`}>{client.email}</a>
+                </div>
+              </div>
+              <div className="detail-group">
+                <label>Phone</label>
+                <div className="detail-value">
+                  <a href={`tel:${client.phone}`}>{client.phone}</a>
+                </div>
+              </div>
+              <div className="detail-group">
+                <label>Status</label>
+                <div className="detail-value">{getStatusBadge(client.status)}</div>
+              </div>
+              <div className="detail-group">
+                <label>Last Contact</label>
+                <div className="detail-value">{new Date(client.lastContact).toLocaleDateString()}</div>
+              </div>
+            </div>
           </div>
 
-          <div className="tab-content">
-            {activeTab === 'overview' && (
-              <div className="overview-tab">
-                <div className="stats-grid">
-                  <div className="stat-card">
-                    <div className="stat-icon primary">
-                      <i className="fas fa-file-alt"></i>
-                    </div>
-                    <div className="stat-content">
-                      <h3>{client.grantsSubmitted}</h3>
-                      <p>Grants Submitted</p>
-                    </div>
-                  </div>
-                  <div className="stat-card">
-                    <div className="stat-icon success">
-                      <i className="fas fa-check-circle"></i>
-                    </div>
-                    <div className="stat-content">
-                      <h3>{client.grantsAwarded}</h3>
-                      <p>Grants Awarded</p>
-                    </div>
-                  </div>
-                  <div className="stat-card">
-                    <div className="stat-icon warning">
-                      <i className="fas fa-percentage"></i>
-                    </div>
-                    <div className="stat-content">
-                      <h3>{Math.round((client.grantsAwarded / client.grantsSubmitted) * 100)}%</h3>
-                      <p>Success Rate</p>
-                    </div>
-                  </div>
-                  <div className="stat-card">
-                    <div className="stat-icon info">
-                      <i className="fas fa-award"></i>
-                    </div>
-                    <div className="stat-content">
-                      <h3>{client.totalFunding}</h3>
-                      <p>Total Funding</p>
-                    </div>
-                  </div>
+          <div className="content-card">
+            <div className="card-header">
+              <h3>Grant Statistics</h3>
+            </div>
+            <div className="stats-grid">
+              <div className="stat-item">
+                <div className="stat-number">{client.grantsSubmitted}</div>
+                <div className="stat-label">Grants Submitted</div>
+              </div>
+              <div className="stat-item">
+                <div className="stat-number">{client.grantsAwarded}</div>
+                <div className="stat-label">Grants Awarded</div>
+              </div>
+              <div className="stat-item">
+                <div className="stat-number" style={{fontSize: '20px'}}>{client.totalFunding}</div>
+                <div className="stat-label">Total Funding</div>
+              </div>
+              <div className="stat-item">
+                <div className="stat-number">
+                  {client.grantsSubmitted > 0 
+                    ? Math.round((client.grantsAwarded / client.grantsSubmitted) * 100) 
+                    : 0
+                  }%
                 </div>
+                <div className="stat-label">Success Rate</div>
+              </div>
+            </div>
+          </div>
 
-                <div className="details-grid">
-                  <div className="detail-section">
-                    <h3>Client Information</h3>
-                    <div className="detail-item">
-                      <label>Last Contact</label>
-                      <span>{new Date(client.lastContact).toLocaleDateString()}</span>
+          <div className="content-card full-width">
+            <div className="card-header">
+              <h3>Notes & Tags</h3>
+            </div>
+            <div className="notes-section">
+              <div className="client-notes">
+                <p>{client.notes}</p>
+              </div>
+              <div className="tags-section">
+                {client.tags.map((tag, index) => (
+                  <span key={index} className="tag">
+                    {tag}
+                  </span>
+                ))}
+              </div>
+            </div>
+          </div>
+
+          <div className="content-card full-width">
+            <div className="card-header">
+              <h3>Recent Communication</h3>
+              <button className="btn-link" onClick={onCommunication}>
+                View All
+              </button>
+            </div>
+            <div className="communication-preview">
+              {client.communicationHistory && client.communicationHistory.length > 0 ? (
+                client.communicationHistory.slice(0, 3).map(comm => (
+                  <div key={comm.id} className="comm-preview-item">
+                    <div className="comm-icon">
+                      <i className={`fas fa-${comm.type === 'email' ? 'envelope' : comm.type === 'call' ? 'phone' : 'sticky-note'}`}></i>
                     </div>
-                    <div className="detail-item">
-                      <label>Status</label>
-                      <span className={`status-badge ${client.status}`}>
-                        {client.status}
-                      </span>
+                    <div className="comm-content">
+                      <div className="comm-title">
+                        {comm.type === 'email' ? comm.subject : 
+                         comm.type === 'call' ? `${comm.direction} Call` : 'Note'}
+                      </div>
+                      <div className="comm-preview">
+                        {comm.type === 'email' ? comm.preview : 
+                         comm.type === 'call' ? comm.notes : comm.content}
+                      </div>
+                    </div>
+                    <div className="comm-date">
+                      {new Date(comm.date).toLocaleDateString()}
                     </div>
                   </div>
-
-                  <div className="detail-section">
-                    <h3>Tags</h3>
-                    <div className="tags-list">
-                      {client.tags.map((tag, index) => (
-                        <span key={index} className="tag">
-                          {tag}
-                        </span>
-                      ))}
-                    </div>
-                  </div>
-
-                  <div className="detail-section full-width">
-                    <h3>Notes</h3>
-                    <div className="notes-content">
-                      {client.notes || 'No notes added for this client.'}
-                    </div>
-                  </div>
+                ))
+              ) : (
+                <div className="no-communications">
+                  <i className="fas fa-comments"></i>
+                  <p>No recent communication</p>
+                  <button className="btn btn-outline" onClick={onCommunication}>
+                    Start Conversation
+                  </button>
                 </div>
-              </div>
-            )}
-
-            {activeTab === 'communications' && (
-              <CommunicationThread client={client} />
-            )}
-
-            {activeTab === 'grants' && (
-              <div className="grants-tab">
-                <h3>Grant History</h3>
-                <p>Grant tracking and history will be displayed here.</p>
-                {/* Grant history table/component would go here */}
-              </div>
-            )}
-
-            {activeTab === 'documents' && (
-              <div className="documents-tab">
-                <h3>Client Documents</h3>
-                <p>Document management will be available here.</p>
-                {/* Document upload/management would go here */}
-              </div>
-            )}
+              )}
+            </div>
           </div>
         </div>
       </div>
