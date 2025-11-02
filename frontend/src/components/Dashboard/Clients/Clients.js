@@ -2,16 +2,26 @@ import React, { useState, useEffect } from 'react';
 import ClientList from './ClientList';
 import ClientForm from './ClientForm';
 import ClientDetails from './ClientDetails';
+import ClientEmails from './ClientEmails';
+import ClientCommunication from './ClientCommunication';
+import CommunicationHistory from './CommunicationHistory';
+import EmailTemplates from './EmailTemplates';
 import BulkEmail from './BulkEmail';
 import EmailComposer from './EmailComposer';
+import CommunicationHub from './CommunicationHub';
 import './Clients.css';
+import './CommunicationHub.css';
+import './EmailTemplates.css';
+import './EmailComposer.css';
 
 const Clients = () => {
-  const [view, setView] = useState('list'); // 'list', 'form', 'details', 'bulk-email'
+  const [view, setView] = useState('list');
   const [selectedClient, setSelectedClient] = useState(null);
   const [clients, setClients] = useState([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
+  const [communicationTab, setCommunicationTab] = useState('emails');
+  const [selectedTemplate, setSelectedTemplate] = useState(null);
 
   // Mock data - Replace with API calls
   useEffect(() => {
@@ -29,7 +39,29 @@ const Clients = () => {
         totalFunding: '$450,000',
         avatar: 'https://i.pravatar.cc/150?img=1',
         notes: 'Very responsive and organized. Great partnership potential.',
-        tags: ['Environment', 'Technology', 'Non-Profit']
+        tags: ['Environment', 'Technology', 'Non-Profit'],
+        communicationHistory: [
+          {
+            id: 1,
+            type: 'email',
+            direction: 'outgoing',
+            subject: 'Grant Proposal Feedback',
+            preview: 'Thank you for submitting the draft proposal...',
+            date: '2024-01-15T10:30:00',
+            status: 'sent',
+            important: true
+          },
+          {
+            id: 2,
+            type: 'call',
+            direction: 'incoming',
+            subject: 'Follow-up call',
+            preview: 'Discussed next steps for the NSF grant...',
+            date: '2024-01-12T14:20:00',
+            duration: '15m',
+            status: 'completed'
+          }
+        ]
       },
       {
         id: 2,
@@ -44,7 +76,19 @@ const Clients = () => {
         totalFunding: '$280,000',
         avatar: 'https://i.pravatar.cc/150?img=32',
         notes: 'Focuses on healthcare access in underserved communities.',
-        tags: ['Healthcare', 'Community', 'Non-Profit']
+        tags: ['Healthcare', 'Community', 'Non-Profit'],
+        communicationHistory: [
+          {
+            id: 1,
+            type: 'email',
+            direction: 'incoming',
+            subject: 'Question about budget',
+            preview: 'Could you clarify the budget allocation for...',
+            date: '2024-01-10T09:15:00',
+            status: 'read',
+            important: false
+          }
+        ]
       },
       {
         id: 3,
@@ -59,7 +103,24 @@ const Clients = () => {
         totalFunding: '$620,000',
         avatar: 'https://i.pravatar.cc/150?img=8',
         notes: 'Excellent track record with education grants.',
-        tags: ['Education', 'Youth', 'Foundation']
+        tags: ['Education', 'Youth', 'Foundation'],
+        communicationHistory: []
+      },
+      {
+        id: 4,
+        name: 'TechStart Inc',
+        email: 'info@techstart.com',
+        phone: '+1 (555) 234-5678',
+        organization: 'TechStart Accelerator',
+        status: 'active',
+        lastContact: '2024-01-08',
+        grantsSubmitted: 6,
+        grantsAwarded: 3,
+        totalFunding: '$150,000',
+        avatar: 'https://i.pravatar.cc/150?img=11',
+        notes: 'Early-stage startup with strong growth potential.',
+        tags: ['Technology', 'Startup', 'Innovation'],
+        communicationHistory: []
       }
     ];
     
@@ -82,6 +143,25 @@ const Clients = () => {
     setView('details');
   };
 
+  const handleEmails = (client) => {
+    setSelectedClient(client);
+    setView('emails');
+  };
+
+  const handleCommunication = (client) => {
+    setSelectedClient(client);
+    setView('communication');
+  };
+
+  const handleViewHistory = (client) => {
+    setSelectedClient(client);
+    setView('history');
+  };
+
+  const handleCommunicationHub = () => {
+    setView('communication-hub');
+  };
+
   const handleSaveClient = (clientData) => {
     if (selectedClient) {
       // Update existing client
@@ -98,7 +178,8 @@ const Clients = () => {
         grantsSubmitted: 0,
         grantsAwarded: 0,
         totalFunding: '$0',
-        avatar: `https://i.pravatar.cc/150?img=${Math.floor(Math.random() * 70)}`
+        avatar: `https://i.pravatar.cc/150?img=${Math.floor(Math.random() * 70)}`,
+        communicationHistory: []
       };
       setClients([...clients, newClient]);
     }
@@ -117,7 +198,80 @@ const Clients = () => {
 
   const handleSendEmail = (client) => {
     setSelectedClient(client);
+    setSelectedTemplate(null);
     setView('email-composer');
+  };
+
+  const handleComposeEmail = (client = null, template = null) => {
+    setSelectedClient(client);
+    setSelectedTemplate(template);
+    setView('email-composer');
+  };
+
+  const handleViewTemplates = () => {
+    setView('templates');
+  };
+
+  const handleUseTemplate = (template) => {
+    setSelectedTemplate(template);
+    setSelectedClient(null);
+    setView('email-composer');
+  };
+
+  const handleAddCommunication = (communication) => {
+    if (selectedClient) {
+      const updatedClients = clients.map(client => {
+        if (client.id === selectedClient.id) {
+          return {
+            ...client,
+            communicationHistory: [
+              ...client.communicationHistory,
+              {
+                ...communication,
+                id: Date.now(),
+                date: new Date().toISOString()
+              }
+            ]
+          };
+        }
+        return client;
+      });
+      setClients(updatedClients);
+      setSelectedClient(updatedClients.find(c => c.id === selectedClient.id));
+    }
+  };
+
+  const handleSendEmailFromComposer = (emailData) => {
+    // Handle email sending logic
+    console.log('Sending email:', emailData);
+    
+    // Add to communication history if sending to a specific client
+    if (selectedClient) {
+      const updatedClients = clients.map(client => {
+        if (client.id === selectedClient.id) {
+          return {
+            ...client,
+            communicationHistory: [
+              ...client.communicationHistory,
+              {
+                id: Date.now(),
+                type: 'email',
+                direction: 'outgoing',
+                subject: emailData.subject,
+                preview: emailData.content.substring(0, 100) + '...',
+                date: new Date().toISOString(),
+                status: 'sent',
+                important: false
+              }
+            ]
+          };
+        }
+        return client;
+      });
+      setClients(updatedClients);
+    }
+    
+    setView('list');
   };
 
   const filteredClients = clients.filter(client =>
@@ -125,6 +279,12 @@ const Clients = () => {
     client.organization.toLowerCase().includes(searchTerm.toLowerCase()) ||
     client.email.toLowerCase().includes(searchTerm.toLowerCase())
   );
+
+  // Simplified logic for determining active states
+  const isClientsActive = view === 'list' || view === 'form' || view === 'details' || 
+                         view === 'emails' || view === 'communication' || view === 'history';
+  
+  const isCommunicationHubActive = view === 'communication-hub';
 
   const renderView = () => {
     switch (view) {
@@ -138,7 +298,12 @@ const Clients = () => {
             onViewClient={handleViewClient}
             onDeleteClient={handleDeleteClient}
             onSendEmail={handleSendEmail}
+            onEmails={handleEmails}
             onBulkEmail={handleBulkEmail}
+            onCommunication={handleCommunication}
+            onViewHistory={handleViewHistory}
+            onCommunicationHub={handleCommunicationHub}
+            onViewTemplates={handleViewTemplates}
             searchTerm={searchTerm}
             onSearchChange={setSearchTerm}
           />
@@ -158,6 +323,44 @@ const Clients = () => {
             onEdit={() => handleEditClient(selectedClient)}
             onBack={() => setView('list')}
             onSendEmail={() => handleSendEmail(selectedClient)}
+            onEmails={() => handleEmails(selectedClient)}
+            onCommunication={() => handleCommunication(selectedClient)}
+            onViewHistory={() => handleViewHistory(selectedClient)}
+          />
+        );
+      case 'emails':
+        return (
+          <ClientEmails
+            client={selectedClient}
+            onBack={() => setView('list')}
+            onSendEmail={() => handleSendEmail(selectedClient)}
+            onUseTemplate={handleUseTemplate}
+          />
+        );
+      case 'communication':
+        return (
+          <ClientCommunication
+            client={selectedClient}
+            onSendEmail={() => handleSendEmail(selectedClient)}
+            onAddCommunication={handleAddCommunication}
+            onBack={() => setView('list')}
+            activeTab={communicationTab}
+            onTabChange={setCommunicationTab}
+          />
+        );
+      case 'history':
+        return (
+          <CommunicationHistory
+            client={selectedClient}
+            onBack={() => setView('list')}
+            onSendEmail={() => handleSendEmail(selectedClient)}
+          />
+        );
+      case 'templates':
+        return (
+          <EmailTemplates
+            onBack={() => setView('list')}
+            onUseTemplate={handleUseTemplate}
           />
         );
       case 'bulk-email':
@@ -172,8 +375,20 @@ const Clients = () => {
         return (
           <EmailComposer
             client={selectedClient}
-            onSend={() => setView('list')}
+            template={selectedTemplate}
+            onSend={handleSendEmailFromComposer}
             onCancel={() => setView('list')}
+          />
+        );
+      case 'communication-hub':
+        return (
+          <CommunicationHub
+            onBack={() => setView('list')}
+            onEmails={() => setView('emails')}
+            onTemplates={handleViewTemplates}
+            onBulkEmail={handleBulkEmail}
+            onComposeEmail={handleComposeEmail}
+            clients={clients}
           />
         );
       default:
@@ -183,7 +398,77 @@ const Clients = () => {
 
   return (
     <div className="clients-container">
-      {renderView()}
+      {/* Enhanced Navigation Bar - Fixed to show all buttons */}
+      <div className="clients-nav">
+        <div className="clients-nav-buttons">
+          {/* Clients Section */}
+          <div className="clients-nav-section">
+            <button 
+              className={`clients-nav-button ${isClientsActive ? 'active' : ''}`}
+              onClick={() => setView('list')}
+            >
+              <i className="fas fa-users"></i>
+              Clients
+              {clients.filter(c => c.status === 'active').length > 0 && (
+                <span className="clients-nav-badge">
+                  {clients.filter(c => c.status === 'active').length}
+                </span>
+              )}
+            </button>
+          </div>
+
+          {/* Communication Section */}
+          <div className="clients-nav-section">
+            <button 
+              className={`clients-nav-button ${isCommunicationHubActive ? 'active' : ''}`}
+              onClick={handleCommunicationHub}
+            >
+              <i className="fas fa-comments"></i>
+              Communication Hub
+              <span className="clients-nav-badge">3</span>
+            </button>
+            
+            {/* Communication Actions - Always Visible */}
+            <button 
+              className="clients-nav-action-btn"
+              onClick={handleViewTemplates}
+            >
+              <i className="fas fa-layer-group"></i>
+              Email Templates
+            </button>
+            
+            {/* Compose Email Button - Added before Bulk Email */}
+            <button 
+              className="clients-nav-action-btn primary"
+              onClick={() => handleComposeEmail()}
+            >
+              <i className="fas fa-edit"></i>
+              Compose Email
+            </button>
+            
+            <button 
+              className="clients-nav-action-btn primary"
+              onClick={handleBulkEmail}
+            >
+              <i className="fas fa-mail-bulk"></i>
+              Bulk Email
+            </button>
+          </div>
+        </div>
+        
+        <div className="clients-nav-actions">
+          {/* Add Client Button - Moved to right side */}
+          <button className="clients-nav-add-btn" onClick={handleAddClient}>
+            <i className="fas fa-plus"></i>
+            Add Client
+          </button>
+        </div>
+      </div>
+
+      {/* Main Content */}
+      <div className="clients-content">
+        {renderView()}
+      </div>
     </div>
   );
 };

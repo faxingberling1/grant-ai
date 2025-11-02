@@ -1,0 +1,267 @@
+import React, { useState } from 'react';
+
+const ClientEmails = ({ client, onBack, onSendEmail, onUseTemplate }) => {
+  const [activeTab, setActiveTab] = useState('inbox');
+  const [selectedEmails, setSelectedEmails] = useState([]);
+
+  const emailTabs = [
+    { id: 'inbox', label: 'Inbox', icon: 'fas fa-inbox', count: 5 },
+    { id: 'sent', label: 'Sent', icon: 'fas fa-paper-plane', count: 12 },
+    { id: 'drafts', label: 'Drafts', icon: 'fas fa-file-alt', count: 2 },
+    { id: 'templates', label: 'Templates', icon: 'fas fa-layer-group', count: 8 }
+  ];
+
+  const emails = {
+    inbox: [
+      {
+        id: 1,
+        from: 'Sarah Chen',
+        email: 'sarah@communityhealth.org',
+        subject: 'Grant Proposal Feedback',
+        preview: 'Thank you for the detailed proposal. I have some questions about the budget allocation...',
+        date: '2024-01-15T10:30:00',
+        unread: true,
+        important: true,
+        attachments: 2
+      },
+      {
+        id: 2,
+        from: 'Michael Rodriguez',
+        email: 'mike@youthfuture.org',
+        subject: 'Meeting Follow-up',
+        preview: 'Great meeting yesterday! Here are the action items we discussed...',
+        date: '2024-01-14T14:20:00',
+        unread: false,
+        important: false,
+        attachments: 1
+      }
+    ],
+    sent: [
+      {
+        id: 1,
+        to: 'Sarah Chen',
+        email: 'sarah@communityhealth.org',
+        subject: 'Revised Grant Proposal',
+        preview: 'Attached please find the revised grant proposal with the updated budget figures...',
+        date: '2024-01-13T09:15:00',
+        status: 'delivered'
+      }
+    ],
+    drafts: [
+      {
+        id: 1,
+        to: 'GreenTech Initiative',
+        subject: 'Quarterly Review Meeting',
+        preview: 'I would like to schedule our quarterly review meeting to discuss...',
+        date: '2024-01-12T16:45:00'
+      }
+    ]
+  };
+
+  const templates = [
+    {
+      id: 1,
+      name: 'Initial Grant Inquiry',
+      category: 'Proposal',
+      subject: 'Grant Opportunity Inquiry - [Organization Name]',
+      preview: 'Dear [Contact Name], I am writing to inquire about potential grant opportunities...',
+      lastUsed: '2024-01-10'
+    },
+    {
+      id: 2,
+      name: 'Proposal Follow-up',
+      category: 'Follow-up',
+      subject: 'Follow-up on Grant Proposal Submission',
+      preview: 'Dear [Contact Name], I wanted to follow up on the grant proposal we submitted...',
+      lastUsed: '2024-01-08'
+    }
+  ];
+
+  const handleEmailSelect = (emailId) => {
+    setSelectedEmails(prev => 
+      prev.includes(emailId) 
+        ? prev.filter(id => id !== emailId)
+        : [...prev, emailId]
+    );
+  };
+
+  const handleSelectAll = () => {
+    const currentEmails = emails[activeTab] || [];
+    if (selectedEmails.length === currentEmails.length) {
+      setSelectedEmails([]);
+    } else {
+      setSelectedEmails(currentEmails.map(email => email.id));
+    }
+  };
+
+  const renderEmailList = () => {
+    const currentEmails = emails[activeTab] || [];
+    
+    return (
+      <div className="email-list-container">
+        <div className="email-toolbar">
+          <div className="email-checkbox">
+            <input
+              type="checkbox"
+              checked={selectedEmails.length > 0 && selectedEmails.length === currentEmails.length}
+              onChange={handleSelectAll}
+            />
+          </div>
+          <div className="email-actions">
+            <button className="btn-icon" title="Archive">
+              <i className="fas fa-archive"></i>
+            </button>
+            <button className="btn-icon" title="Delete">
+              <i className="fas fa-trash"></i>
+            </button>
+            <button className="btn-icon" title="Mark as Read">
+              <i className="fas fa-envelope-open"></i>
+            </button>
+            <button className="btn-icon" title="Mark as Important">
+              <i className="fas fa-exclamation"></i>
+            </button>
+          </div>
+          <div className="email-search">
+            <i className="fas fa-search"></i>
+            <input type="text" placeholder="Search emails..." />
+          </div>
+        </div>
+
+        <div className="email-items">
+          {currentEmails.map(email => (
+            <div key={email.id} className={`email-item ${email.unread ? 'unread' : ''} ${selectedEmails.includes(email.id) ? 'selected' : ''}`}>
+              <div className="email-checkbox">
+                <input
+                  type="checkbox"
+                  checked={selectedEmails.includes(email.id)}
+                  onChange={() => handleEmailSelect(email.id)}
+                />
+              </div>
+              <div className="email-sender">
+                {activeTab === 'inbox' ? email.from : email.to}
+              </div>
+              <div className="email-content">
+                <div className="email-subject">
+                  {email.subject}
+                  {email.important && <i className="fas fa-exclamation-circle important-icon"></i>}
+                  {email.attachments > 0 && <i className="fas fa-paperclip attachment-icon"></i>}
+                </div>
+                <div className="email-preview">{email.preview}</div>
+              </div>
+              <div className="email-meta">
+                <div className="email-date">
+                  {new Date(email.date).toLocaleDateString()}
+                </div>
+                {email.unread && <div className="unread-indicator"></div>}
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    );
+  };
+
+  const renderTemplates = () => (
+    <div className="templates-grid">
+      {templates.map(template => (
+        <div key={template.id} className="template-card" onClick={() => onUseTemplate(template)}>
+          <div className="template-header">
+            <div className="template-icon">
+              <i className="fas fa-layer-group"></i>
+            </div>
+            <div className="template-meta">
+              <span className="template-category">{template.category}</span>
+              <span className="template-last-used">
+                Used {new Date(template.lastUsed).toLocaleDateString()}
+              </span>
+            </div>
+          </div>
+          <div className="template-content">
+            <h4 className="template-name">{template.name}</h4>
+            <div className="template-subject">{template.subject}</div>
+            <div className="template-preview">{template.preview}</div>
+          </div>
+          <div className="template-actions">
+            <button className="btn btn-outline">
+              <i className="fas fa-eye"></i>
+              Preview
+            </button>
+            <button className="btn btn-primary">
+              <i className="fas fa-envelope"></i>
+              Use Template
+            </button>
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+
+  return (
+    <div className="clients-email-view">
+      <div className="email-header">
+        <div className="header-content">
+          <button className="btn btn-outline" onClick={onBack}>
+            <i className="fas fa-arrow-left"></i>
+            Back to Clients
+          </button>
+          <div className="header-title">
+            <h1>Email Management</h1>
+            <p>Manage client communications and email templates</p>
+          </div>
+          <div className="header-actions">
+            <button className="btn btn-primary" onClick={onSendEmail}>
+              <i className="fas fa-pencil-alt"></i>
+              Compose Email
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <div className="email-content">
+        <div className="email-sidebar">
+          <div className="sidebar-section">
+            <button className="btn btn-primary compose-btn">
+              <i className="fas fa-pencil-alt"></i>
+              Compose
+            </button>
+          </div>
+          
+          <div className="sidebar-section">
+            <h3>Folders</h3>
+            {emailTabs.map(tab => (
+              <button
+                key={tab.id}
+                className={`sidebar-tab ${activeTab === tab.id ? 'active' : ''}`}
+                onClick={() => setActiveTab(tab.id)}
+              >
+                <i className={tab.icon}></i>
+                <span className="tab-label">{tab.label}</span>
+                <span className="tab-count">{tab.count}</span>
+              </button>
+            ))}
+          </div>
+
+          <div className="sidebar-section">
+            <h3>Labels</h3>
+            <button className="sidebar-tab">
+              <i className="fas fa-star" style={{color: '#f59e0b'}}></i>
+              <span className="tab-label">Important</span>
+              <span className="tab-count">3</span>
+            </button>
+            <button className="sidebar-tab">
+              <i className="fas fa-paperclip"></i>
+              <span className="tab-label">Attachments</span>
+              <span className="tab-count">7</span>
+            </button>
+          </div>
+        </div>
+
+        <div className="email-main">
+          {activeTab === 'templates' ? renderTemplates() : renderEmailList()}
+        </div>
+      </div>
+    </div>
+  );
+};
+
+export default ClientEmails;

@@ -1,0 +1,11 @@
+# Node modules
+node_modules/
+
+# Cache folders
+node_modules/.cache/
+
+# Build output
+build/
+
+# Environment variables
+.env
