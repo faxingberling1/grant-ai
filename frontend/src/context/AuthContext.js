@@ -11,6 +11,9 @@ export function AuthProvider({ children }) {
   const [loading, setLoading] = useState(true);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
 
+  // Dynamically pick API URL
+  const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000';
+
   useEffect(() => {
     const token = localStorage.getItem('grantflow-token');
     const user = localStorage.getItem('grantflow-user');
@@ -26,10 +29,10 @@ export function AuthProvider({ children }) {
 
   const verifyToken = async (token) => {
     try {
-      const response = await fetch('http://localhost:5000/api/auth/me', {
+      const response = await fetch(`${API_URL}/api/auth/me`, {
         headers: {
-          'Authorization': `Bearer ${token}`
-        }
+          'Authorization': `Bearer ${token}`,
+        },
       });
 
       if (response.ok) {
@@ -49,11 +52,9 @@ export function AuthProvider({ children }) {
 
   const login = async (email, password) => {
     try {
-      const response = await fetch('http://localhost:5000/api/auth/login', {
+      const response = await fetch(`${API_URL}/api/auth/login`, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email, password }),
       });
 
@@ -69,17 +70,16 @@ export function AuthProvider({ children }) {
         return { success: false, message: data.message };
       }
     } catch (error) {
+      console.error('Login failed:', error);
       return { success: false, message: 'Network error. Please try again.' };
     }
   };
 
   const register = async (name, email, password) => {
     try {
-      const response = await fetch('http://localhost:5000/api/auth/register', {
+      const response = await fetch(`${API_URL}/api/auth/register`, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ name, email, password }),
       });
 
@@ -95,6 +95,7 @@ export function AuthProvider({ children }) {
         return { success: false, message: data.message };
       }
     } catch (error) {
+      console.error('Registration failed:', error);
       return { success: false, message: 'Network error. Please try again.' };
     }
   };
@@ -112,7 +113,7 @@ export function AuthProvider({ children }) {
     loading,
     login,
     register,
-    logout
+    logout,
   };
 
   return (
