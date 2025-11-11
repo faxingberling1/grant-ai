@@ -4,11 +4,13 @@ import DashboardHeader from './DashboardHeader';
 import DashboardSidebar from './DashboardSidebar';
 import Clients from './Clients/Clients';
 import Grants from './Grants/Grants';
+import ClientGrantMatching from './Grants/ClientGrantMatching';
 import Submissions from './Submissions/Submissions';
 import Sources from './Sources/Sources';
 import Matching from './Matching/Matching';
 import AIWriting from './AIWriting/AIWriting';
 import Reports from './Reports/Reports';
+
 import './Dashboard.css';
 
 const Dashboard = () => {
@@ -27,7 +29,27 @@ const Dashboard = () => {
       case 'clients':
         return <Clients />;
       case 'grants':
-        return <Grants />;
+        return (
+          <Grants 
+            onNavigateToMatching={() => setActivePage('client-matching')}
+            onNavigateToNewGrant={() => {
+              alert('New Grant form would open here');
+            }}
+            onNavigateToDrafts={() => {
+              alert('Drafts page would open here');
+            }}
+          />
+        );
+      case 'client-matching':
+        return (
+          <ClientGrantMatching 
+            onNavigateToGrants={() => setActivePage('grants')}
+            onNavigateToNewGrant={(data) => {
+              console.log('Navigate to new grant with:', data);
+              alert(`New Grant form would open with client: ${data.client.name} and grant: ${data.grant.grantName}`);
+            }}
+          />
+        );
       case 'submissions':
         return <Submissions />;
       case 'sources':
