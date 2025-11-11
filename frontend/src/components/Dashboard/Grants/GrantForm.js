@@ -1,874 +1,992 @@
-import React, { useState, useEffect } from 'react';
+// GrantForm.js
+import React, { useState } from 'react';
+import './GrantForm.css';
 
-const GrantForm = ({ grant, clients, onSave, onCancel }) => {
+// Icons
+const Icon = {
+  Add: () => <span>➕</span>,
+  Remove: () => <span>❌</span>,
+  Back: () => <span>←</span>,
+  Upload: () => <span>📁</span>,
+  Document: () => <span>📄</span>,
+  Organization: () => <span>🏢</span>,
+  Contact: () => <span>👤</span>,
+  Program: () => <span>📊</span>,
+  Funding: () => <span>💰</span>,
+  Location: () => <span>📍</span>,
+  Attachment: () => <span>📎</span>
+};
+
+const GrantForm = () => {
   const [formData, setFormData] = useState({
     // Basic Grant Information
-    title: '',
-    clientId: '',
-    funder: '',
-    amount: '',
-    deadline: '',
-    status: 'draft',
+    grantTitle: '',
+    clientOrganization: '',
+    fundingOrganization: '',
+    fundingAmount: '',
+    applicationDeadline: '',
     category: '',
-    priority: 'medium',
     
     // Client Information
     organizationName: '',
-    mailingAddress: '',
-    website: '',
     taxStatus: '',
     ein: '',
     yearEstablished: '',
-    primaryContactName: '',
-    primaryContactTitle: '',
-    primaryContactEmail: '',
-    primaryContactPhone: '',
-    missionStatement: '',
-    visionStatement: '',
+    mailingAddress: '',
+    website: '',
     projectStartDate: '',
     projectEndDate: '',
     
+    // Primary Contact Information
+    contactName: '',
+    title: '',
+    email: '',
+    phone: '',
+    missionStatement: '',
+    visionStatement: '',
+    
     // Programs & Services
-    programs: [{ name: '', targetPopulation: '', geographicArea: '', description: '' }],
+    programs: [{
+      programName: '',
+      targetPopulation: [],
+      geographicArea: '',
+      description: ''
+    }],
     
     // Target Population
     targetPopulations: [],
     otherTargetPopulation: '',
     
     // Funding Needs
-    fundingNeeds: '',
-    fundingAmount: '',
-    fundUsage: '',
+    fundingNeeded: '',
+    fundingNeeds: [],
+    fundsUsage: '',
     previousGrants: '',
     
     // Geographic Scope
     geographicScope: '',
-    localScope: '',
-    statewideScope: '',
-    
-    // Grant Preferences
     grantPreferences: [],
     
-    // Documents
-    documents: [],
+    // Required Documents
+    documents: [{
+      documentName: '',
+      documentType: '',
+      file: null
+    }],
     
-    notes: '',
+    // Additional Information
+    additionalNotes: '',
     tags: []
   });
 
-  const [newTag, setNewTag] = useState('');
-  const [newDocument, setNewDocument] = useState({ name: '', type: '', file: null });
+  const [currentTag, setCurrentTag] = useState('');
 
-  // Options for dropdowns
-  const targetPopulationOptions = [
-    'Youth', 'Seniors', 'BIPOC communities', 'Veterans', 
-    'LGBTQ+', 'People with disabilities', 'Rural populations', 
-    'Low-income households'
-  ];
-
-  const geographicScopeOptions = [
-    'Local', 'Statewide', 'Regional', 'National', 'International'
-  ];
-
-  const grantPreferenceOptions = [
-    'Private foundations', 'Government (local/state/federal)', 
-    'Corporate giving', 'Faith-based or community funds'
-  ];
-
-  const taxStatusOptions = [
-    '501(c)(3)', '501(c)(4)', '501(c)(6)', 'For-profit', 
-    'Fiscally sponsored', 'Government entity', 'Other'
-  ];
-
-  useEffect(() => {
-    if (grant) {
-      setFormData({
-        ...formData,
-        ...grant
-      });
-    }
-  }, [grant]);
-
-  const handleChange = (e) => {
-    const { name, value, type, checked } = e.target;
-    
-    if (type === 'checkbox') {
-      if (name === 'targetPopulations' || name === 'grantPreferences') {
-        const updatedArray = checked 
-          ? [...formData[name], value]
-          : formData[name].filter(item => item !== value);
-        setFormData({
-          ...formData,
-          [name]: updatedArray
-        });
+  // Handle input changes
+  const handleInputChange = (section, field, value) => {
+    setFormData(prev => ({
+      ...prev,
+      [section]: {
+        ...prev[section],
+        [field]: value
       }
-    } else {
-      setFormData({
-        ...formData,
-        [name]: value
-      });
-    }
+    }));
   };
 
-  // Programs Management
-  const handleProgramChange = (index, field, value) => {
-    const updatedPrograms = [...formData.programs];
-    updatedPrograms[index][field] = value;
-    setFormData({
-      ...formData,
-      programs: updatedPrograms
-    });
+  const handleSimpleInputChange = (field, value) => {
+    setFormData(prev => ({
+      ...prev,
+      [field]: value
+    }));
   };
 
+  // Program management
   const addProgram = () => {
-    setFormData({
-      ...formData,
-      programs: [...formData.programs, { name: '', targetPopulation: '', geographicArea: '', description: '' }]
-    });
+    setFormData(prev => ({
+      ...prev,
+      programs: [...prev.programs, {
+        programName: '',
+        targetPopulation: [],
+        geographicArea: '',
+        description: ''
+      }]
+    }));
   };
 
   const removeProgram = (index) => {
-    const updatedPrograms = formData.programs.filter((_, i) => i !== index);
-    setFormData({
-      ...formData,
-      programs: updatedPrograms
-    });
+    setFormData(prev => ({
+      ...prev,
+      programs: prev.programs.filter((_, i) => i !== index)
+    }));
   };
 
-  // Documents Management
-  const handleDocumentChange = (field, value) => {
-    setNewDocument({
-      ...newDocument,
-      [field]: value
-    });
+  const updateProgram = (index, field, value) => {
+    setFormData(prev => ({
+      ...prev,
+      programs: prev.programs.map((program, i) => 
+        i === index ? { ...program, [field]: value } : program
+      )
+    }));
   };
 
+  // Document management
   const addDocument = () => {
-    if (newDocument.name && newDocument.type) {
-      setFormData({
-        ...formData,
-        documents: [...formData.documents, { ...newDocument, id: Date.now() }]
-      });
-      setNewDocument({ name: '', type: '', file: null });
-    }
+    setFormData(prev => ({
+      ...prev,
+      documents: [...prev.documents, {
+        documentName: '',
+        documentType: '',
+        file: null
+      }]
+    }));
   };
 
   const removeDocument = (index) => {
-    const updatedDocuments = formData.documents.filter((_, i) => i !== index);
-    setFormData({
-      ...formData,
-      documents: updatedDocuments
-    });
+    setFormData(prev => ({
+      ...prev,
+      documents: prev.documents.filter((_, i) => i !== index)
+    }));
   };
 
-  // Tags Management
-  const handleAddTag = () => {
-    if (newTag.trim() && !formData.tags.includes(newTag.trim())) {
-      setFormData({
-        ...formData,
-        tags: [...formData.tags, newTag.trim()]
-      });
-      setNewTag('');
+  const updateDocument = (index, field, value) => {
+    setFormData(prev => ({
+      ...prev,
+      documents: prev.documents.map((doc, i) => 
+        i === index ? { ...doc, [field]: value } : doc
+      )
+    }));
+  };
+
+  // Handle file upload
+  const handleFileUpload = (index, file) => {
+    updateDocument(index, 'file', file);
+  };
+
+  // Handle checkbox arrays
+  const handleCheckboxChange = (field, value, checked) => {
+    setFormData(prev => ({
+      ...prev,
+      [field]: checked 
+        ? [...prev[field], value]
+        : prev[field].filter(item => item !== value)
+    }));
+  };
+
+  // Handle tags
+  const handleTagAdd = (e) => {
+    if (e.key === 'Enter' && currentTag.trim()) {
+      e.preventDefault();
+      setFormData(prev => ({
+        ...prev,
+        tags: [...prev.tags, currentTag.trim()]
+      }));
+      setCurrentTag('');
     }
   };
 
-  const handleRemoveTag = (tagToRemove) => {
-    setFormData({
-      ...formData,
-      tags: formData.tags.filter(tag => tag !== tagToRemove)
-    });
+  const handleTagRemove = (index) => {
+    setFormData(prev => ({
+      ...prev,
+      tags: prev.tags.filter((_, i) => i !== index)
+    }));
   };
 
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    onSave(formData);
+  // Form submission
+  const handleSubmit = (action) => {
+    console.log(`${action} form:`, formData);
+    // Handle form submission logic here
   };
 
-  const documentTypes = [
-    'EIN Determination Letter',
-    'Financial Statements',
-    'Annual Budget',
-    'Program Budget',
-    'Board List',
-    'Staff List',
-    'Audit Report',
-    'IRS Form 990',
-    'Bylaws',
-    'Strategic Plan',
+  const handleBack = () => {
+    window.history.back();
+  };
+
+  // Options for selects
+  const taxStatusOptions = [
+    '501(c)(3) Public Charity',
+    '501(c)(3) Private Foundation',
+    'Government Entity',
+    'Educational Institution',
+    'Religious Organization',
     'Other'
   ];
 
+  const categoryOptions = [
+    'Education',
+    'Healthcare',
+    'Arts & Culture',
+    'Environment',
+    'Community Development',
+    'Human Services',
+    'Youth Development',
+    'Research'
+  ];
+
+  const fundingNeedsOptions = [
+    'Program Support',
+    'General Operating',
+    'Capacity Building',
+    'Capital Campaign',
+    'Equipment',
+    'Technology',
+    'Staff Training',
+    'Research & Development'
+  ];
+
+  const geographicScopeOptions = [
+    'Local',
+    'Regional',
+    'Statewide',
+    'National',
+    'International'
+  ];
+
+  const grantPreferencesOptions = [
+    'Private foundations',
+    'Government (local/state/federal)',
+    'Corporate giving',
+    'Faith-based or community funds'
+  ];
+
+  const targetPopulationOptions = [
+    'Youth',
+    'Seniors',
+    'BIPOC communities',
+    'Veterans',
+    'LGBTQ+',
+    'People with disabilities',
+    'Rural populations',
+    'Low-income households'
+  ];
+
+  const documentTypeOptions = [
+    'EIN Determination Letter',
+    'Financial Statements',
+    'Annual Report',
+    'Board List',
+    'Budget',
+    'Program Description',
+    'Audit Report',
+    'Bylaws'
+  ];
+
   return (
-    <div className="grant-form-container">
-      <div className="form-header">
-        <div className="header-content">
-          <div className="header-title">
-            <h1>{grant ? 'Edit Grant Application' : 'New Grant Application'}</h1>
-            <button
-              type="button"
-              className="btn-back"
-              onClick={onCancel}
-              title="Go back to previous page"
-            >
-              <i className="fas fa-arrow-left"></i>
-              Back
+    <div className="grants-form-container">
+      {/* Navigation Bar */}
+      <nav className="grants-form-nav">
+        <div className="grants-form-nav-buttons">
+          <div className="grants-form-nav-section">
+            <button className="grants-form-nav-button" onClick={handleBack}>
+              <Icon.Back />
+              Back to Grants
+            </button>
+            <button className="grants-form-nav-button grants-form-active">
+              <Icon.Document />
+              New Grant Application
             </button>
           </div>
-          <p>{grant ? 'Update grant application information' : 'Complete the grant application form'}</p>
-        </div>
-      </div>
-
-      <form onSubmit={handleSubmit} className="grant-form">
-        {/* Basic Grant Information */}
-        <div className="form-section">
-          <h2>Basic Grant Information</h2>
-          <div className="form-grid">
-            <div className="form-group full-width">
-              <label htmlFor="title">Grant Title *</label>
-              <input
-                type="text"
-                id="title"
-                name="title"
-                value={formData.title}
-                onChange={handleChange}
-                required
-                placeholder="Enter grant title"
-              />
-            </div>
-
-            <div className="form-group">
-              <label htmlFor="clientId">Client Organization *</label>
-              <select
-                id="clientId"
-                name="clientId"
-                value={formData.clientId}
-                onChange={handleChange}
-                required
-              >
-                <option value="">Select Client</option>
-                {clients.map(client => (
-                  <option key={client.id} value={client.id}>
-                    {client.name}
-                  </option>
-                ))}
-              </select>
-            </div>
-
-            <div className="form-group">
-              <label htmlFor="funder">Funding Organization *</label>
-              <input
-                type="text"
-                id="funder"
-                name="funder"
-                value={formData.funder}
-                onChange={handleChange}
-                required
-                placeholder="Enter funder name"
-              />
-            </div>
-
-            <div className="form-group">
-              <label htmlFor="amount">Funding Amount Requested *</label>
-              <input
-                type="text"
-                id="amount"
-                name="amount"
-                value={formData.amount}
-                onChange={handleChange}
-                required
-                placeholder="e.g., $500,000"
-              />
-            </div>
-
-            <div className="form-group">
-              <label htmlFor="deadline">Application Deadline *</label>
-              <input
-                type="date"
-                id="deadline"
-                name="deadline"
-                value={formData.deadline}
-                onChange={handleChange}
-                required
-              />
-            </div>
-
-            <div className="form-group">
-              <label htmlFor="category">Category</label>
-              <select
-                id="category"
-                name="category"
-                value={formData.category}
-                onChange={handleChange}
-              >
-                <option value="">Select Category</option>
-                <option value="Education">Education</option>
-                <option value="Healthcare">Healthcare</option>
-                <option value="Environment">Environment</option>
-                <option value="Technology">Technology</option>
-                <option value="Arts & Culture">Arts & Culture</option>
-                <option value="Community Development">Community Development</option>
-                <option value="Youth">Youth</option>
-                <option value="Research">Research</option>
-                <option value="Social Services">Social Services</option>
-                <option value="Other">Other</option>
-              </select>
-            </div>
-          </div>
         </div>
 
-        {/* Client Information */}
-        <div className="form-section">
-          <h2>Client Information</h2>
-          <div className="form-grid">
-            <div className="form-group">
-              <label htmlFor="organizationName">Organization Name *</label>
-              <input
-                type="text"
-                id="organizationName"
-                name="organizationName"
-                value={formData.organizationName}
-                onChange={handleChange}
-                required
-                placeholder="Legal organization name"
-              />
-            </div>
-
-            <div className="form-group">
-              <label htmlFor="taxStatus">Tax Status *</label>
-              <select
-                id="taxStatus"
-                name="taxStatus"
-                value={formData.taxStatus}
-                onChange={handleChange}
-                required
-              >
-                <option value="">Select Tax Status</option>
-                {taxStatusOptions.map(status => (
-                  <option key={status} value={status}>{status}</option>
-                ))}
-              </select>
-            </div>
-
-            <div className="form-group">
-              <label htmlFor="ein">EIN / Tax ID *</label>
-              <input
-                type="text"
-                id="ein"
-                name="ein"
-                value={formData.ein}
-                onChange={handleChange}
-                required
-                placeholder="XX-XXXXXXX"
-              />
-            </div>
-
-            <div className="form-group">
-              <label htmlFor="yearEstablished">Year Established *</label>
-              <input
-                type="number"
-                id="yearEstablished"
-                name="yearEstablished"
-                value={formData.yearEstablished}
-                onChange={handleChange}
-                required
-                placeholder="YYYY"
-                min="1900"
-                max="2030"
-              />
-            </div>
-
-            <div className="form-group full-width">
-              <label htmlFor="mailingAddress">Mailing Address *</label>
-              <textarea
-                id="mailingAddress"
-                name="mailingAddress"
-                value={formData.mailingAddress}
-                onChange={handleChange}
-                required
-                rows="3"
-                placeholder="Full mailing address"
-              />
-            </div>
-
-            <div className="form-group">
-              <label htmlFor="website">Website</label>
-              <input
-                type="url"
-                id="website"
-                name="website"
-                value={formData.website}
-                onChange={handleChange}
-                placeholder="https://example.com"
-              />
-            </div>
-
-            <div className="form-group">
-              <label htmlFor="projectStartDate">Project Start Date</label>
-              <input
-                type="date"
-                id="projectStartDate"
-                name="projectStartDate"
-                value={formData.projectStartDate}
-                onChange={handleChange}
-              />
-            </div>
-
-            <div className="form-group">
-              <label htmlFor="projectEndDate">Project End Date</label>
-              <input
-                type="date"
-                id="projectEndDate"
-                name="projectEndDate"
-                value={formData.projectEndDate}
-                onChange={handleChange}
-              />
-            </div>
-          </div>
-
-          {/* Primary Contact */}
-          <div className="sub-section">
-            <h3>Primary Contact Information</h3>
-            <div className="form-grid">
-              <div className="form-group">
-                <label htmlFor="primaryContactName">Contact Name *</label>
-                <input
-                  type="text"
-                  id="primaryContactName"
-                  name="primaryContactName"
-                  value={formData.primaryContactName}
-                  onChange={handleChange}
-                  required
-                  placeholder="Full name"
-                />
-              </div>
-
-              <div className="form-group">
-                <label htmlFor="primaryContactTitle">Title *</label>
-                <input
-                  type="text"
-                  id="primaryContactTitle"
-                  name="primaryContactTitle"
-                  value={formData.primaryContactTitle}
-                  onChange={handleChange}
-                  required
-                  placeholder="Job title"
-                />
-              </div>
-
-              <div className="form-group">
-                <label htmlFor="primaryContactEmail">Email *</label>
-                <input
-                  type="email"
-                  id="primaryContactEmail"
-                  name="primaryContactEmail"
-                  value={formData.primaryContactEmail}
-                  onChange={handleChange}
-                  required
-                  placeholder="email@organization.org"
-                />
-              </div>
-
-              <div className="form-group">
-                <label htmlFor="primaryContactPhone">Phone *</label>
-                <input
-                  type="tel"
-                  id="primaryContactPhone"
-                  name="primaryContactPhone"
-                  value={formData.primaryContactPhone}
-                  onChange={handleChange}
-                  required
-                  placeholder="(555) 123-4567"
-                />
-              </div>
-            </div>
-          </div>
-
-          {/* Mission & Vision */}
-          <div className="form-group full-width">
-            <label htmlFor="missionStatement">Mission Statement *</label>
-            <textarea
-              id="missionStatement"
-              name="missionStatement"
-              value={formData.missionStatement}
-              onChange={handleChange}
-              required
-              rows="3"
-              placeholder="Organization's mission statement"
-            />
-          </div>
-
-          <div className="form-group full-width">
-            <label htmlFor="visionStatement">Vision Statement</label>
-            <textarea
-              id="visionStatement"
-              name="visionStatement"
-              value={formData.visionStatement}
-              onChange={handleChange}
-              rows="3"
-              placeholder="Organization's vision for the future"
-            />
-          </div>
-        </div>
-
-        {/* Programs & Services */}
-        <div className="form-section">
-          <h2>Programs & Services</h2>
-          {formData.programs.map((program, index) => (
-            <div key={index} className="program-item">
-              <div className="program-header">
-                <h4>Program {index + 1}</h4>
-                {formData.programs.length > 1 && (
-                  <button
-                    type="button"
-                    className="btn-remove"
-                    onClick={() => removeProgram(index)}
-                  >
-                    <i className="fas fa-times"></i>
-                  </button>
-                )}
-              </div>
-              <div className="form-grid">
-                <div className="form-group">
-                  <label htmlFor={`program-name-${index}`}>Program Name *</label>
-                  <input
-                    type="text"
-                    id={`program-name-${index}`}
-                    value={program.name}
-                    onChange={(e) => handleProgramChange(index, 'name', e.target.value)}
-                    required
-                    placeholder="Program name"
-                  />
-                </div>
-                <div className="form-group">
-                  <label htmlFor={`program-target-${index}`}>Target Population</label>
-                  <input
-                    type="text"
-                    id={`program-target-${index}`}
-                    value={program.targetPopulation}
-                    onChange={(e) => handleProgramChange(index, 'targetPopulation', e.target.value)}
-                    placeholder="Who does this program serve?"
-                  />
-                </div>
-                <div className="form-group">
-                  <label htmlFor={`program-area-${index}`}>Geographic Area Served</label>
-                  <input
-                    type="text"
-                    id={`program-area-${index}`}
-                    value={program.geographicArea}
-                    onChange={(e) => handleProgramChange(index, 'geographicArea', e.target.value)}
-                    placeholder="Where is this program offered?"
-                  />
-                </div>
-                <div className="form-group full-width">
-                  <label htmlFor={`program-desc-${index}`}>Brief Description (2-3 sentences) *</label>
-                  <textarea
-                    id={`program-desc-${index}`}
-                    value={program.description}
-                    onChange={(e) => handleProgramChange(index, 'description', e.target.value)}
-                    required
-                    rows="3"
-                    placeholder="Describe the program's activities, goals, and impact"
-                  />
-                </div>
-              </div>
-            </div>
-          ))}
-          <button type="button" className="btn btn-outline" onClick={addProgram}>
-            <i className="fas fa-plus"></i>
-            Add Another Program
+        <div className="grants-form-nav-actions">
+          <button className="grants-form-nav-add-btn" onClick={() => handleSubmit('create')}>
+            <Icon.Add />
+            Create Grant
           </button>
         </div>
+      </nav>
 
-        {/* Target Population */}
-        <div className="form-section">
-          <h2>Target Population</h2>
-          <div className="checkbox-grid">
-            {targetPopulationOptions.map(population => (
-              <label key={population} className="checkbox-label">
-                <input
-                  type="checkbox"
-                  name="targetPopulations"
-                  value={population}
-                  checked={formData.targetPopulations.includes(population)}
-                  onChange={handleChange}
-                />
-                <span className="checkmark"></span>
-                {population}
-              </label>
-            ))}
-          </div>
-          <div className="form-group">
-            <label htmlFor="otherTargetPopulation">Other Target Population</label>
-            <input
-              type="text"
-              id="otherTargetPopulation"
-              name="otherTargetPopulation"
-              value={formData.otherTargetPopulation}
-              onChange={handleChange}
-              placeholder="Specify other target population"
-            />
+      {/* Form Container */}
+      <div className="grants-form-wrapper">
+        {/* Header */}
+        <div className="grants-form-header">
+          <div className="grants-form-header-content">
+            <h1>New Grant Application</h1>
+            <p>Complete all required fields to submit your grant application</p>
           </div>
         </div>
 
-        {/* Funding Needs */}
-        <div className="form-section">
-          <h2>Funding Needs</h2>
-          <div className="form-grid">
-            <div className="form-group">
-              <label htmlFor="fundingAmount">How much funding is needed? *</label>
-              <input
-                type="text"
-                id="fundingAmount"
-                name="fundingAmount"
-                value={formData.fundingAmount}
-                onChange={handleChange}
-                required
-                placeholder="e.g., $50,000"
-              />
+        {/* Form Content */}
+        <div className="grants-form-content">
+          {/* Section 1: Basic Grant Information */}
+          <div className="grants-form-section">
+            <div className="grants-form-section-header">
+              <h2 className="grants-form-section-title">
+                <Icon.Document />
+                Basic Grant Information
+              </h2>
+              <p className="grants-form-section-subtitle">
+                Provide essential details about the grant application
+              </p>
             </div>
-            <div className="form-group full-width">
-              <label htmlFor="fundingNeeds">Funding Needs *</label>
-              <select
-                id="fundingNeeds"
-                name="fundingNeeds"
-                value={formData.fundingNeeds}
-                onChange={handleChange}
-                required
-              >
-                <option value="">Select Funding Need</option>
-                <option value="General Operations">General Operations</option>
-                <option value="Program Extension">Program Extension</option>
-                <option value="Equipment">Equipment</option>
-                <option value="Staffing">Staffing</option>
-                <option value="Capacity Building">Capacity Building</option>
-                <option value="Capital Project">Capital Project</option>
-                <option value="Research">Research</option>
-                <option value="Other">Other</option>
-              </select>
-            </div>
-            <div className="form-group full-width">
-              <label htmlFor="fundUsage">How will funds be used? *</label>
-              <textarea
-                id="fundUsage"
-                name="fundUsage"
-                value={formData.fundUsage}
-                onChange={handleChange}
-                required
-                rows="4"
-                placeholder="Provide specific details about how the funds will be allocated and used"
-              />
-            </div>
-            <div className="form-group full-width">
-              <label htmlFor="previousGrants">Previous Grants Awarded</label>
-              <textarea
-                id="previousGrants"
-                name="previousGrants"
-                value={formData.previousGrants}
-                onChange={handleChange}
-                rows="3"
-                placeholder="List previous funders, amounts awarded, and dates"
-              />
-            </div>
-          </div>
-        </div>
 
-        {/* Geographic Scope */}
-        <div className="form-section">
-          <h2>Geographic Scope</h2>
-          <div className="form-grid">
-            <div className="form-group">
-              <label htmlFor="geographicScope">Geographic Scope *</label>
-              <select
-                id="geographicScope"
-                name="geographicScope"
-                value={formData.geographicScope}
-                onChange={handleChange}
-                required
-              >
-                <option value="">Select Scope</option>
-                {geographicScopeOptions.map(scope => (
-                  <option key={scope} value={scope}>{scope}</option>
-                ))}
-              </select>
-            </div>
-            {formData.geographicScope === 'Local' && (
-              <div className="form-group">
-                <label htmlFor="localScope">Specify City/County</label>
+            <div className="grants-form-grid">
+              <div className="grants-form-group grants-form-group-full">
+                <label className="grants-form-label grants-form-label-required">
+                  Grant Title
+                </label>
                 <input
                   type="text"
-                  id="localScope"
-                  name="localScope"
-                  value={formData.localScope}
-                  onChange={handleChange}
-                  placeholder="e.g., New York City, NY"
+                  className="grants-form-input"
+                  placeholder="Enter grant title"
+                  value={formData.grantTitle}
+                  onChange={(e) => handleSimpleInputChange('grantTitle', e.target.value)}
                 />
               </div>
-            )}
-            {formData.geographicScope === 'Statewide' && (
-              <div className="form-group">
-                <label htmlFor="statewideScope">Specify State</label>
+
+              <div className="grants-form-group">
+                <label className="grants-form-label grants-form-label-required">
+                  Client Organization
+                </label>
+                <select
+                  className="grants-form-select"
+                  value={formData.clientOrganization}
+                  onChange={(e) => handleSimpleInputChange('clientOrganization', e.target.value)}
+                >
+                  <option value="">Select Client</option>
+                  <option value="client1">Client Organization 1</option>
+                  <option value="client2">Client Organization 2</option>
+                  <option value="client3">Client Organization 3</option>
+                </select>
+              </div>
+
+              <div className="grants-form-group">
+                <label className="grants-form-label grants-form-label-required">
+                  Funding Organization
+                </label>
                 <input
                   type="text"
-                  id="statewideScope"
-                  name="statewideScope"
-                  value={formData.statewideScope}
-                  onChange={handleChange}
-                  placeholder="e.g., California"
+                  className="grants-form-input"
+                  placeholder="Enter funder name"
+                  value={formData.fundingOrganization}
+                  onChange={(e) => handleSimpleInputChange('fundingOrganization', e.target.value)}
                 />
               </div>
-            )}
-          </div>
-        </div>
 
-        {/* Grant Preferences */}
-        <div className="form-section">
-          <h2>Grant Preferences</h2>
-          <div className="checkbox-grid">
-            {grantPreferenceOptions.map(preference => (
-              <label key={preference} className="checkbox-label">
+              <div className="grants-form-group">
+                <label className="grants-form-label grants-form-label-required">
+                  Funding Amount Requested
+                </label>
                 <input
-                  type="checkbox"
-                  name="grantPreferences"
-                  value={preference}
-                  checked={formData.grantPreferences.includes(preference)}
-                  onChange={handleChange}
+                  type="text"
+                  className="grants-form-input"
+                  placeholder="e.g., $500,000"
+                  value={formData.fundingAmount}
+                  onChange={(e) => handleSimpleInputChange('fundingAmount', e.target.value)}
                 />
-                <span className="checkmark"></span>
-                {preference}
-              </label>
-            ))}
-          </div>
-        </div>
-
-        {/* Documents Section */}
-        <div className="form-section">
-          <h2>Required Documents</h2>
-          <div className="documents-section">
-            <div className="document-input">
-              <div className="form-grid">
-                <div className="form-group">
-                  <label htmlFor="documentName">Document Name</label>
-                  <input
-                    type="text"
-                    id="documentName"
-                    value={newDocument.name}
-                    onChange={(e) => handleDocumentChange('name', e.target.value)}
-                    placeholder="e.g., EIN Determination Letter"
-                  />
-                </div>
-                <div className="form-group">
-                  <label htmlFor="documentType">Document Type</label>
-                  <select
-                    id="documentType"
-                    value={newDocument.type}
-                    onChange={(e) => handleDocumentChange('type', e.target.value)}
-                  >
-                    <option value="">Select Type</option>
-                    {documentTypes.map(type => (
-                      <option key={type} value={type}>{type}</option>
-                    ))}
-                  </select>
-                </div>
-                <div className="form-group">
-                  <label htmlFor="documentFile">Upload File</label>
-                  <input
-                    type="file"
-                    id="documentFile"
-                    onChange={(e) => handleDocumentChange('file', e.target.files[0])}
-                  />
-                </div>
               </div>
-              <button type="button" className="btn btn-outline" onClick={addDocument}>
-                <i className="fas fa-plus"></i>
-                Add Document
-              </button>
-            </div>
 
-            {/* Documents List */}
-            <div className="documents-list">
-              {formData.documents.map((doc, index) => (
-                <div key={doc.id || index} className="document-item">
-                  <div className="document-info">
-                    <i className="fas fa-file"></i>
-                    <div>
-                      <div className="document-name">{doc.name}</div>
-                      <div className="document-type">{doc.type}</div>
-                    </div>
-                  </div>
-                  <button
-                    type="button"
-                    className="btn-remove"
-                    onClick={() => removeDocument(index)}
-                  >
-                    <i className="fas fa-times"></i>
-                  </button>
-                </div>
-              ))}
-            </div>
-          </div>
-        </div>
+              <div className="grants-form-group">
+                <label className="grants-form-label grants-form-label-required">
+                  Application Deadline
+                </label>
+                <input
+                  type="date"
+                  className="grants-form-input"
+                  value={formData.applicationDeadline}
+                  onChange={(e) => handleSimpleInputChange('applicationDeadline', e.target.value)}
+                />
+              </div>
 
-        {/* Additional Information */}
-        <div className="form-section">
-          <h2>Additional Information</h2>
-          <div className="form-grid">
-            <div className="form-group full-width">
-              <label htmlFor="notes">Additional Notes & Comments</label>
-              <textarea
-                id="notes"
-                name="notes"
-                value={formData.notes}
-                onChange={handleChange}
-                rows="4"
-                placeholder="Any additional information, special requirements, or comments"
-              />
+              <div className="grants-form-group">
+                <label className="grants-form-label">Category</label>
+                <select
+                  className="grants-form-select"
+                  value={formData.category}
+                  onChange={(e) => handleSimpleInputChange('category', e.target.value)}
+                >
+                  <option value="">Select Category</option>
+                  {categoryOptions.map(option => (
+                    <option key={option} value={option}>{option}</option>
+                  ))}
+                </select>
+              </div>
             </div>
           </div>
 
-          {/* Tags */}
-          <div className="form-group full-width">
-            <label htmlFor="tags">Tags</label>
-            <div className="tags-input">
-              <div className="tags-list">
-                {formData.tags.map((tag, index) => (
-                  <span key={index} className="tag">
-                    {tag}
+          {/* Section 2: Client Information */}
+          <div className="grants-form-section">
+            <div className="grants-form-section-header">
+              <h2 className="grants-form-section-title">
+                <Icon.Organization />
+                Client Information
+              </h2>
+              <p className="grants-form-section-subtitle">
+                Organization details and legal information
+              </p>
+            </div>
+
+            <div className="grants-form-grid">
+              <div className="grants-form-group grants-form-group-full">
+                <label className="grants-form-label grants-form-label-required">
+                  Organization Name
+                </label>
+                <input
+                  type="text"
+                  className="grants-form-input"
+                  placeholder="Legal organization name"
+                  value={formData.organizationName}
+                  onChange={(e) => handleSimpleInputChange('organizationName', e.target.value)}
+                />
+              </div>
+
+              <div className="grants-form-group">
+                <label className="grants-form-label grants-form-label-required">
+                  Tax Status
+                </label>
+                <select
+                  className="grants-form-select"
+                  value={formData.taxStatus}
+                  onChange={(e) => handleSimpleInputChange('taxStatus', e.target.value)}
+                >
+                  <option value="">Select Tax Status</option>
+                  {taxStatusOptions.map(option => (
+                    <option key={option} value={option}>{option}</option>
+                  ))}
+                </select>
+              </div>
+
+              <div className="grants-form-group">
+                <label className="grants-form-label grants-form-label-required">
+                  EIN / Tax ID
+                </label>
+                <input
+                  type="text"
+                  className="grants-form-input"
+                  placeholder="XX-XXXXXXX"
+                  value={formData.ein}
+                  onChange={(e) => handleSimpleInputChange('ein', e.target.value)}
+                />
+              </div>
+
+              <div className="grants-form-group">
+                <label className="grants-form-label grants-form-label-required">
+                  Year Established
+                </label>
+                <input
+                  type="number"
+                  className="grants-form-input"
+                  placeholder="YYYY"
+                  value={formData.yearEstablished}
+                  onChange={(e) => handleSimpleInputChange('yearEstablished', e.target.value)}
+                />
+              </div>
+
+              <div className="grants-form-group grants-form-group-full">
+                <label className="grants-form-label grants-form-label-required">
+                  Mailing Address
+                </label>
+                <textarea
+                  className="grants-form-textarea grants-form-textarea-small"
+                  placeholder="Full mailing address"
+                  value={formData.mailingAddress}
+                  onChange={(e) => handleSimpleInputChange('mailingAddress', e.target.value)}
+                />
+              </div>
+
+              <div className="grants-form-group">
+                <label className="grants-form-label">Website</label>
+                <input
+                  type="url"
+                  className="grants-form-input"
+                  placeholder="https://example.com"
+                  value={formData.website}
+                  onChange={(e) => handleSimpleInputChange('website', e.target.value)}
+                />
+              </div>
+
+              <div className="grants-form-group">
+                <label className="grants-form-label">Project Start Date</label>
+                <input
+                  type="date"
+                  className="grants-form-input"
+                  value={formData.projectStartDate}
+                  onChange={(e) => handleSimpleInputChange('projectStartDate', e.target.value)}
+                />
+              </div>
+
+              <div className="grants-form-group">
+                <label className="grants-form-label">Project End Date</label>
+                <input
+                  type="date"
+                  className="grants-form-input"
+                  value={formData.projectEndDate}
+                  onChange={(e) => handleSimpleInputChange('projectEndDate', e.target.value)}
+                />
+              </div>
+            </div>
+          </div>
+
+          {/* Section 3: Primary Contact Information */}
+          <div className="grants-form-section">
+            <div className="grants-form-section-header">
+              <h2 className="grants-form-section-title">
+                <Icon.Contact />
+                Primary Contact Information
+              </h2>
+              <p className="grants-form-section-subtitle">
+                Main point of contact for this application
+              </p>
+            </div>
+
+            <div className="grants-form-grid">
+              <div className="grants-form-group">
+                <label className="grants-form-label grants-form-label-required">
+                  Contact Name
+                </label>
+                <input
+                  type="text"
+                  className="grants-form-input"
+                  placeholder="Full name"
+                  value={formData.contactName}
+                  onChange={(e) => handleSimpleInputChange('contactName', e.target.value)}
+                />
+              </div>
+
+              <div className="grants-form-group">
+                <label className="grants-form-label grants-form-label-required">
+                  Title
+                </label>
+                <input
+                  type="text"
+                  className="grants-form-input"
+                  placeholder="Job title"
+                  value={formData.title}
+                  onChange={(e) => handleSimpleInputChange('title', e.target.value)}
+                />
+              </div>
+
+              <div className="grants-form-group">
+                <label className="grants-form-label grants-form-label-required">
+                  Email
+                </label>
+                <input
+                  type="email"
+                  className="grants-form-input"
+                  placeholder="email@organization.org"
+                  value={formData.email}
+                  onChange={(e) => handleSimpleInputChange('email', e.target.value)}
+                />
+              </div>
+
+              <div className="grants-form-group">
+                <label className="grants-form-label grants-form-label-required">
+                  Phone
+                </label>
+                <input
+                  type="tel"
+                  className="grants-form-input"
+                  placeholder="(555) 123-4567"
+                  value={formData.phone}
+                  onChange={(e) => handleSimpleInputChange('phone', e.target.value)}
+                />
+              </div>
+
+              <div className="grants-form-group grants-form-group-full">
+                <label className="grants-form-label grants-form-label-required">
+                  Mission Statement
+                </label>
+                <textarea
+                  className="grants-form-textarea"
+                  placeholder="Organization's mission statement"
+                  value={formData.missionStatement}
+                  onChange={(e) => handleSimpleInputChange('missionStatement', e.target.value)}
+                />
+              </div>
+
+              <div className="grants-form-group grants-form-group-full">
+                <label className="grants-form-label">Vision Statement</label>
+                <textarea
+                  className="grants-form-textarea"
+                  placeholder="Organization's vision for the future"
+                  value={formData.visionStatement}
+                  onChange={(e) => handleSimpleInputChange('visionStatement', e.target.value)}
+                />
+              </div>
+            </div>
+          </div>
+
+          {/* Section 4: Programs & Services */}
+          <div className="grants-form-section">
+            <div className="grants-form-section-header">
+              <h2 className="grants-form-section-title">
+                <Icon.Program />
+                Programs & Services
+              </h2>
+              <p className="grants-form-section-subtitle">
+                Describe the programs and services your organization provides
+              </p>
+            </div>
+
+            {formData.programs.map((program, index) => (
+              <div key={index} className="grants-form-program">
+                <div className="grants-form-program-header">
+                  <h3 className="grants-form-program-title">Program {index + 1}</h3>
+                  {formData.programs.length > 1 && (
                     <button
                       type="button"
-                      onClick={() => handleRemoveTag(tag)}
-                      className="tag-remove"
+                      className="grants-form-remove-btn"
+                      onClick={() => removeProgram(index)}
                     >
-                      <i className="fas fa-times"></i>
+                      <Icon.Remove />
+                      Remove
                     </button>
-                  </span>
-                ))}
+                  )}
+                </div>
+
+                <div className="grants-form-grid">
+                  <div className="grants-form-group grants-form-group-full">
+                    <label className="grants-form-label grants-form-label-required">
+                      Program Name
+                    </label>
+                    <input
+                      type="text"
+                      className="grants-form-input"
+                      placeholder="Program name"
+                      value={program.programName}
+                      onChange={(e) => updateProgram(index, 'programName', e.target.value)}
+                    />
+                  </div>
+
+                  <div className="grants-form-group">
+                    <label className="grants-form-label">Target Population</label>
+                    <input
+                      type="text"
+                      className="grants-form-input"
+                      placeholder="Who does this program serve?"
+                      value={program.targetPopulation}
+                      onChange={(e) => updateProgram(index, 'targetPopulation', e.target.value)}
+                    />
+                  </div>
+
+                  <div className="grants-form-group">
+                    <label className="grants-form-label">Geographic Area Served</label>
+                    <input
+                      type="text"
+                      className="grants-form-input"
+                      placeholder="Where is this program offered?"
+                      value={program.geographicArea}
+                      onChange={(e) => updateProgram(index, 'geographicArea', e.target.value)}
+                    />
+                  </div>
+
+                  <div className="grants-form-group grants-form-group-full">
+                    <label className="grants-form-label grants-form-label-required">
+                      Brief Description (2-3 sentences)
+                    </label>
+                    <textarea
+                      className="grants-form-textarea"
+                      placeholder="Describe the program's activities, goals, and impact"
+                      value={program.description}
+                      onChange={(e) => updateProgram(index, 'description', e.target.value)}
+                    />
+                  </div>
+                </div>
               </div>
-              <div className="tag-input-wrapper">
+            ))}
+
+            <button type="button" className="grants-form-add-btn" onClick={addProgram}>
+              <Icon.Add />
+              Add Another Program
+            </button>
+          </div>
+
+          {/* Section 5: Target Population */}
+          <div className="grants-form-section">
+            <div className="grants-form-section-header">
+              <h2 className="grants-form-section-title">
+                <Icon.Location />
+                Target Population
+              </h2>
+              <p className="grants-form-section-subtitle">
+                Select the populations served by your organization
+              </p>
+            </div>
+
+            <div className="grants-form-checkbox-group">
+              {targetPopulationOptions.map(population => (
+                <label key={population} className="grants-form-checkbox-label">
+                  <input
+                    type="checkbox"
+                    className="grants-form-checkbox"
+                    checked={formData.targetPopulations.includes(population)}
+                    onChange={(e) => handleCheckboxChange('targetPopulations', population, e.target.checked)}
+                  />
+                  {population}
+                </label>
+              ))}
+            </div>
+
+            <div className="grants-form-group" style={{ marginTop: '1rem' }}>
+              <label className="grants-form-label">Other Target Population</label>
+              <input
+                type="text"
+                className="grants-form-input"
+                placeholder="Specify other target population"
+                value={formData.otherTargetPopulation}
+                onChange={(e) => handleSimpleInputChange('otherTargetPopulation', e.target.value)}
+              />
+            </div>
+          </div>
+
+          {/* Section 6: Funding Needs */}
+          <div className="grants-form-section">
+            <div className="grants-form-section-header">
+              <h2 className="grants-form-section-title">
+                <Icon.Funding />
+                Funding Needs
+              </h2>
+              <p className="grants-form-section-subtitle">
+                Detail your funding requirements and usage
+              </p>
+            </div>
+
+            <div className="grants-form-grid">
+              <div className="grants-form-group">
+                <label className="grants-form-label grants-form-label-required">
+                  How much funding is needed?
+                </label>
                 <input
                   type="text"
-                  value={newTag}
-                  onChange={(e) => setNewTag(e.target.value)}
-                  onKeyPress={(e) => e.key === 'Enter' && (e.preventDefault(), handleAddTag())}
-                  placeholder="Add a tag and press Enter"
+                  className="grants-form-input"
+                  placeholder="e.g., $50,000"
+                  value={formData.fundingNeeded}
+                  onChange={(e) => handleSimpleInputChange('fundingNeeded', e.target.value)}
                 />
-                <button type="button" onClick={handleAddTag} className="btn-tag-add">
-                  <i className="fas fa-plus"></i>
-                </button>
+              </div>
+
+              <div className="grants-form-group">
+                <label className="grants-form-label grants-form-label-required">
+                  Funding Needs
+                </label>
+                <select
+                  className="grants-form-select"
+                  value={formData.fundingNeeds[0] || ''}
+                  onChange={(e) => handleSimpleInputChange('fundingNeeds', [e.target.value])}
+                >
+                  <option value="">Select Funding Need</option>
+                  {fundingNeedsOptions.map(option => (
+                    <option key={option} value={option}>{option}</option>
+                  ))}
+                </select>
+              </div>
+
+              <div className="grants-form-group grants-form-group-full">
+                <label className="grants-form-label grants-form-label-required">
+                  How will funds be used?
+                </label>
+                <textarea
+                  className="grants-form-textarea"
+                  placeholder="Provide specific details about how the funds will be allocated and used"
+                  value={formData.fundsUsage}
+                  onChange={(e) => handleSimpleInputChange('fundsUsage', e.target.value)}
+                />
+              </div>
+
+              <div className="grants-form-group grants-form-group-full">
+                <label className="grants-form-label">Previous Grants Awarded</label>
+                <textarea
+                  className="grants-form-textarea grants-form-textarea-small"
+                  placeholder="List previous funders, amounts awarded, and dates"
+                  value={formData.previousGrants}
+                  onChange={(e) => handleSimpleInputChange('previousGrants', e.target.value)}
+                />
+              </div>
+            </div>
+          </div>
+
+          {/* Section 7: Geographic Scope & Preferences */}
+          <div className="grants-form-section">
+            <div className="grants-form-section-header">
+              <h2 className="grants-form-section-title">
+                <Icon.Location />
+                Geographic Scope & Grant Preferences
+              </h2>
+            </div>
+
+            <div className="grants-form-grid">
+              <div className="grants-form-group">
+                <label className="grants-form-label grants-form-label-required">
+                  Geographic Scope
+                </label>
+                <select
+                  className="grants-form-select"
+                  value={formData.geographicScope}
+                  onChange={(e) => handleSimpleInputChange('geographicScope', e.target.value)}
+                >
+                  <option value="">Select Scope</option>
+                  {geographicScopeOptions.map(option => (
+                    <option key={option} value={option}>{option}</option>
+                  ))}
+                </select>
+              </div>
+
+              <div className="grants-form-group">
+                <label className="grants-form-label">Grant Preferences</label>
+                <div className="grants-form-checkbox-group">
+                  {grantPreferencesOptions.map(preference => (
+                    <label key={preference} className="grants-form-checkbox-label">
+                      <input
+                        type="checkbox"
+                        className="grants-form-checkbox"
+                        checked={formData.grantPreferences.includes(preference)}
+                        onChange={(e) => handleCheckboxChange('grantPreferences', preference, e.target.checked)}
+                      />
+                      {preference}
+                    </label>
+                  ))}
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Section 8: Required Documents */}
+          <div className="grants-form-section">
+            <div className="grants-form-section-header">
+              <h2 className="grants-form-section-title">
+                <Icon.Attachment />
+                Required Documents
+              </h2>
+              <p className="grants-form-section-subtitle">
+                Upload supporting documents for your application
+              </p>
+            </div>
+
+            {formData.documents.map((document, index) => (
+              <div key={index} className="grants-form-program">
+                <div className="grants-form-program-header">
+                  <h3 className="grants-form-program-title">Document {index + 1}</h3>
+                  {formData.documents.length > 1 && (
+                    <button
+                      type="button"
+                      className="grants-form-remove-btn"
+                      onClick={() => removeDocument(index)}
+                    >
+                      <Icon.Remove />
+                      Remove
+                    </button>
+                  )}
+                </div>
+
+                <div className="grants-form-grid">
+                  <div className="grants-form-group">
+                    <label className="grants-form-label">Document Name</label>
+                    <input
+                      type="text"
+                      className="grants-form-input"
+                      placeholder="e.g., EIN Determination Letter"
+                      value={document.documentName}
+                      onChange={(e) => updateDocument(index, 'documentName', e.target.value)}
+                    />
+                  </div>
+
+                  <div className="grants-form-group">
+                    <label className="grants-form-label">Document Type</label>
+                    <select
+                      className="grants-form-select"
+                      value={document.documentType}
+                      onChange={(e) => updateDocument(index, 'documentType', e.target.value)}
+                    >
+                      <option value="">Select Type</option>
+                      {documentTypeOptions.map(option => (
+                        <option key={option} value={option}>{option}</option>
+                      ))}
+                    </select>
+                  </div>
+
+                  <div className="grants-form-group grants-form-group-full">
+                    <label className="grants-form-label">Upload File</label>
+                    <div className="grants-form-file-upload">
+                      <input
+                        type="file"
+                        className="grants-form-file-input"
+                        id={`file-upload-${index}`}
+                        onChange={(e) => handleFileUpload(index, e.target.files[0])}
+                      />
+                      <label htmlFor={`file-upload-${index}`} className="grants-form-file-label">
+                        <Icon.Upload />
+                        <span>{document.file ? document.file.name : 'No file chosen'}</span>
+                        <span>Click to upload or drag and drop</span>
+                      </label>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            ))}
+
+            <button type="button" className="grants-form-add-btn" onClick={addDocument}>
+              <Icon.Add />
+              Add Document
+            </button>
+          </div>
+
+          {/* Section 9: Additional Information */}
+          <div className="grants-form-section">
+            <div className="grants-form-section-header">
+              <h2 className="grants-form-section-title">
+                Additional Information
+              </h2>
+            </div>
+
+            <div className="grants-form-grid">
+              <div className="grants-form-group grants-form-group-full">
+                <label className="grants-form-label">Additional Notes & Comments</label>
+                <textarea
+                  className="grants-form-textarea"
+                  placeholder="Any additional information, special requirements, or comments"
+                  value={formData.additionalNotes}
+                  onChange={(e) => handleSimpleInputChange('additionalNotes', e.target.value)}
+                />
+              </div>
+
+              <div className="grants-form-group grants-form-group-full">
+                <label className="grants-form-label">Tags</label>
+                <div className="grants-form-tags-container">
+                  {formData.tags.map((tag, index) => (
+                    <span key={index} className="grants-form-tag">
+                      {tag}
+                      <button
+                        type="button"
+                        className="grants-form-tag-remove"
+                        onClick={() => handleTagRemove(index)}
+                      >
+                        ×
+                      </button>
+                    </span>
+                  ))}
+                  <input
+                    type="text"
+                    className="grants-form-tags-input"
+                    placeholder="Add a tag and press Enter"
+                    value={currentTag}
+                    onChange={(e) => setCurrentTag(e.target.value)}
+                    onKeyPress={handleTagAdd}
+                  />
+                </div>
               </div>
             </div>
           </div>
         </div>
 
         {/* Form Actions */}
-        <div className="form-actions">
-          <button type="button" className="btn btn-outline" onClick={onCancel}>
-            Cancel
-          </button>
-          <button type="submit" className="btn btn-primary">
-            {grant ? 'Update Grant Application' : 'Create Grant Application'}
-          </button>
+        <div className="grants-form-actions">
+          <div className="grants-form-actions-left">
+            <button type="button" className="grants-form-btn grants-form-btn-back" onClick={handleBack}>
+              <Icon.Back />
+              Back
+            </button>
+          </div>
+          <div className="grants-form-actions-right">
+            <button type="button" className="grants-form-btn grants-form-btn-cancel" onClick={handleBack}>
+              Cancel
+            </button>
+            <button type="button" className="grants-form-btn grants-form-btn-draft" onClick={() => handleSubmit('saveDraft')}>
+              Save Draft
+            </button>
+            <button type="button" className="grants-form-btn grants-form-btn-create" onClick={() => handleSubmit('create')}>
+              Create Grant Application
+            </button>
+          </div>
         </div>
-      </form>
+      </div>
     </div>
   );
 };

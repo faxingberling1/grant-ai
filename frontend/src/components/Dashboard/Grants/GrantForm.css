@@ -1,0 +1,606 @@
+/* GrantForm.css - Standalone Form Styles */
+.grants-form-container {
+  min-height: 100vh;
+  background: #f8f9fa;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
+  padding: 0 2rem 2rem;
+}
+
+/* Navigation Bar */
+.grants-form-nav {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1rem 2rem;
+  background: linear-gradient(135deg, #1a472a 0%, #2d5a3a 100%);
+  border-bottom: 3px solid #d4af37;
+  box-shadow: 0 4px 20px rgba(26, 71, 42, 0.3);
+  margin-bottom: 2rem;
+  border-radius: 0 0 16px 16px;
+}
+
+.grants-form-nav-buttons {
+  display: flex;
+  gap: 0.75rem;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.grants-form-nav-section {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding-right: 1rem;
+  border-right: 1px solid rgba(255, 255, 255, 0.3);
+}
+
+.grants-form-nav-section:last-child {
+  border-right: none;
+  padding-right: 0;
+}
+
+.grants-form-nav-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.75rem;
+  padding: 0.75rem 1.5rem;
+  border: 2px solid rgba(255, 255, 255, 0.2);
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.1);
+  color: #fff;
+  font-size: 0.95rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  text-decoration: none;
+}
+
+.grants-form-nav-button:hover {
+  background: rgba(255, 255, 255, 0.15);
+  border-color: rgba(255, 255, 255, 0.4);
+  transform: translateY(-2px);
+}
+
+.grants-form-nav-button.grants-form-active {
+  background: #d4af37;
+  border-color: #d4af37;
+  color: #1a472a;
+}
+
+.grants-form-nav-actions {
+  display: flex;
+  gap: 0.75rem;
+  align-items: center;
+}
+
+.grants-form-nav-add-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 0.75rem 1.5rem;
+  border: 2px solid #d4af37;
+  border-radius: 10px;
+  background: #d4af37;
+  color: #1a472a;
+  font-size: 0.95rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.grants-form-nav-add-btn:hover {
+  background: #e6c44a;
+  border-color: #e6c44a;
+  transform: translateY(-2px);
+}
+
+/* Form Container */
+.grants-form-wrapper {
+  max-width: 1200px;
+  margin: 0 auto;
+  background: #fff;
+  border-radius: 20px;
+  box-shadow: 0 8px 32px rgba(26, 71, 42, 0.1);
+  overflow: hidden;
+  border: 1px solid #e1e5e9;
+}
+
+.grants-form-header {
+  background: linear-gradient(135deg, #1a472a 0%, #2d5a3a 100%);
+  color: #fff;
+  padding: 3rem 2rem;
+  position: relative;
+  overflow: hidden;
+}
+
+.grants-form-header::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: 200px;
+  height: 200px;
+  background: radial-gradient(circle, rgba(212, 175, 55, 0.1) 0%, transparent 70%);
+}
+
+.grants-form-header-content {
+  max-width: 1000px;
+  margin: 0 auto;
+  position: relative;
+  z-index: 2;
+}
+
+.grants-form-header h1 {
+  margin: 0 0 0.75rem 0;
+  font-size: 2.5rem;
+  font-weight: 800;
+  color: #fff;
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+}
+
+.grants-form-header p {
+  margin: 0;
+  opacity: 0.9;
+  font-size: 1.2rem;
+  color: rgba(255, 255, 255, 0.9);
+}
+
+/* Form Content */
+.grants-form-content {
+  padding: 3rem;
+}
+
+.grants-form-section {
+  margin-bottom: 3rem;
+  padding-bottom: 2rem;
+  border-bottom: 2px solid #f1f3f4;
+}
+
+.grants-form-section:last-of-type {
+  border-bottom: none;
+  margin-bottom: 0;
+}
+
+.grants-form-section-header {
+  margin-bottom: 2rem;
+}
+
+.grants-form-section-title {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: #1a472a;
+  margin: 0 0 0.5rem 0;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.grants-form-section-subtitle {
+  color: #6c757d;
+  font-size: 1rem;
+  margin: 0;
+}
+
+/* Form Grid */
+.grants-form-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1.5rem;
+}
+
+.grants-form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.grants-form-group-full {
+  grid-column: 1 / -1;
+}
+
+.grants-form-label {
+  font-weight: 600;
+  color: #1a472a;
+  font-size: 0.9rem;
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+.grants-form-label-required::after {
+  content: '*';
+  color: #dc3545;
+  margin-left: 0.25rem;
+}
+
+.grants-form-input,
+.grants-form-select,
+.grants-form-textarea {
+  padding: 1rem 1.25rem;
+  border: 2px solid #e1e5e9;
+  border-radius: 12px;
+  font-size: 1rem;
+  transition: all 0.3s ease;
+  background: #f8f9fa;
+  font-family: inherit;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.grants-form-input:focus,
+.grants-form-select:focus,
+.grants-form-textarea:focus {
+  outline: none;
+  border-color: #1a472a;
+  background: #fff;
+  box-shadow: 0 0 0 3px rgba(26, 71, 42, 0.1);
+}
+
+.grants-form-textarea {
+  resize: vertical;
+  min-height: 120px;
+}
+
+.grants-form-textarea-small {
+  min-height: 80px;
+}
+
+/* File Upload */
+.grants-form-file-upload {
+  border: 2px dashed #e1e5e9;
+  border-radius: 12px;
+  padding: 2rem;
+  text-align: center;
+  background: #f8f9fa;
+  transition: all 0.3s ease;
+  cursor: pointer;
+}
+
+.grants-form-file-upload:hover {
+  border-color: #1a472a;
+  background: #f0f9f0;
+}
+
+.grants-form-file-input {
+  display: none;
+}
+
+.grants-form-file-label {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.75rem;
+  cursor: pointer;
+  color: #6c757d;
+  font-weight: 500;
+}
+
+.grants-form-file-label i {
+  font-size: 2rem;
+  color: #1a472a;
+}
+
+/* Program Section */
+.grants-form-program {
+  background: #f8f9fa;
+  border: 1px solid #e1e5e9;
+  border-radius: 12px;
+  padding: 1.5rem;
+  margin-bottom: 1rem;
+}
+
+.grants-form-program-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1rem;
+}
+
+.grants-form-program-title {
+  font-weight: 600;
+  color: #1a472a;
+  margin: 0;
+}
+
+.grants-form-remove-btn {
+  background: #dc3545;
+  color: white;
+  border: none;
+  padding: 0.5rem 1rem;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 0.85rem;
+  transition: all 0.3s ease;
+}
+
+.grants-form-remove-btn:hover {
+  background: #c82333;
+  transform: translateY(-1px);
+}
+
+/* Add Button */
+.grants-form-add-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  background: #1a472a;
+  color: white;
+  border: none;
+  padding: 0.75rem 1.5rem;
+  border-radius: 8px;
+  cursor: pointer;
+  font-weight: 600;
+  transition: all 0.3s ease;
+  margin-top: 1rem;
+}
+
+.grants-form-add-btn:hover {
+  background: #2d5a3a;
+  transform: translateY(-2px);
+}
+
+/* Checkbox Group */
+.grants-form-checkbox-group {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 1rem;
+  margin-top: 0.5rem;
+}
+
+.grants-form-checkbox-label {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  cursor: pointer;
+  font-weight: 500;
+  color: #495057;
+}
+
+.grants-form-checkbox {
+  width: 18px;
+  height: 18px;
+  border: 2px solid #e1e5e9;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+/* Tags Input */
+.grants-form-tags-container {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-top: 0.5rem;
+  padding: 1rem;
+  border: 1px solid #e1e5e9;
+  border-radius: 8px;
+  min-height: 60px;
+  background: #f8f9fa;
+}
+
+.grants-form-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  background: #1a472a;
+  color: white;
+  padding: 0.5rem 0.75rem;
+  border-radius: 20px;
+  font-size: 0.85rem;
+  font-weight: 500;
+}
+
+.grants-form-tag-remove {
+  background: none;
+  border: none;
+  color: white;
+  cursor: pointer;
+  padding: 0;
+  width: 16px;
+  height: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  transition: background 0.3s ease;
+}
+
+.grants-form-tag-remove:hover {
+  background: rgba(255, 255, 255, 0.2);
+}
+
+.grants-form-tags-input {
+  border: none;
+  background: none;
+  outline: none;
+  flex: 1;
+  min-width: 120px;
+  font-size: 0.9rem;
+}
+
+/* Form Actions */
+.grants-form-actions {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 2rem 3rem;
+  background: #f8f9fa;
+  border-top: 2px solid #e1e5e9;
+  gap: 1rem;
+}
+
+.grants-form-actions-left {
+  display: flex;
+  gap: 1rem;
+}
+
+.grants-form-actions-right {
+  display: flex;
+  gap: 1rem;
+}
+
+.grants-form-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.75rem;
+  padding: 0.875rem 1.75rem;
+  border: 2px solid transparent;
+  border-radius: 10px;
+  font-size: 0.95rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  min-width: 140px;
+}
+
+.grants-form-btn:focus {
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(212, 175, 55, 0.3);
+}
+
+.grants-form-btn-back {
+  background: #6c757d;
+  border-color: #6c757d;
+  color: white;
+}
+
+.grants-form-btn-back:hover {
+  background: #5a6268;
+  border-color: #5a6268;
+  transform: translateY(-2px);
+}
+
+.grants-form-btn-cancel {
+  background: transparent;
+  border-color: #6c757d;
+  color: #6c757d;
+}
+
+.grants-form-btn-cancel:hover {
+  background: #6c757d;
+  color: white;
+  transform: translateY(-2px);
+}
+
+.grants-form-btn-draft {
+  background: #d4af37;
+  border-color: #d4af37;
+  color: #1a472a;
+  font-weight: 700;
+}
+
+.grants-form-btn-draft:hover {
+  background: #e6c44a;
+  border-color: #e6c44a;
+  transform: translateY(-2px);
+}
+
+.grants-form-btn-create {
+  background: #1a472a;
+  border-color: #1a472a;
+  color: white;
+}
+
+.grants-form-btn-create:hover {
+  background: #2d5a3a;
+  border-color: #2d5a3a;
+  transform: translateY(-2px);
+}
+
+/* Responsive Design */
+@media (max-width: 1024px) {
+  .grants-form-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .grants-form-content {
+    padding: 2rem;
+  }
+}
+
+@media (max-width: 768px) {
+  .grants-form-container {
+    padding: 0 1rem 1rem;
+  }
+  
+  .grants-form-nav {
+    flex-direction: column;
+    gap: 1rem;
+    padding: 1rem;
+  }
+  
+  .grants-form-nav-buttons {
+    width: 100%;
+    justify-content: center;
+  }
+  
+  .grants-form-nav-actions {
+    width: 100%;
+    justify-content: center;
+  }
+  
+  .grants-form-nav-button,
+  .grants-form-nav-add-btn {
+    flex: 1;
+    justify-content: center;
+  }
+  
+  .grants-form-header {
+    padding: 2rem 1rem;
+  }
+  
+  .grants-form-header h1 {
+    font-size: 2rem;
+  }
+  
+  .grants-form-header p {
+    font-size: 1rem;
+  }
+  
+  .grants-form-content {
+    padding: 1.5rem;
+  }
+  
+  .grants-form-actions {
+    flex-direction: column;
+    gap: 1rem;
+    padding: 1.5rem;
+  }
+  
+  .grants-form-actions-left,
+  .grants-form-actions-right {
+    width: 100%;
+    justify-content: center;
+  }
+  
+  .grants-form-btn {
+    flex: 1;
+    min-width: auto;
+  }
+}
+
+@media (max-width: 480px) {
+  .grants-form-nav-buttons {
+    flex-direction: column;
+  }
+  
+  .grants-form-nav-section {
+    flex-direction: column;
+    width: 100%;
+    border-right: none;
+    padding-right: 0;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.3);
+    padding-bottom: 1rem;
+  }
+  
+  .grants-form-nav-section:last-child {
+    border-bottom: none;
+    padding-bottom: 0;
+  }
+  
+  .grants-form-checkbox-group {
+    grid-template-columns: 1fr;
+  }
+}
