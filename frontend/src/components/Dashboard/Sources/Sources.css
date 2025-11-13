@@ -1479,3 +1479,186 @@
   border-color: #1a472a;
   box-shadow: 0 0 0 2px rgba(26, 71, 42, 0.1);
 }
+
+/* Grants.gov Integration Styles */
+.last-updated {
+  font-size: 12px;
+  color: #6c757d;
+  margin-top: 4px;
+}
+
+.stat-breakdown {
+  display: flex;
+  gap: 12px;
+  margin-top: 8px;
+  font-size: 12px;
+}
+
+.breakdown-item {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  color: #6c757d;
+}
+
+.dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  display: inline-block;
+}
+
+.dot.manual {
+  background: #3498db;
+}
+
+.dot.grants-gov {
+  background: #27ae60;
+}
+
+.source-badge {
+  font-size: 10px;
+  padding: 2px 8px;
+  border-radius: 12px;
+  font-weight: 700;
+  margin-left: 8px;
+  text-transform: uppercase;
+}
+
+.grants-gov-badge {
+  background: #d4edda;
+  color: #155724;
+  border: 1px solid #c3e6cb;
+}
+
+.imported-badge {
+  background: #fff3cd;
+  color: #856404;
+  border: 1px solid #ffeaa7;
+}
+
+.source-name-wrapper {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.opportunity-number {
+  font-size: 11px;
+  color: #6c757d;
+  font-family: 'Courier New', monospace;
+  background: #f8f9fa;
+  padding: 2px 6px;
+  border-radius: 4px;
+  display: inline-block;
+}
+
+.grants-gov-row {
+  background: #f8fff9 !important;
+  border-left: 3px solid #27ae60;
+}
+
+.grants-gov-row:hover {
+  background: #f0fff4 !important;
+}
+
+.deadline-passed {
+  font-size: 10px;
+  color: #dc3545;
+  margin-left: 6px;
+  font-weight: 600;
+}
+
+.empty-state-actions {
+  display: flex;
+  gap: 12px;
+  margin-top: 20px;
+  justify-content: center;
+}
+
+.grants-gov-banner {
+  background: linear-gradient(135deg, #d4edda 0%, #f8fff9 100%);
+  border: 1px solid #c3e6cb;
+  border-radius: 12px;
+  padding: 20px;
+  margin-top: 30px;
+}
+
+.banner-content {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+}
+
+.banner-icon {
+  font-size: 24px;
+  color: #27ae60;
+}
+
+.banner-text {
+  flex: 1;
+}
+
+.banner-text h4 {
+  margin: 0 0 8px 0;
+  color: #155724;
+  font-size: 16px;
+}
+
+.banner-text p {
+  margin: 0;
+  color: #155724;
+  opacity: 0.9;
+  font-size: 14px;
+}
+
+.banner-actions {
+  display: flex;
+  gap: 12px;
+}
+
+.action-buttons-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 12px;
+}
+
+.sources-loading .loading-details {
+  margin-top: 10px;
+  color: #6c757d;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .header-actions {
+    flex-direction: column;
+    width: 100%;
+  }
+  
+  .header-actions .btn {
+    width: 100%;
+    justify-content: center;
+  }
+  
+  .banner-content {
+    flex-direction: column;
+    text-align: center;
+  }
+  
+  .banner-actions {
+    justify-content: center;
+  }
+  
+  .empty-state-actions {
+    flex-direction: column;
+  }
+  
+  .action-buttons-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .stat-breakdown {
+    flex-direction: column;
+    gap: 4px;
+  }
+}

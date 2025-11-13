@@ -1,4 +1,3 @@
-// frontend/src/components/Dashboard/Sources/SourceList.js
 import React from 'react';
 
 const SourceList = ({
@@ -7,8 +6,11 @@ const SourceList = ({
   onEditSource,
   onCreateSource,
   onDeleteSource,
+  onImportFromGrantsGov,
+  onRefreshGrantsGov,
   filter,
-  onFilterChange
+  onFilterChange,
+  lastUpdated
 }) => {
   const getTypeBadgeClass = (type) => {
     switch (type) {
@@ -50,6 +52,24 @@ const SourceList = ({
     return types[type] || type;
   };
 
+  const getSourceBadge = (source) => {
+    if (source.source === 'grants.gov') {
+      return <span className="source-badge grants-gov-badge">Grants.gov</span>;
+    }
+    if (source.imported) {
+      return <span className="source-badge imported-badge">Imported</span>;
+    }
+    return null;
+  };
+
+  // Calculate stats
+  const totalSources = sources.length;
+  const activeSources = sources.filter(s => s.status === 'active').length;
+  const upcomingSources = sources.filter(s => s.status === 'upcoming').length;
+  const highMatchSources = sources.filter(s => s.matchScore >= 80).length;
+  const grantsGovSources = sources.filter(s => s.source === 'grants.gov').length;
+  const manualSources = sources.filter(s => !s.source || s.source === 'manual').length;
+
   return (
     <div className="sources-list">
       {/* Header Section */}
@@ -58,8 +78,21 @@ const SourceList = ({
           <div className="header-title">
             <h1>Grant Sources</h1>
             <p>Discover and manage funding opportunities</p>
+            {lastUpdated && (
+              <div className="last-updated">
+                Last updated: {new Date(lastUpdated).toLocaleString()}
+              </div>
+            )}
           </div>
           <div className="header-actions">
+            <button 
+              className="btn btn-secondary"
+              onClick={onImportFromGrantsGov}
+              title="Import from Grants.gov"
+            >
+              <i className="fas fa-database"></i>
+              Import from Grants.gov
+            </button>
             <button 
               className="btn btn-primary"
               onClick={onCreateSource}
@@ -79,8 +112,18 @@ const SourceList = ({
               <i className="fas fa-database"></i>
             </div>
             <div className="stat-content">
-              <h3>{sources.length}</h3>
+              <h3>{totalSources}</h3>
               <p>Total Sources</p>
+              <div className="stat-breakdown">
+                <span className="breakdown-item">
+                  <span className="dot manual"></span>
+                  {manualSources} Manual
+                </span>
+                <span className="breakdown-item">
+                  <span className="dot grants-gov"></span>
+                  {grantsGovSources} Grants.gov
+                </span>
+              </div>
             </div>
           </div>
           
@@ -89,7 +132,7 @@ const SourceList = ({
               <i className="fas fa-check-circle"></i>
             </div>
             <div className="stat-content">
-              <h3>{sources.filter(s => s.status === 'active').length}</h3>
+              <h3>{activeSources}</h3>
               <p>Active</p>
             </div>
           </div>
@@ -99,7 +142,7 @@ const SourceList = ({
               <i className="fas fa-clock"></i>
             </div>
             <div className="stat-content">
-              <h3>{sources.filter(s => s.status === 'upcoming').length}</h3>
+              <h3>{upcomingSources}</h3>
               <p>Upcoming</p>
             </div>
           </div>
@@ -109,9 +152,7 @@ const SourceList = ({
               <i className="fas fa-chart-line"></i>
             </div>
             <div className="stat-content">
-              <h3>
-                {sources.filter(s => s.matchScore >= 80).length}
-              </h3>
+              <h3>{highMatchSources}</h3>
               <p>High Match</p>
             </div>
           </div>
@@ -155,6 +196,12 @@ const SourceList = ({
               <option value="arts">Arts & Culture</option>
               <option value="social">Social Justice</option>
             </select>
+
+            <select className="filter-select">
+              <option value="">All Sources</option>
+              <option value="manual">Manual Entries</option>
+              <option value="grants.gov">Grants.gov</option>
+            </select>
           </div>
         </div>
 
@@ -180,28 +227,45 @@ const SourceList = ({
                     <div className="empty-state">
                       <i className="fas fa-inbox"></i>
                       <h3>No Grant Sources Found</h3>
-                      <p>Get started by adding your first grant source.</p>
-                      <button 
-                        className="btn btn-primary"
-                        onClick={onCreateSource}
-                      >
-                        <i className="fas fa-plus"></i>
-                        Add Source
-                      </button>
+                      <p>Get started by adding your first grant source or importing from Grants.gov.</p>
+                      <div className="empty-state-actions">
+                        <button 
+                          className="btn btn-primary"
+                          onClick={onCreateSource}
+                        >
+                          <i className="fas fa-plus"></i>
+                          Add Source
+                        </button>
+                        <button 
+                          className="btn btn-secondary"
+                          onClick={onImportFromGrantsGov}
+                        >
+                          <i className="fas fa-database"></i>
+                          Import from Grants.gov
+                        </button>
+                      </div>
                     </div>
                   </td>
                 </tr>
               ) : (
                 sources.map(source => (
-                  <tr key={source.id} className="source-row">
+                  <tr key={source.id} className={`source-row ${source.source === 'grants.gov' ? 'grants-gov-row' : ''}`}>
                     <td>
                       <div className="source-info">
-                        <button 
-                          className="source-name-link"
-                          onClick={() => onViewSource(source)}
-                        >
-                          {source.name}
-                        </button>
+                        <div className="source-name-wrapper">
+                          <button 
+                            className="source-name-link"
+                            onClick={() => onViewSource(source)}
+                          >
+                            {source.name}
+                            {getSourceBadge(source)}
+                          </button>
+                          {source.opportunityNumber && (
+                            <div className="opportunity-number">
+                              #{source.opportunityNumber}
+                            </div>
+                          )}
+                        </div>
                         <div className="source-website">
                           <a href={source.website} target="_blank" rel="noopener noreferrer">
                             <i className="fas fa-external-link-alt"></i>
@@ -226,6 +290,9 @@ const SourceList = ({
                     <td>
                       <div className="source-deadline">
                         {formatDate(source.deadline)}
+                        {source.deadline && new Date(source.deadline) < new Date() && (
+                          <span className="deadline-passed">Past</span>
+                        )}
                       </div>
                     </td>
                     <td>
@@ -255,20 +322,33 @@ const SourceList = ({
                         >
                           <i className="fas fa-eye"></i>
                         </button>
-                        <button 
-                          className="btn-icon"
-                          onClick={() => onEditSource(source)}
-                          title="Edit Source"
-                        >
-                          <i className="fas fa-edit"></i>
-                        </button>
-                        <button 
-                          className="btn-icon danger"
-                          onClick={() => onDeleteSource(source.id)}
-                          title="Delete Source"
-                        >
-                          <i className="fas fa-trash"></i>
-                        </button>
+                        {source.source !== 'grants.gov' && (
+                          <>
+                            <button 
+                              className="btn-icon"
+                              onClick={() => onEditSource(source)}
+                              title="Edit Source"
+                            >
+                              <i className="fas fa-edit"></i>
+                            </button>
+                            <button 
+                              className="btn-icon danger"
+                              onClick={() => onDeleteSource(source.id)}
+                              title="Delete Source"
+                            >
+                              <i className="fas fa-trash"></i>
+                            </button>
+                          </>
+                        )}
+                        {source.source === 'grants.gov' && (
+                          <button 
+                            className="btn-icon info"
+                            onClick={() => window.open(source.website, '_blank')}
+                            title="View on Grants.gov"
+                          >
+                            <i className="fas fa-external-link-alt"></i>
+                          </button>
+                        )}
                       </div>
                     </td>
                   </tr>
@@ -282,17 +362,23 @@ const SourceList = ({
         <div className="quick-actions">
           <h3>Quick Actions</h3>
           <div className="action-buttons-grid">
+            <button 
+              className="btn btn-outline"
+              onClick={onImportFromGrantsGov}
+            >
+              <i className="fas fa-database"></i>
+              Import from Grants.gov
+            </button>
+            <button 
+              className="btn btn-outline"
+              onClick={onRefreshGrantsGov}
+            >
+              <i className="fas fa-sync"></i>
+              Refresh Grants.gov Data
+            </button>
             <button className="btn btn-outline">
               <i className="fas fa-download"></i>
               Export Sources
-            </button>
-            <button className="btn btn-outline">
-              <i className="fas fa-sync"></i>
-              Refresh Data
-            </button>
-            <button className="btn btn-outline">
-              <i className="fas fa-filter"></i>
-              Advanced Filters
             </button>
             <button className="btn btn-outline">
               <i className="fas fa-robot"></i>
@@ -300,6 +386,40 @@ const SourceList = ({
             </button>
           </div>
         </div>
+
+        {/* Grants.gov Info Banner */}
+        {grantsGovSources > 0 && (
+          <div className="grants-gov-banner">
+            <div className="banner-content">
+              <div className="banner-icon">
+                <i className="fas fa-database"></i>
+              </div>
+              <div className="banner-text">
+                <h4>Grants.gov Integration Active</h4>
+                <p>
+                  You have {grantsGovSources} federal grant opportunities from Grants.gov. 
+                  These are automatically updated and provide real-time federal funding information.
+                </p>
+              </div>
+              <div className="banner-actions">
+                <button 
+                  className="btn btn-outline"
+                  onClick={onImportFromGrantsGov}
+                >
+                  <i className="fas fa-plus"></i>
+                  Import More
+                </button>
+                <button 
+                  className="btn btn-outline"
+                  onClick={onRefreshGrantsGov}
+                >
+                  <i className="fas fa-sync"></i>
+                  Refresh Data
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );

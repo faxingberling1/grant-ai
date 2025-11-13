@@ -1,9 +1,10 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import DashboardHeader from './DashboardHeader';
 import DashboardSidebar from './DashboardSidebar';
 import Clients from './Clients/Clients';
 import Grants from './Grants/Grants';
+import FindGrants from './Grants/FindGrants';
 import ClientGrantMatching from './Grants/ClientGrantMatching';
 import Submissions from './Submissions/Submissions';
 import Sources from './Sources/Sources';
@@ -17,15 +18,32 @@ const Dashboard = () => {
   const { currentUser } = useAuth();
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [activePage, setActivePage] = useState('dashboard');
+  const [sourcesData, setSourcesData] = useState([]);
 
   const toggleSidebar = () => {
     setSidebarOpen(!sidebarOpen);
   };
 
+  // Function to update sources data from Sources component
+  const updateSourcesData = (data) => {
+    console.log('📊 Dashboard: Sources data updated', data);
+    setSourcesData(data);
+  };
+
   const renderPageContent = () => {
+    console.log('🔄 Rendering page:', activePage);
+    
     switch (activePage) {
       case 'dashboard':
-        return <DashboardContent onNavigateToClients={() => setActivePage('clients')} />;
+        return (
+          <DashboardContent 
+            onNavigateToClients={() => setActivePage('clients')} 
+            onNavigateToFindGrants={() => setActivePage('find-grants')}
+            onNavigateToSources={() => setActivePage('sources')}
+            onNavigateToAIWriting={() => setActivePage('ai-writing')}
+            onNavigateToReports={() => setActivePage('reports')}
+          />
+        );
       case 'clients':
         return <Clients />;
       case 'grants':
@@ -33,10 +51,28 @@ const Dashboard = () => {
           <Grants 
             onNavigateToMatching={() => setActivePage('client-matching')}
             onNavigateToNewGrant={() => {
+              console.log('New grant creation requested');
               alert('New Grant form would open here');
             }}
             onNavigateToDrafts={() => {
+              console.log('Drafts page requested');
               alert('Drafts page would open here');
+            }}
+            onNavigateToFindGrants={() => setActivePage('find-grants')}
+          />
+        );
+      case 'find-grants':
+        return (
+          <FindGrants 
+            onBack={() => setActivePage('grants')}
+            sourcesData={sourcesData}
+            onViewGrant={(grant) => {
+              console.log('Viewing grant details:', grant);
+              alert(`Viewing grant: ${grant.title}\n\nThis would open a detailed grant view with full information.`);
+            }}
+            onImportGrant={(grant) => {
+              console.log('Importing grant:', grant);
+              alert(`✅ Grant "${grant.title}" has been saved to your grants!\n\nYou can now track this grant in your Grants section.`);
             }}
           />
         );
@@ -45,15 +81,15 @@ const Dashboard = () => {
           <ClientGrantMatching 
             onNavigateToGrants={() => setActivePage('grants')}
             onNavigateToNewGrant={(data) => {
-              console.log('Navigate to new grant with:', data);
-              alert(`New Grant form would open with client: ${data.client.name} and grant: ${data.grant.grantName}`);
+              console.log('Navigate to new grant with client data:', data);
+              alert(`New Grant form would open with:\n- Client: ${data.client.name}\n- Grant: ${data.grant.grantName}\n- Match Score: ${data.matchScore}%`);
             }}
           />
         );
       case 'submissions':
         return <Submissions />;
       case 'sources':
-        return <Sources />;
+        return <Sources onSourcesUpdate={updateSourcesData} />;
       case 'matching':
         return <Matching />;
       case 'ai-writing':
@@ -67,10 +103,67 @@ const Dashboard = () => {
               <h1>My Profile</h1>
               <p>Manage your account settings and preferences</p>
             </div>
-            <div className="coming-soon">
-              <i className="fas fa-user"></i>
-              <h2>Profile Management Coming Soon</h2>
-              <p>This section is under development and will be available soon.</p>
+            <div className="profile-content">
+              <div className="profile-card">
+                <div className="profile-header">
+                  <div className="profile-avatar">
+                    <img 
+                      src={currentUser?.photoURL || `https://ui-avatars.com/api/?name=${encodeURIComponent(currentUser?.name || 'User')}&background=667eea&color=fff`} 
+                      alt={currentUser?.name || 'User'} 
+                    />
+                  </div>
+                  <div className="profile-info">
+                    <h2>{currentUser?.name || 'User'}</h2>
+                    <p>{currentUser?.email || 'No email provided'}</p>
+                    <span className="profile-role">Grant Manager</span>
+                  </div>
+                </div>
+                <div className="profile-stats">
+                  <div className="profile-stat">
+                    <span className="stat-number">24</span>
+                    <span className="stat-label">Active Grants</span>
+                  </div>
+                  <div className="profile-stat">
+                    <span className="stat-number">18</span>
+                    <span className="stat-label">Submitted</span>
+                  </div>
+                  <div className="profile-stat">
+                    <span className="stat-number">$245K</span>
+                    <span className="stat-label">Secured</span>
+                  </div>
+                </div>
+              </div>
+              
+              <div className="profile-sections">
+                <div className="profile-section">
+                  <h3>Account Settings</h3>
+                  <div className="setting-item">
+                    <label>Email Notifications</label>
+                    <div className="toggle-switch">
+                      <input type="checkbox" defaultChecked />
+                      <span className="toggle-slider"></span>
+                    </div>
+                  </div>
+                  <div className="setting-item">
+                    <label>Weekly Reports</label>
+                    <div className="toggle-switch">
+                      <input type="checkbox" defaultChecked />
+                      <span className="toggle-slider"></span>
+                    </div>
+                  </div>
+                </div>
+                
+                <div className="profile-section">
+                  <h3>Preferences</h3>
+                  <div className="preference-item">
+                    <label>Default Grant View</label>
+                    <select defaultValue="grid">
+                      <option value="grid">Grid View</option>
+                      <option value="list">List View</option>
+                    </select>
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
         );
@@ -81,10 +174,44 @@ const Dashboard = () => {
               <h1>Settings</h1>
               <p>Configure your application preferences</p>
             </div>
-            <div className="coming-soon">
-              <i className="fas fa-cog"></i>
-              <h2>Settings Coming Soon</h2>
-              <p>This section is under development and will be available soon.</p>
+            <div className="settings-content">
+              <div className="settings-section">
+                <h3>Application Settings</h3>
+                <div className="setting-group">
+                  <label>Theme</label>
+                  <select defaultValue="light">
+                    <option value="light">Light</option>
+                    <option value="dark">Dark</option>
+                    <option value="auto">Auto</option>
+                  </select>
+                </div>
+                <div className="setting-group">
+                  <label>Language</label>
+                  <select defaultValue="en">
+                    <option value="en">English</option>
+                    <option value="es">Spanish</option>
+                    <option value="fr">French</option>
+                  </select>
+                </div>
+              </div>
+              
+              <div className="settings-section">
+                <h3>Notification Preferences</h3>
+                <div className="setting-item">
+                  <label>Grant Deadline Alerts</label>
+                  <div className="toggle-switch">
+                    <input type="checkbox" defaultChecked />
+                    <span className="toggle-slider"></span>
+                  </div>
+                </div>
+                <div className="setting-item">
+                  <label>New Grant Opportunities</label>
+                  <div className="toggle-switch">
+                    <input type="checkbox" defaultChecked />
+                    <span className="toggle-slider"></span>
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
         );
@@ -95,15 +222,61 @@ const Dashboard = () => {
               <h1>Help & Support</h1>
               <p>Get help and learn how to use GrantFlow</p>
             </div>
-            <div className="coming-soon">
-              <i className="fas fa-question-circle"></i>
-              <h2>Help Center Coming Soon</h2>
-              <p>This section is under development and will be available soon.</p>
+            <div className="help-content">
+              <div className="help-sections">
+                <div className="help-section">
+                  <div className="help-icon">
+                    <i className="fas fa-book"></i>
+                  </div>
+                  <h3>Documentation</h3>
+                  <p>Comprehensive guides and tutorials</p>
+                  <button className="btn btn-outline">View Docs</button>
+                </div>
+                
+                <div className="help-section">
+                  <div className="help-icon">
+                    <i className="fas fa-video"></i>
+                  </div>
+                  <h3>Video Tutorials</h3>
+                  <p>Step-by-step video guides</p>
+                  <button className="btn btn-outline">Watch Videos</button>
+                </div>
+                
+                <div className="help-section">
+                  <div className="help-icon">
+                    <i className="fas fa-question-circle"></i>
+                  </div>
+                  <h3>FAQ</h3>
+                  <p>Frequently asked questions</p>
+                  <button className="btn btn-outline">View FAQ</button>
+                </div>
+              </div>
+              
+              <div className="support-contact">
+                <h3>Need More Help?</h3>
+                <p>Contact our support team for personalized assistance</p>
+                <div className="contact-actions">
+                  <button className="btn btn-primary">
+                    <i className="fas fa-envelope"></i>
+                    Email Support
+                  </button>
+                  <button className="btn btn-outline">
+                    <i className="fas fa-phone"></i>
+                    Call Support
+                  </button>
+                </div>
+              </div>
             </div>
           </div>
         );
       default:
-        return <DashboardContent onNavigateToClients={() => setActivePage('clients')} />;
+        return (
+          <DashboardContent 
+            onNavigateToClients={() => setActivePage('clients')} 
+            onNavigateToFindGrants={() => setActivePage('find-grants')}
+            onNavigateToSources={() => setActivePage('sources')}
+          />
+        );
     }
   };
 
@@ -121,6 +294,7 @@ const Dashboard = () => {
           onToggleSidebar={toggleSidebar}
           sidebarOpen={sidebarOpen}
           currentPage={activePage}
+          user={currentUser}
         />
         
         <div className="dashboard-content">
@@ -131,8 +305,14 @@ const Dashboard = () => {
   );
 };
 
-// Main Dashboard Content Component with Enhanced Recent Clients Section
-const DashboardContent = ({ onNavigateToClients }) => {
+// Main Dashboard Content Component
+const DashboardContent = ({ 
+  onNavigateToClients, 
+  onNavigateToFindGrants, 
+  onNavigateToSources,
+  onNavigateToAIWriting,
+  onNavigateToReports 
+}) => {
   const { currentUser } = useAuth();
   const [activeClientTab, setActiveClientTab] = useState('all');
 
@@ -288,9 +468,19 @@ const DashboardContent = ({ onNavigateToClients }) => {
         <div className="welcome-content">
           <h1>Welcome back, {currentUser?.name || 'User'}! 🎉</h1>
           <p>Your AI-powered grant management platform is ready to help you secure more funding.</p>
+          <div className="welcome-stats">
+            <div className="welcome-stat">
+              <i className="fas fa-trophy"></i>
+              <span>$2.4M secured this quarter</span>
+            </div>
+            <div className="welcome-stat">
+              <i className="fas fa-clock"></i>
+              <span>5 deadlines this week</span>
+            </div>
+          </div>
         </div>
         <div className="welcome-actions">
-          <button className="btn btn-primary">
+          <button className="btn btn-primary" onClick={onNavigateToAIWriting}>
             <i className="fas fa-robot"></i>
             Start AI Grant Writing
           </button>
@@ -352,7 +542,7 @@ const DashboardContent = ({ onNavigateToClients }) => {
       <div className="quick-actions-grid">
         <h2>Quick Actions</h2>
         <div className="actions-grid">
-          <div className="action-card primary">
+          <div className="action-card primary" onClick={onNavigateToAIWriting}>
             <div className="action-icon">
               <i className="fas fa-robot"></i>
             </div>
@@ -365,7 +555,7 @@ const DashboardContent = ({ onNavigateToClients }) => {
             </div>
           </div>
           
-          <div className="action-card success">
+          <div className="action-card success" onClick={onNavigateToClients}>
             <div className="action-icon">
               <i className="fas fa-users"></i>
             </div>
@@ -378,26 +568,26 @@ const DashboardContent = ({ onNavigateToClients }) => {
             </div>
           </div>
           
-          <div className="action-card warning">
+          <div className="action-card warning" onClick={onNavigateToFindGrants}>
             <div className="action-icon">
               <i className="fas fa-search"></i>
             </div>
             <div className="action-content">
               <h3>Find Grants</h3>
-              <p>Discover new funding opportunities</p>
+              <p>Discover funding opportunities from multiple sources</p>
             </div>
             <div className="action-arrow">
               <i className="fas fa-arrow-right"></i>
             </div>
           </div>
           
-          <div className="action-card info">
+          <div className="action-card info" onClick={onNavigateToReports}>
             <div className="action-icon">
               <i className="fas fa-chart-line"></i>
             </div>
             <div className="action-content">
               <h3>View Reports</h3>
-              <p>Analyze your grant performance</p>
+              <p>Analyze your grant performance and success metrics</p>
             </div>
             <div className="action-arrow">
               <i className="fas fa-arrow-right"></i>
