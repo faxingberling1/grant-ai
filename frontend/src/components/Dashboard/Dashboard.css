@@ -1887,9 +1887,9 @@
 }
 
 .dashboard-content .btn-outline {
-  background: transparent;
-  border: 2px solid rgba(255, 255, 255, 0.3);
-  color: white;
+    background: #daa520;
+    border: 2px solid rgba(255, 255, 255, 0.3);
+    color: white;
 }
 
 .dashboard-content .btn-outline:hover {
