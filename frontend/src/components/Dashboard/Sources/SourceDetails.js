@@ -1,5 +1,6 @@
 // frontend/src/components/Dashboard/Sources/SourceDetails.js
 import React from 'react';
+import './SourceDetails.css';
 
 const SourceDetails = ({ source, onBack, onEdit }) => {
   const formatDate = (dateString) => {

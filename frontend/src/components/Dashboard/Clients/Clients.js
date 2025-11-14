@@ -23,13 +23,14 @@ const Clients = () => {
   const [communicationTab, setCommunicationTab] = useState('emails');
   const [selectedTemplate, setSelectedTemplate] = useState(null);
 
-  // Mock data - Replace with API calls
+  // Mock data - Updated with new comprehensive fields
   useEffect(() => {
     const mockClients = [
       {
         id: 1,
-        name: 'GreenTech Initiative',
-        email: 'contact@greentech.org',
+        // Core fields (for backward compatibility)
+        name: 'Sarah Chen',
+        email: 'sarah.chen@greentech.org',
         phone: '+1 (555) 123-4567',
         organization: 'GreenTech Initiative',
         status: 'active',
@@ -61,12 +62,38 @@ const Clients = () => {
             duration: '15m',
             status: 'completed'
           }
-        ]
+        ],
+        
+        // New comprehensive fields
+        organizationName: 'GreenTech Initiative',
+        primaryContactName: 'Sarah Chen',
+        titleRole: 'Executive Director',
+        emailAddress: 'sarah.chen@greentech.org',
+        phoneNumbers: '+1 (555) 123-4567',
+        additionalContactName: 'Michael Rodriguez',
+        additionalContactTitle: 'Program Manager',
+        additionalContactEmail: 'm.rodriguez@greentech.org',
+        additionalContactPhone: '+1 (555) 123-4568',
+        mailingAddress: '123 Green Street, Eco City, EC 12345',
+        website: 'https://greentech.org',
+        socialMediaLinks: [
+          { platform: 'LinkedIn', url: 'https://linkedin.com/company/greentech' },
+          { platform: 'Twitter', url: 'https://twitter.com/greentech' },
+          { platform: 'Facebook', url: 'https://facebook.com/greentech' }
+        ],
+        taxIdEIN: '12-3456789',
+        organizationType: 'Nonprofit 501(c)(3)',
+        missionStatement: 'To promote sustainable technology solutions for environmental conservation and climate change mitigation through innovative research and community engagement.',
+        focusAreas: ['Renewable Energy', 'Climate Tech', 'Sustainable Agriculture', 'Environmental Education'],
+        serviceArea: 'National',
+        annualBudget: '$1,000,000 - $5,000,000',
+        staffCount: '26-50'
       },
       {
         id: 2,
-        name: 'Sarah Chen',
-        email: 'sarah.chen@communityhealth.org',
+        // Core fields
+        name: 'David Kim',
+        email: 'david.kim@communityhealth.org',
         phone: '+1 (555) 987-6543',
         organization: 'Community Health Alliance',
         status: 'active',
@@ -88,12 +115,37 @@ const Clients = () => {
             status: 'read',
             important: false
           }
-        ]
+        ],
+        
+        // New comprehensive fields
+        organizationName: 'Community Health Alliance',
+        primaryContactName: 'David Kim',
+        titleRole: 'Program Director',
+        emailAddress: 'david.kim@communityhealth.org',
+        phoneNumbers: '+1 (555) 987-6543',
+        additionalContactName: 'Maria Gonzalez',
+        additionalContactTitle: 'Outreach Coordinator',
+        additionalContactEmail: 'maria.gonzalez@communityhealth.org',
+        additionalContactPhone: '+1 (555) 987-6544',
+        mailingAddress: '456 Health Avenue, Medtown, MT 67890',
+        website: 'https://communityhealth.org',
+        socialMediaLinks: [
+          { platform: 'Facebook', url: 'https://facebook.com/communityhealth' },
+          { platform: 'Instagram', url: 'https://instagram.com/communityhealth' }
+        ],
+        taxIdEIN: '98-7654321',
+        organizationType: 'Nonprofit 501(c)(3)',
+        missionStatement: 'To provide accessible healthcare services and health education to underserved communities while promoting wellness and preventive care.',
+        focusAreas: ['Healthcare Access', 'Community Wellness', 'Preventive Care', 'Health Education'],
+        serviceArea: 'Regional',
+        annualBudget: '$500,000 - $1,000,000',
+        staffCount: '11-25'
       },
       {
         id: 3,
-        name: 'Michael Rodriguez',
-        email: 'm.rodriguez@youthfuture.org',
+        // Core fields
+        name: 'James Wilson',
+        email: 'j.wilson@youthfuture.org',
         phone: '+1 (555) 456-7890',
         organization: 'Youth Future Foundation',
         status: 'inactive',
@@ -104,10 +156,36 @@ const Clients = () => {
         avatar: 'https://i.pravatar.cc/150?img=8',
         notes: 'Excellent track record with education grants.',
         tags: ['Education', 'Youth', 'Foundation'],
-        communicationHistory: []
+        communicationHistory: [],
+        
+        // New comprehensive fields
+        organizationName: 'Youth Future Foundation',
+        primaryContactName: 'James Wilson',
+        titleRole: 'Foundation Director',
+        emailAddress: 'j.wilson@youthfuture.org',
+        phoneNumbers: '+1 (555) 456-7890',
+        additionalContactName: 'Lisa Thompson',
+        additionalContactTitle: 'Grants Manager',
+        additionalContactEmail: 'lisa.thompson@youthfuture.org',
+        additionalContactPhone: '+1 (555) 456-7891',
+        mailingAddress: '789 Future Drive, Progress City, PC 34567',
+        website: 'https://youthfuture.org',
+        socialMediaLinks: [
+          { platform: 'LinkedIn', url: 'https://linkedin.com/company/youthfuture' },
+          { platform: 'Twitter', url: 'https://twitter.com/youthfuture' },
+          { platform: 'YouTube', url: 'https://youtube.com/c/youthfuture' }
+        ],
+        taxIdEIN: '45-6789012',
+        organizationType: 'Foundation',
+        missionStatement: 'Empowering youth through education, mentorship, and opportunity creation for a brighter future.',
+        focusAreas: ['Youth Education', 'Mentorship Programs', 'Career Development', 'Scholarships'],
+        serviceArea: 'National',
+        annualBudget: '$5,000,000 - $10,000,000',
+        staffCount: '51-100'
       },
       {
         id: 4,
+        // Core fields
         name: 'TechStart Inc',
         email: 'info@techstart.com',
         phone: '+1 (555) 234-5678',
@@ -120,7 +198,31 @@ const Clients = () => {
         avatar: 'https://i.pravatar.cc/150?img=11',
         notes: 'Early-stage startup with strong growth potential.',
         tags: ['Technology', 'Startup', 'Innovation'],
-        communicationHistory: []
+        communicationHistory: [],
+        
+        // New comprehensive fields
+        organizationName: 'TechStart Accelerator',
+        primaryContactName: 'Alex Johnson',
+        titleRole: 'CEO',
+        emailAddress: 'alex.johnson@techstart.com',
+        phoneNumbers: '+1 (555) 234-5678',
+        additionalContactName: 'Sarah Martinez',
+        additionalContactTitle: 'CTO',
+        additionalContactEmail: 'sarah.martinez@techstart.com',
+        additionalContactPhone: '+1 (555) 234-5679',
+        mailingAddress: '321 Innovation Blvd, Tech Valley, TV 89012',
+        website: 'https://techstart.com',
+        socialMediaLinks: [
+          { platform: 'LinkedIn', url: 'https://linkedin.com/company/techstart' },
+          { platform: 'Twitter', url: 'https://twitter.com/techstart' }
+        ],
+        taxIdEIN: '78-9012345',
+        organizationType: 'For-Profit Corporation',
+        missionStatement: 'Accelerating technology innovation by supporting early-stage startups with funding, mentorship, and resources.',
+        focusAreas: ['Technology Innovation', 'Startup Acceleration', 'Venture Funding', 'Tech Education'],
+        serviceArea: 'International',
+        annualBudget: 'Over $10,000,000',
+        staffCount: '26-50'
       }
     ];
     
@@ -164,22 +266,81 @@ const Clients = () => {
 
   const handleSaveClient = (clientData) => {
     if (selectedClient) {
-      // Update existing client
+      // Update existing client - map new form data to client structure
       setClients(clients.map(client => 
         client.id === selectedClient.id 
-          ? { ...client, ...clientData }
+          ? { 
+              ...client,
+              // Map new form fields to existing client structure
+              name: clientData.primaryContactName || client.name,
+              email: clientData.emailAddress || client.email,
+              phone: clientData.phoneNumbers || client.phone,
+              organization: clientData.organizationName || client.organization,
+              status: clientData.status || client.status,
+              notes: clientData.notes || client.notes,
+              tags: clientData.tags || client.tags,
+              // Add new fields
+              organizationName: clientData.organizationName,
+              primaryContactName: clientData.primaryContactName,
+              titleRole: clientData.titleRole,
+              emailAddress: clientData.emailAddress,
+              phoneNumbers: clientData.phoneNumbers,
+              additionalContactName: clientData.additionalContactName,
+              additionalContactTitle: clientData.additionalContactTitle,
+              additionalContactEmail: clientData.additionalContactEmail,
+              additionalContactPhone: clientData.additionalContactPhone,
+              mailingAddress: clientData.mailingAddress,
+              website: clientData.website,
+              socialMediaLinks: clientData.socialMediaLinks,
+              taxIdEIN: clientData.taxIdEIN,
+              organizationType: clientData.organizationType,
+              missionStatement: clientData.missionStatement,
+              focusAreas: clientData.focusAreas,
+              serviceArea: clientData.serviceArea,
+              annualBudget: clientData.annualBudget,
+              staffCount: clientData.staffCount
+            }
           : client
       ));
     } else {
-      // Add new client
+      // Add new client with complete structure
       const newClient = {
-        ...clientData,
+        // Core client data (for backward compatibility)
         id: Date.now(),
+        name: clientData.primaryContactName,
+        email: clientData.emailAddress,
+        phone: clientData.phoneNumbers,
+        organization: clientData.organizationName,
+        status: clientData.status,
+        notes: clientData.notes,
+        tags: clientData.tags,
         grantsSubmitted: 0,
         grantsAwarded: 0,
         totalFunding: '$0',
         avatar: `https://i.pravatar.cc/150?img=${Math.floor(Math.random() * 70)}`,
-        communicationHistory: []
+        lastContact: new Date().toISOString().split('T')[0],
+        communicationHistory: [],
+        
+        // New comprehensive client data
+        organizationName: clientData.organizationName,
+        primaryContactName: clientData.primaryContactName,
+        titleRole: clientData.titleRole,
+        emailAddress: clientData.emailAddress,
+        phoneNumbers: clientData.phoneNumbers,
+        additionalContactName: clientData.additionalContactName,
+        additionalContactTitle: clientData.additionalContactTitle,
+        additionalContactEmail: clientData.additionalContactEmail,
+        additionalContactPhone: clientData.additionalContactPhone,
+        mailingAddress: clientData.mailingAddress,
+        website: clientData.website,
+        socialMediaLinks: clientData.socialMediaLinks,
+        taxIdEIN: clientData.taxIdEIN,
+        organizationType: clientData.organizationType,
+        missionStatement: clientData.missionStatement,
+        focusAreas: clientData.focusAreas,
+        serviceArea: clientData.serviceArea,
+        annualBudget: clientData.annualBudget,
+        staffCount: clientData.staffCount
       };
       setClients([...clients, newClient]);
     }
@@ -275,9 +436,10 @@ const Clients = () => {
   };
 
   const filteredClients = clients.filter(client =>
-    client.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    client.organization.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    client.email.toLowerCase().includes(searchTerm.toLowerCase())
+    (client.organizationName || client.organization).toLowerCase().includes(searchTerm.toLowerCase()) ||
+    (client.primaryContactName || client.name).toLowerCase().includes(searchTerm.toLowerCase()) ||
+    (client.emailAddress || client.email).toLowerCase().includes(searchTerm.toLowerCase()) ||
+    client.tags.some(tag => tag.toLowerCase().includes(searchTerm.toLowerCase()))
   );
 
   // Simplified logic for determining active states

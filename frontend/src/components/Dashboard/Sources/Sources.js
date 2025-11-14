@@ -1,19 +1,27 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import SourceList from './SourceList';
 import SourceDetails from './SourceDetails';
 import SourceForm from './SourceForm';
 import GrantsGovIntegration from './GrantsGovIntegration';
+import GrantWatchIntegration from './GrantWatchIntegration';
 import { GrantsGovService } from '../../../services/grantsGovApi';
+import { GrantWatchService } from '../../../services/grantWatchApi';
 import './Sources.css';
 
-const Sources = ({ onSourcesUpdate }) => {
+const Sources = ({ onSourcesUpdate, integrations = {} }) => {
   const [view, setView] = useState('list');
   const [selectedSource, setSelectedSource] = useState(null);
   const [sources, setSources] = useState([]);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState('all');
   const [grantsGovData, setGrantsGovData] = useState([]);
+  const [grantWatchData, setGrantWatchData] = useState([]);
   const [lastUpdated, setLastUpdated] = useState(null);
+  
+  // Refs to track previous states and prevent unnecessary re-renders
+  const integrationsRef = useRef(integrations);
+  const dataLoadedRef = useRef(false);
+  const initialLoadRef = useRef(false);
 
   // Enhanced mock data
   const mockSources = [
@@ -30,7 +38,7 @@ const Sources = ({ onSourcesUpdate }) => {
       contactEmail: 'grants@nsf.gov',
       eligibility: 'Universities, Research Institutions, Non-profit STEM Organizations',
       focusAreas: ['STEM Education', 'Research', 'Technology', 'Innovation'],
-      notes: 'Focus on innovative STEM education programs and research initiatives. Priority given to projects with strong community impact and measurable outcomes.',
+      notes: 'Focus on innovative STEM education programs and research initiatives.',
       lastUpdated: '2024-01-15',
       grants: [
         {
@@ -40,269 +48,324 @@ const Sources = ({ onSourcesUpdate }) => {
           deadline: '2024-03-15',
           category: 'Research',
           status: 'active',
-          description: 'Support for research projects that advance STEM education through innovative approaches and methodologies.'
-        },
-        {
-          id: 'nsf-2',
-          title: 'Technology Innovation Program',
-          amount: '$750,000 - $2,000,000',
-          deadline: '2024-04-30',
-          category: 'Technology',
-          status: 'upcoming',
-          description: 'Funding for technology-driven solutions in education and research infrastructure.'
+          description: 'Support for research projects that advance STEM education.'
         }
       ]
     },
     {
       id: '2',
-      name: 'Ford Foundation',
+      name: 'Bill & Melinda Gates Foundation',
       type: 'private_foundation',
-      category: 'Social Justice',
-      deadline: '2024-06-30',
-      amount: '100,000 - 1,000,000',
+      category: 'Global Health',
+      deadline: '2024-04-30',
+      amount: '1,000,000 - 5,000,000',
       status: 'active',
       matchScore: 88,
-      website: 'https://www.fordfoundation.org',
-      contactEmail: 'grants@fordfoundation.org',
-      eligibility: 'Nonprofits, Community Organizations, Advocacy Groups',
-      focusAreas: ['Social Justice', 'Equity', 'Community Development', 'Civil Rights'],
-      notes: 'Priority given to organizations serving marginalized communities and advancing social justice initiatives.',
+      website: 'https://www.gatesfoundation.org',
+      contactEmail: 'grants@gatesfoundation.org',
+      eligibility: 'Non-profit organizations, Research Institutions, Universities',
+      focusAreas: ['Global Health', 'Education', 'Poverty Alleviation'],
+      notes: 'Focus on innovative solutions for global health and development challenges.',
       lastUpdated: '2024-01-10',
       grants: [
         {
-          id: 'ford-1',
-          title: 'Racial Justice Initiative',
-          amount: '$250,000 - $1,000,000',
-          deadline: '2024-06-30',
-          category: 'Social Justice',
-          status: 'active',
-          description: 'Support for organizations working to address systemic racism and promote racial equity.'
-        },
-        {
-          id: 'ford-2',
-          title: 'Economic Opportunity Fund',
-          amount: '$100,000 - $500,000',
-          deadline: '2024-05-15',
-          category: 'Community Development',
-          status: 'active',
-          description: 'Grants for programs that create economic opportunities in underserved communities.'
-        }
-      ]
-    },
-    {
-      id: '3',
-      name: 'Department of Energy',
-      type: 'government',
-      category: 'Clean Energy',
-      deadline: '2024-04-20',
-      amount: '750,000 - 5,000,000',
-      status: 'active',
-      matchScore: 92,
-      website: 'https://www.energy.gov',
-      contactEmail: 'funding@energy.gov',
-      eligibility: 'Research Institutions, Energy Companies, Universities, National Labs',
-      focusAreas: ['Renewable Energy', 'Climate Change', 'Innovation', 'Sustainability'],
-      notes: 'Focus on clean energy research, development, and deployment with potential for significant environmental impact.',
-      lastUpdated: '2024-01-08',
-      grants: [
-        {
-          id: 'doe-1',
-          title: 'Solar Energy Research Program',
-          amount: '$1,000,000 - $5,000,000',
-          deadline: '2024-04-20',
-          category: 'Research',
-          status: 'active',
-          description: 'Funding for advanced solar energy research and technology development.'
-        },
-        {
-          id: 'doe-2',
-          title: 'Grid Modernization Initiative',
-          amount: '$750,000 - $3,000,000',
-          deadline: '2024-03-31',
-          category: 'Technology',
-          status: 'active',
-          description: 'Support for projects that enhance grid resilience and integrate renewable energy sources.'
-        }
-      ]
-    },
-    {
-      id: '4',
-      name: 'Gates Foundation',
-      type: 'private_foundation',
-      category: 'Global Health',
-      deadline: '2024-05-15',
-      amount: '500,000 - 10,000,000',
-      status: 'active',
-      matchScore: 85,
-      website: 'https://www.gatesfoundation.org',
-      contactEmail: 'grants@gatesfoundation.org',
-      eligibility: 'Global Health Organizations, Research Institutions, NGOs',
-      focusAreas: ['Global Health', 'Education', 'Poverty Alleviation', 'Vaccine Development'],
-      notes: 'Focus on global health initiatives, education programs, and poverty alleviation with measurable impact.',
-      lastUpdated: '2024-01-05',
-      grants: [
-        {
           id: 'gates-1',
-          title: 'Global Health Innovation',
-          amount: '$2,000,000 - $10,000,000',
-          deadline: '2024-05-15',
-          category: 'Research',
+          title: 'Global Health Innovation Grant',
+          amount: '$2,000,000 - $5,000,000',
+          deadline: '2024-04-30',
+          category: 'Health',
           status: 'active',
-          description: 'Large-scale grants for innovative global health solutions and disease prevention.'
-        }
-      ]
-    },
-    {
-      id: '5',
-      name: 'National Endowment for the Arts',
-      type: 'government',
-      category: 'Arts & Culture',
-      deadline: '2024-02-28',
-      amount: '10,000 - 100,000',
-      status: 'upcoming',
-      matchScore: 78,
-      website: 'https://www.arts.gov',
-      contactEmail: 'grants@arts.gov',
-      eligibility: 'Arts Organizations, Individual Artists, Cultural Institutions',
-      focusAreas: ['Arts Education', 'Cultural Programs', 'Community Arts', 'Performing Arts'],
-      notes: 'Supports arts education, community cultural programs, and individual artistic excellence.',
-      lastUpdated: '2024-01-12',
-      grants: [
-        {
-          id: 'nea-1',
-          title: 'Arts Education Partnership',
-          amount: '$25,000 - $100,000',
-          deadline: '2024-02-28',
-          category: 'Education',
-          status: 'upcoming',
-          description: 'Grants for arts education programs in schools and community centers.'
-        }
-      ]
-    },
-    {
-      id: '6',
-      name: 'Google.org',
-      type: 'corporate',
-      category: 'Technology',
-      deadline: '2024-12-31',
-      amount: '250,000 - 2,000,000',
-      status: 'active',
-      matchScore: 82,
-      website: 'https://www.google.org',
-      contactEmail: 'grants@google.org',
-      eligibility: 'Nonprofits, Social Enterprises, Educational Institutions',
-      focusAreas: ['Technology', 'Education', 'Economic Opportunity', 'Crisis Response'],
-      notes: 'Google philanthropic arm focusing on technology-driven solutions for social challenges.',
-      lastUpdated: '2024-01-18',
-      grants: [
-        {
-          id: 'google-1',
-          title: 'Digital Skills Initiative',
-          amount: '$500,000 - $2,000,000',
-          deadline: '2024-12-31',
-          category: 'Education',
-          status: 'active',
-          description: 'Funding for programs that provide digital skills training to underserved communities.'
+          description: 'Funding for innovative approaches to global health challenges.'
         }
       ]
     }
   ];
 
-  // Load all data
+  // FIXED: Integration check - enabled by default, only disabled when explicitly false
+  const isIntegrationEnabled = (integrationId) => {
+    // Default to true, only false when explicitly set to false
+    const isEnabled = integrations[integrationId] !== false;
+    return isEnabled;
+  };
+
+  // Check if integrations have actually changed
+  const haveIntegrationsChanged = (prevIntegrations, currentIntegrations) => {
+    const prev = prevIntegrations || {};
+    const current = currentIntegrations || {};
+    
+    const grantsGovChanged = prev.grantsGov !== current.grantsGov;
+    const grantWatchChanged = prev.grantWatch !== current.grantWatch;
+    
+    const changed = grantsGovChanged || grantWatchChanged;
+    
+    if (changed) {
+      console.log('🔄 Integrations changed - reloading data');
+      console.log('Previous:', prev);
+      console.log('Current:', current);
+    }
+    
+    return changed;
+  };
+
+  // Load all data based on integration status - FIXED to prevent rapid refreshing
   useEffect(() => {
+    // Skip if this is not the initial load and integrations haven't changed
+    if (initialLoadRef.current && !haveIntegrationsChanged(integrationsRef.current, integrations)) {
+      console.log('⏭️ Skipping data load - no integration changes detected');
+      return;
+    }
+
     const loadAllData = async () => {
       setLoading(true);
       console.log('🔄 Loading grant sources data...');
+      console.log('📊 Integration state:', integrations);
       
       try {
-        // Load Grants.gov data
-        const grantsData = await GrantsGovService.searchGrants({
-          keyword: '',
-          rows: 20
+        let grantsGovSources = [];
+        let grantWatchSources = [];
+
+        // Load Grants.gov data only if integration is enabled
+        if (isIntegrationEnabled('grantsGov')) {
+          console.log('🌐 Loading Grants.gov data...');
+          try {
+            const grantsData = await GrantsGovService.searchGrants({
+              keyword: '',
+              rows: 20
+            });
+            
+            console.log(`✅ Loaded ${grantsData.length} grants from Grants.gov`);
+            setGrantsGovData(grantsData);
+            
+            grantsGovSources = grantsData.map(grant => ({
+              id: grant.id,
+              name: grant.agency || 'Unknown Agency',
+              type: 'government',
+              category: grant.category || 'Federal Grant',
+              deadline: grant.closeDate,
+              amount: `${grant.awardFloor || 'Varies'} - ${grant.awardCeiling || 'Varies'}`,
+              status: grant.status || 'active',
+              matchScore: grant.matchScore || 75,
+              website: grant.website,
+              contactEmail: grant.grantorContact || '',
+              eligibility: grant.eligibility || 'Various organizations eligible',
+              focusAreas: [grant.category].filter(Boolean),
+              notes: grant.description || 'Federal grant opportunity',
+              lastUpdated: grant.lastUpdated || new Date().toISOString().split('T')[0],
+              grants: [{
+                id: grant.id,
+                title: grant.title,
+                amount: grant.estimatedFunding,
+                deadline: grant.closeDate,
+                category: grant.category,
+                status: grant.status,
+                description: grant.description,
+                opportunityNumber: grant.opportunityNumber,
+                source: 'grants.gov'
+              }],
+              source: 'grants.gov',
+              opportunityNumber: grant.opportunityNumber,
+              imported: false
+            }));
+
+            console.log(`🎯 Created ${grantsGovSources.length} Grants.gov sources`);
+          } catch (error) {
+            console.error('❌ Error loading Grants.gov data:', error);
+            // Fallback to mock grants.gov data if API fails
+            grantsGovSources = [{
+              id: 'grants-gov-fallback',
+              name: 'Department of Education',
+              type: 'government',
+              category: 'Education',
+              deadline: '2024-06-30',
+              amount: '100,000 - 500,000',
+              status: 'active',
+              matchScore: 85,
+              website: 'https://www.ed.gov',
+              contactEmail: 'grants@ed.gov',
+              eligibility: 'Educational Institutions, Non-profits',
+              focusAreas: ['Education', 'Literacy', 'Student Success'],
+              notes: 'Federal education grants for innovative programs',
+              lastUpdated: new Date().toISOString().split('T')[0],
+              grants: [{
+                id: 'ed-1',
+                title: 'Innovative Education Programs Grant',
+                amount: '$100,000 - $500,000',
+                deadline: '2024-06-30',
+                category: 'Education',
+                status: 'active',
+                description: 'Funding for innovative educational programs'
+              }],
+              source: 'grants.gov',
+              imported: false
+            }];
+          }
+        } else {
+          console.log('⏸️ Grants.gov integration disabled - skipping API call');
+          setGrantsGovData([]);
+        }
+
+        // Load GrantWatch data only if integration is enabled
+        if (isIntegrationEnabled('grantWatch')) {
+          console.log('📊 Loading GrantWatch data...');
+          try {
+            const grantWatchGrants = await GrantWatchService.searchGrants({
+              keyword: '',
+              rows: 15
+            });
+            
+            console.log(`✅ Loaded ${grantWatchGrants.length} grants from GrantWatch`);
+            setGrantWatchData(grantWatchGrants);
+            
+            grantWatchSources = grantWatchGrants.map(grant => ({
+              id: grant.id,
+              name: grant.agency,
+              type: grant.category === 'Business' ? 'corporate' : 'private_foundation',
+              category: grant.category,
+              deadline: grant.deadline,
+              amount: `${grant.awardFloor ? `$${grant.awardFloor.toLocaleString()}` : 'Varies'} - ${grant.awardCeiling ? `$${grant.awardCeiling.toLocaleString()}` : 'Varies'}`,
+              status: grant.status,
+              matchScore: grant.matchScore,
+              website: grant.website,
+              contactEmail: grant.contactEmail,
+              eligibility: grant.eligibility,
+              focusAreas: [grant.category, grant.focusArea].filter(Boolean),
+              notes: grant.description,
+              lastUpdated: grant.lastUpdated,
+              grants: [{
+                id: grant.id,
+                title: grant.title,
+                amount: grant.estimatedFunding,
+                deadline: grant.deadline,
+                category: grant.category,
+                status: grant.status,
+                description: grant.description,
+                source: 'grantwatch',
+                region: grant.state
+              }],
+              source: 'grantwatch',
+              region: grant.state,
+              imported: false
+            }));
+          } catch (error) {
+            console.error('❌ Error loading GrantWatch data:', error);
+            // Fallback to mock grantwatch data if API fails
+            grantWatchSources = [{
+              id: 'grantwatch-fallback',
+              name: 'Community Foundation',
+              type: 'private_foundation',
+              category: 'Community Development',
+              deadline: '2024-05-15',
+              amount: '10,000 - 50,000',
+              status: 'active',
+              matchScore: 80,
+              website: 'https://www.communityfoundation.org',
+              contactEmail: 'grants@communityfoundation.org',
+              eligibility: 'Local non-profits, Community Organizations',
+              focusAreas: ['Community Development', 'Social Services'],
+              notes: 'Local community development grants',
+              lastUpdated: new Date().toISOString().split('T')[0],
+              grants: [{
+                id: 'cf-1',
+                title: 'Community Development Grant',
+                amount: '$10,000 - $50,000',
+                deadline: '2024-05-15',
+                category: 'Community',
+                status: 'active',
+                description: 'Funding for local community development projects'
+              }],
+              source: 'grantwatch',
+              imported: false
+            }];
+          }
+        } else {
+          console.log('⏸️ GrantWatch integration disabled - skipping API call');
+          setGrantWatchData([]);
+        }
+
+        // Build final sources array - ALWAYS include mock sources + enabled integration sources
+        let allSources = [...mockSources]; // Always include mock sources
+        
+        // Add API sources if their integrations are enabled
+        if (isIntegrationEnabled('grantsGov')) {
+          console.log('➕ Adding Grants.gov sources to final list');
+          allSources = [...allSources, ...grantsGovSources];
+        }
+        
+        if (isIntegrationEnabled('grantWatch')) {
+          console.log('➕ Adding GrantWatch sources to final list');
+          allSources = [...allSources, ...grantWatchSources];
+        }
+        
+        console.log('📊 Final sources breakdown:', {
+          total: allSources.length,
+          manual: mockSources.length,
+          grantsGov: grantsGovSources.length,
+          grantWatch: grantWatchSources.length,
+          grantsGovEnabled: isIntegrationEnabled('grantsGov'),
+          grantWatchEnabled: isIntegrationEnabled('grantWatch')
         });
         
-        console.log(`✅ Loaded ${grantsData.length} grants from Grants.gov`);
-        setGrantsGovData(grantsData);
-        
-        // Convert Grants.gov opportunities to source format
-        const grantsGovSources = grantsData.map(grant => ({
-          id: grant.id,
-          name: grant.agency,
-          type: 'government',
-          category: grant.category,
-          deadline: grant.closeDate,
-          amount: `${grant.awardFloor || 'Varies'} - ${grant.awardCeiling || 'Varies'}`,
-          status: grant.status,
-          matchScore: grant.matchScore,
-          website: grant.website,
-          contactEmail: grant.grantorContact || '',
-          eligibility: grant.eligibility,
-          focusAreas: [grant.category],
-          notes: grant.description,
-          lastUpdated: grant.lastUpdated,
-          grants: [{
-            id: grant.id,
-            title: grant.title,
-            amount: grant.estimatedFunding,
-            deadline: grant.closeDate,
-            category: grant.category,
-            status: grant.status,
-            description: grant.description,
-            opportunityNumber: grant.opportunityNumber,
-            source: 'grants.gov'
-          }],
-          source: 'grants.gov',
-          opportunityNumber: grant.opportunityNumber,
-          imported: false
-        }));
-
-        const allSources = [...mockSources, ...grantsGovSources];
         setSources(allSources);
         setLastUpdated(new Date().toISOString());
-        
-        console.log(`🎯 Total sources loaded: ${allSources.length} (${mockSources.length} manual + ${grantsGovSources.length} Grants.gov)`);
+        dataLoadedRef.current = true;
+        integrationsRef.current = { ...integrations };
+        initialLoadRef.current = true;
         
       } catch (error) {
         console.error('❌ Error loading data:', error);
+        // Fallback to mock data on error
         setSources(mockSources);
+        dataLoadedRef.current = true;
+        initialLoadRef.current = true;
       } finally {
         setLoading(false);
       }
     };
 
     loadAllData();
-  }, []);
+  }, [integrations]); // Only re-run when integrations actually change
 
   // Notify parent component when sources change
   useEffect(() => {
-    if (onSourcesUpdate && sources.length > 0) {
-      console.log('📤 Notifying parent of sources update:', sources.length, 'sources');
+    if (onSourcesUpdate && sources.length > 0 && dataLoadedRef.current) {
+      console.log('📢 Notifying parent of sources update:', sources.length);
       onSourcesUpdate(sources);
     }
   }, [sources, onSourcesUpdate]);
 
+  // Listen for integration updates from other components - but don't force immediate reload
+  useEffect(() => {
+    const handleIntegrationUpdate = (event) => {
+      console.log('📡 Sources component received integration update:', event.detail);
+      // Just update the ref, don't force immediate reload
+      // The main useEffect will handle the reload when integrations prop changes
+      integrationsRef.current = event.detail.allIntegrations || integrationsRef.current;
+    };
+
+    window.addEventListener('grantFlowIntegrationUpdate', handleIntegrationUpdate);
+    
+    return () => {
+      window.removeEventListener('grantFlowIntegrationUpdate', handleIntegrationUpdate);
+    };
+  }, []);
+
   const handleViewSource = (source) => {
-    console.log('👀 Viewing source:', source.name);
     setSelectedSource(source);
     setView('details');
   };
 
   const handleEditSource = (source) => {
-    console.log('✏️ Editing source:', source.name);
     setSelectedSource(source);
     setView('edit');
   };
 
   const handleCreateSource = () => {
-    console.log('➕ Creating new source');
     setSelectedSource(null);
     setView('create');
   };
 
   const handleSaveSource = (sourceData) => {
     if (sourceData.id) {
-      // Update existing source
-      console.log('💾 Updating source:', sourceData.name);
       setSources(prev => {
         const updatedSources = prev.map(source => 
           source.id === sourceData.id ? { 
@@ -311,7 +374,6 @@ const Sources = ({ onSourcesUpdate }) => {
           } : source
         );
         
-        // Notify parent of update
         if (onSourcesUpdate) {
           onSourcesUpdate(updatedSources);
         }
@@ -319,8 +381,6 @@ const Sources = ({ onSourcesUpdate }) => {
         return updatedSources;
       });
     } else {
-      // Create new source
-      console.log('💾 Creating new source:', sourceData.name);
       const newSource = {
         ...sourceData,
         id: Date.now().toString(),
@@ -331,7 +391,6 @@ const Sources = ({ onSourcesUpdate }) => {
       setSources(prev => {
         const updatedSources = [...prev, newSource];
         
-        // Notify parent of update
         if (onSourcesUpdate) {
           onSourcesUpdate(updatedSources);
         }
@@ -343,13 +402,9 @@ const Sources = ({ onSourcesUpdate }) => {
   };
 
   const handleDeleteSource = (sourceId) => {
-    const sourceToDelete = sources.find(source => source.id === sourceId);
-    console.log('🗑️ Deleting source:', sourceToDelete?.name);
-    
     setSources(prev => {
       const updatedSources = prev.filter(source => source.id !== sourceId);
       
-      // Notify parent of update
       if (onSourcesUpdate) {
         onSourcesUpdate(updatedSources);
       }
@@ -360,21 +415,31 @@ const Sources = ({ onSourcesUpdate }) => {
   };
 
   const handleBackToList = () => {
-    console.log('↩️ Returning to sources list');
     setView('list');
     setSelectedSource(null);
   };
 
   const handleImportFromGrantsGov = () => {
-    console.log('🌐 Opening Grants.gov integration');
+    if (!isIntegrationEnabled('grantsGov')) {
+      alert('Grants.gov integration is disabled. Please enable it in Integration Settings.');
+      return;
+    }
     setView('grants-gov');
+  };
+
+  const handleImportFromGrantWatch = () => {
+    if (!isIntegrationEnabled('grantWatch')) {
+      alert('GrantWatch integration is disabled. Please enable it in Integration Settings.');
+      return;
+    }
+    setView('grantwatch');
   };
 
   const handleImportGrants = (selectedGrants) => {
     console.log('📥 Importing grants from Grants.gov:', selectedGrants.length);
     
     const newSources = selectedGrants.map(grant => ({
-      id: `imported-${grant.opportunityNumber}`,
+      id: `imported-${grant.opportunityNumber || grant.id}`,
       name: grant.agency,
       type: 'government',
       category: grant.category,
@@ -407,7 +472,6 @@ const Sources = ({ onSourcesUpdate }) => {
     setSources(prev => {
       const updatedSources = [...prev, ...newSources];
       
-      // Notify parent of update
       if (onSourcesUpdate) {
         onSourcesUpdate(updatedSources);
       }
@@ -415,13 +479,59 @@ const Sources = ({ onSourcesUpdate }) => {
       return updatedSources;
     });
     setView('list');
-    
-    console.log(`✅ Imported ${newSources.length} grants from Grants.gov`);
+  };
+
+  const handleImportGrantWatchGrants = (selectedGrants) => {
+    const newSources = selectedGrants.map(grant => ({
+      id: `imported-gw-${grant.id}`,
+      name: grant.agency,
+      type: grant.category === 'Business' ? 'corporate' : 'private_foundation',
+      category: grant.category,
+      deadline: grant.deadline,
+      amount: `${grant.awardFloor ? `$${grant.awardFloor.toLocaleString()}` : 'Varies'} - ${grant.awardCeiling ? `$${grant.awardCeiling.toLocaleString()}` : 'Varies'}`,
+      status: grant.status,
+      matchScore: grant.matchScore,
+      website: grant.website,
+      contactEmail: grant.contactEmail,
+      eligibility: grant.eligibility,
+      focusAreas: [grant.category, grant.focusArea].filter(Boolean),
+      notes: grant.description,
+      lastUpdated: new Date().toISOString().split('T')[0],
+      grants: [{
+        id: grant.id,
+        title: grant.title,
+        amount: grant.estimatedFunding,
+        deadline: grant.deadline,
+        category: grant.category,
+        status: grant.status,
+        description: grant.description,
+        source: 'grantwatch',
+        region: grant.state
+      }],
+      source: 'grantwatch',
+      region: grant.state,
+      imported: true
+    }));
+
+    setSources(prev => {
+      const updatedSources = [...prev, ...newSources];
+      
+      if (onSourcesUpdate) {
+        onSourcesUpdate(updatedSources);
+      }
+      
+      return updatedSources;
+    });
+    setView('list');
   };
 
   const handleRefreshGrantsGov = async () => {
+    if (!isIntegrationEnabled('grantsGov')) {
+      alert('Grants.gov integration is disabled. Please enable it in Integration Settings.');
+      return;
+    }
+
     setLoading(true);
-    console.log('🔄 Refreshing Grants.gov data...');
     
     try {
       const grantsData = await GrantsGovService.searchGrants({
@@ -431,7 +541,6 @@ const Sources = ({ onSourcesUpdate }) => {
       
       setGrantsGovData(grantsData);
       
-      // Update existing Grants.gov sources
       setSources(prev => {
         const nonGrantsGovSources = prev.filter(source => source.source !== 'grants.gov');
         const updatedGrantsGovSources = grantsData.map(grant => ({
@@ -467,12 +576,10 @@ const Sources = ({ onSourcesUpdate }) => {
         const updatedSources = [...nonGrantsGovSources, ...updatedGrantsGovSources];
         setLastUpdated(new Date().toISOString());
         
-        // Notify parent of update
         if (onSourcesUpdate) {
           onSourcesUpdate(updatedSources);
         }
         
-        console.log(`✅ Refreshed ${updatedGrantsGovSources.length} Grants.gov opportunities`);
         return updatedSources;
       });
     } catch (error) {
@@ -482,20 +589,65 @@ const Sources = ({ onSourcesUpdate }) => {
     }
   };
 
-  const handleSyncAllSources = async () => {
+  const handleRefreshGrantWatch = async () => {
+    if (!isIntegrationEnabled('grantWatch')) {
+      alert('GrantWatch integration is disabled. Please enable it in Integration Settings.');
+      return;
+    }
+
     setLoading(true);
-    console.log('🔄 Syncing all grant sources...');
     
     try {
-      // Simulate syncing with multiple sources
-      await new Promise(resolve => setTimeout(resolve, 2000));
+      const grantsData = await GrantWatchService.searchGrants({
+        keyword: '',
+        rows: 15
+      });
       
-      // Refresh Grants.gov data
-      await handleRefreshGrantsGov();
+      setGrantWatchData(grantsData);
       
-      console.log('✅ All sources synced successfully');
+      setSources(prev => {
+        const nonGrantWatchSources = prev.filter(source => source.source !== 'grantwatch');
+        const updatedGrantWatchSources = grantsData.map(grant => ({
+          id: grant.id,
+          name: grant.agency,
+          type: grant.category === 'Business' ? 'corporate' : 'private_foundation',
+          category: grant.category,
+          deadline: grant.deadline,
+          amount: `${grant.awardFloor ? `$${grant.awardFloor.toLocaleString()}` : 'Varies'} - ${grant.awardCeiling ? `$${grant.awardCeiling.toLocaleString()}` : 'Varies'}`,
+          status: grant.status,
+          matchScore: grant.matchScore,
+          website: grant.website,
+          contactEmail: grant.contactEmail,
+          eligibility: grant.eligibility,
+          focusAreas: [grant.category, grant.focusArea].filter(Boolean),
+          notes: grant.description,
+          lastUpdated: new Date().toISOString().split('T')[0],
+          grants: [{
+            id: grant.id,
+            title: grant.title,
+            amount: grant.estimatedFunding,
+            deadline: grant.deadline,
+            category: grant.category,
+            status: grant.status,
+            description: grant.description,
+            source: 'grantwatch',
+            region: grant.state
+          }],
+          source: 'grantwatch',
+          region: grant.state
+        }));
+        
+        const updatedSources = [...nonGrantWatchSources, ...updatedGrantWatchSources];
+        setLastUpdated(new Date().toISOString());
+        
+        if (onSourcesUpdate) {
+          onSourcesUpdate(updatedSources);
+        }
+        
+        return updatedSources;
+      });
     } catch (error) {
-      console.error('❌ Error syncing sources:', error);
+      console.error('❌ Error refreshing GrantWatch data:', error);
     } finally {
       setLoading(false);
     }
@@ -503,76 +655,108 @@ const Sources = ({ onSourcesUpdate }) => {
 
   const filteredSources = sources.filter(source => {
     if (filter === 'all') return true;
-    return source.status === filter;
+    if (filter === 'government') return source.type === 'government';
+    if (filter === 'private_foundation') return source.type === 'private_foundation';
+    if (filter === 'corporate') return source.type === 'corporate';
+    if (filter === 'imported') return source.imported === true;
+    return true;
   });
 
-  // Calculate statistics
-  const stats = {
-    total: sources.length,
-    active: sources.filter(s => s.status === 'active').length,
-    upcoming: sources.filter(s => s.status === 'upcoming').length,
-    government: sources.filter(s => s.type === 'government').length,
-    foundation: sources.filter(s => s.type === 'private_foundation').length,
-    corporate: sources.filter(s => s.type === 'corporate').length,
-    grantsGov: sources.filter(s => s.source === 'grants.gov').length,
-    manual: sources.filter(s => !s.source || s.source === 'manual').length
+  // Render current view
+  const renderCurrentView = () => {
+    switch (view) {
+      case 'list':
+        return (
+          <SourceList
+            sources={filteredSources}
+            onViewSource={handleViewSource}
+            onEditSource={handleEditSource}
+            onDeleteSource={handleDeleteSource}
+            onCreateSource={handleCreateSource}
+            onImportFromGrantsGov={handleImportFromGrantsGov}
+            onImportFromGrantWatch={handleImportFromGrantWatch}
+            onRefreshGrantsGov={handleRefreshGrantsGov}
+            onRefreshGrantWatch={handleRefreshGrantWatch}
+            filter={filter}
+            onFilterChange={setFilter}
+            loading={loading}
+            lastUpdated={lastUpdated}
+            integrations={integrations}
+          />
+        );
+      
+      case 'details':
+        return (
+          <SourceDetails
+            source={selectedSource}
+            onBack={handleBackToList}
+            onEdit={handleEditSource}
+          />
+        );
+      
+      case 'create':
+      case 'edit':
+        return (
+          <SourceForm
+            source={selectedSource}
+            onSave={handleSaveSource}
+            onCancel={handleBackToList}
+            mode={view === 'create' ? 'create' : 'edit'}
+          />
+        );
+      
+      case 'grants-gov':
+        return (
+          <GrantsGovIntegration
+            onBack={handleBackToList}
+            onImportGrants={handleImportGrants}
+            initialData={grantsGovData}
+          />
+        );
+      
+      case 'grantwatch':
+        return (
+          <GrantWatchIntegration
+            onBack={handleBackToList}
+            onImportGrants={handleImportGrantWatchGrants}
+            initialData={grantWatchData}
+          />
+        );
+      
+      default:
+        return (
+          <SourceList
+            sources={filteredSources}
+            onViewSource={handleViewSource}
+            onEditSource={handleEditSource}
+            onDeleteSource={handleDeleteSource}
+            onCreateSource={handleCreateSource}
+            onImportFromGrantsGov={handleImportFromGrantsGov}
+            onImportFromGrantWatch={handleImportFromGrantWatch}
+            onRefreshGrantsGov={handleRefreshGrantsGov}
+            onRefreshGrantWatch={handleRefreshGrantWatch}
+            filter={filter}
+            onFilterChange={setFilter}
+            loading={loading}
+            lastUpdated={lastUpdated}
+            integrations={integrations}
+          />
+        );
+    }
   };
-
-  if (loading) {
-    return (
-      <div className="sources-loading">
-        <i className="fas fa-spinner fa-spin"></i>
-        <p>Loading grant sources...</p>
-        <div className="loading-details">
-          <small>Fetching latest opportunities from Grants.gov</small>
-        </div>
-      </div>
-    );
-  }
 
   return (
     <div className="sources-container">
-      {view === 'list' && (
-        <SourceList
-          sources={filteredSources}
-          onViewSource={handleViewSource}
-          onEditSource={handleEditSource}
-          onCreateSource={handleCreateSource}
-          onDeleteSource={handleDeleteSource}
-          onImportFromGrantsGov={handleImportFromGrantsGov}
-          onRefreshGrantsGov={handleRefreshGrantsGov}
-          onSyncAllSources={handleSyncAllSources}
-          filter={filter}
-          onFilterChange={setFilter}
-          lastUpdated={lastUpdated}
-          stats={stats}
-        />
-      )}
+      <div className="sources-header">
+        <h1>Grant Sources</h1>
+        <p className="sources-subtitle">
+          Manage and discover grant funding opportunities from various sources
+        </p>
+      </div>
 
-      {view === 'details' && selectedSource && (
-        <SourceDetails
-          source={selectedSource}
-          onBack={handleBackToList}
-          onEdit={() => setView('edit')}
-        />
-      )}
-
-      {(view === 'create' || view === 'edit') && (
-        <SourceForm
-          source={view === 'edit' ? selectedSource : null}
-          onSave={handleSaveSource}
-          onCancel={handleBackToList}
-          mode={view}
-        />
-      )}
-
-      {view === 'grants-gov' && (
-        <GrantsGovIntegration
-          grants={grantsGovData}
-          onImport={handleImportGrants}
-          onCancel={handleBackToList}
-        />
-      )}
+      <div className="sources-content">
+        {renderCurrentView()}
+      </div>
     </div>
   );
 };
