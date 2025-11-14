@@ -1,14 +1,10 @@
-/* Sources Container */
-.sources-container {
-  padding: 0;
-  background: #ffffff;
+/* SourceList Component Styles */
+.sources-list {
   min-height: 100vh;
-  max-width: 100%;
-  margin: 0 auto;
-  font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+  background: #f8fafc;
 }
 
-/* Sources Header */
+/* Header Section */
 .sources-header {
   background: #1a472a; /* Dark Green */
   border-bottom: 1px solid #2d5a27;
@@ -16,27 +12,73 @@
   box-shadow: 0 2px 8px rgba(26, 71, 42, 0.2);
 }
 
-.sources-header h1 {
+.header-content {
+  max-width: 100%;
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 20px;
+}
+
+.header-title h1 {
   font-size: 32px;
   font-weight: 700;
   color: #ffffff; /* White text on dark green */
   margin-bottom: 8px;
 }
 
-.sources-subtitle {
+.header-title p {
   color: #e8f5e8; /* Light green text */
   font-size: 16px;
-  margin: 0;
+  margin: 0 0 12px 0;
   font-weight: 500;
   opacity: 0.9;
 }
 
-/* Sources Content */
-.sources-content {
-  padding: 32px;
-  max-width: 1400px;
-  margin: 0 auto;
-  background: #f8fafc;
+.last-updated {
+  font-size: 12px;
+  color: #b8d4b8; /* Light green */
+  font-weight: 500;
+}
+
+.header-actions {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.integration-buttons {
+  display: flex;
+  gap: 8px;
+}
+
+.integration-btn {
+  padding: 10px 16px;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 6px;
+  background: rgba(255, 255, 255, 0.1);
+  color: white;
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  transition: all 0.3s ease;
+}
+
+.integration-btn:hover {
+  background: rgba(255, 255, 255, 0.2);
+  transform: translateY(-1px);
+}
+
+.integration-btn.grants-gov {
+  border-color: rgba(212, 175, 55, 0.3); /* Gold */
+}
+
+.integration-btn.grantwatch {
+  border-color: rgba(46, 139, 87, 0.3); /* Medium Green */
 }
 
 /* Stats Overview */
@@ -81,17 +123,17 @@
   color: #1a472a; /* Dark Green */
 }
 
+.stat-icon.success {
+  background: rgba(26, 71, 42, 0.1); /* Dark Green */
+  color: #1a472a; /* Dark Green */
+}
+
 .stat-icon.warning {
   background: rgba(212, 175, 55, 0.1); /* Gold */
   color: #d4af37; /* Gold */
 }
 
 .stat-icon.info {
-  background: rgba(59, 130, 246, 0.1);
-  color: #1a472a; /* Dark Green instead of blue */
-}
-
-.stat-icon.success {
   background: rgba(26, 71, 42, 0.1); /* Dark Green */
   color: #1a472a; /* Dark Green */
 }
@@ -107,10 +149,44 @@
 .stat-content p {
   color: #64748b; /* Gray text */
   font-size: 14px;
-  margin: 0;
+  margin: 0 0 8px 0;
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.5px;
+}
+
+.stat-breakdown {
+  display: flex;
+  gap: 12px;
+  margin-top: 8px;
+  font-size: 12px;
+}
+
+.breakdown-item {
+  display: none;
+  align-items: center;
+  gap: 4px;
+  color: #64748b; /* Gray text */
+  font-weight: 500;
+}
+
+.dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  display: inline-block;
+}
+
+.dot.manual {
+  background: #1a472a; /* Dark Green */
+}
+
+.dot.grants-gov {
+  background: #d4af37; /* Gold */
+}
+
+.dot.grantwatch {
+  background: #2e8b57; /* Medium Green */
 }
 
 /* Toolbar */
@@ -169,8 +245,9 @@
 
 .filters {
   display: flex;
-  gap: 16px;
+  gap: 12px;
   align-items: center;
+  flex-wrap: wrap;
 }
 
 .filter-select {
@@ -183,12 +260,39 @@
   font-weight: 500;
   transition: all 0.3s ease;
   color: #1e293b; /* Dark text */
+  cursor: pointer;
 }
 
 .filter-select:focus {
   outline: none;
   border-color: #1a472a; /* Dark Green */
   box-shadow: 0 0 0 2px rgba(26, 71, 42, 0.1);
+}
+
+.toolbar-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.sync-btn {
+  padding: 12px 20px;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  background: white;
+  color: #64748b;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  transition: all 0.3s ease;
+}
+
+.sync-btn:hover {
+  background: #f8fafc;
+  border-color: #1a472a;
+  color: #1a472a;
 }
 
 /* Sources Table */
@@ -255,6 +359,35 @@
   color: #1a472a; /* Dark Green */
 }
 
+.source-name-wrapper {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.opportunity-number {
+  font-size: 11px;
+  color: #64748b; /* Gray text */
+  font-family: 'Courier New', monospace;
+  background: #f8f9fa;
+  padding: 2px 6px;
+  border-radius: 4px;
+  display: inline-block;
+}
+
+.grantwatch-region {
+  font-size: 12px;
+  color: #64748b;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.grantwatch-region i {
+  color: #d4af37; /* Gold */
+  font-size: 10px;
+}
+
 .source-website {
   font-size: 14px;
   color: #64748b; /* Gray text */
@@ -268,6 +401,7 @@
   gap: 4px;
   font-size: 13px;
   font-weight: 500;
+  transition: color 0.3s ease;
 }
 
 .source-website a:hover {
@@ -292,6 +426,16 @@
   font-size: 14px;
   color: #64748b; /* Gray text */
   font-weight: 500;
+}
+
+.deadline-passed {
+  font-size: 10px;
+  color: #dc2626; /* Red */
+  margin-left: 6px;
+  font-weight: 600;
+  background: #fef2f2;
+  padding: 2px 6px;
+  border-radius: 4px;
 }
 
 /* Type and Status Badges */
@@ -327,7 +471,7 @@
 }
 
 .status-active {
-  background: #10b981; /* Green */
+  background: #1a472a; /* Dark Green */
 }
 
 .status-upcoming {
@@ -398,27 +542,50 @@
   background: #dc2626; /* Red */
 }
 
-.match-score-display {
-  padding: 8px 16px;
-  border-radius: 20px;
-  font-size: 12px;
+/* Source Badges */
+.source-badge {
+  font-size: 10px;
+  padding: 2px 8px;
+  border-radius: 12px;
   font-weight: 700;
+  margin-left: 8px;
   text-transform: uppercase;
-  letter-spacing: 0.5px;
   color: white; /* White text */
 }
 
-.match-score-display.high {
+.grants-gov-badge {
   background: #1a472a; /* Dark Green */
+  border: 1px solid #2d5a27;
 }
 
-.match-score-display.medium {
+.grantwatch-badge {
   background: #d4af37; /* Gold */
   color: #1e293b; /* Dark text on gold */
+  border: 1px solid #b8941f;
 }
 
-.match-score-display.low {
-  background: #dc2626; /* Red */
+.imported-badge {
+  background: #2e8b57; /* Medium Green */
+  border: 1px solid #1a472a;
+}
+
+/* Special Rows */
+.grants-gov-row {
+  background: #f0f9f0 !important; /* Light green background */
+  border-left: 3px solid #1a472a; /* Dark Green */
+}
+
+.grants-gov-row:hover {
+  background: #e8f5e8 !important; /* Lighter green on hover */
+}
+
+.grantwatch-row {
+  background: #fefce8 !important; /* Light gold background */
+  border-left: 3px solid #d4af37; /* Gold */
+}
+
+.grantwatch-row:hover {
+  background: #fef9c3 !important; /* Lighter gold on hover */
 }
 
 /* Action Buttons */
@@ -454,51 +621,15 @@
   color: white;
 }
 
-/* Buttons */
-.btn {
-  padding: 14px 24px;
-  border: none;
-  border-radius: 8px;
-  cursor: pointer;
-  font-size: 14px;
-  font-weight: 600;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  transition: all 0.3s ease;
-  text-decoration: none;
-}
-
-.btn-primary {
-  background: #1a472a; /* Dark Green */
-  color: white; /* White text */
-}
-
-.btn-primary:hover {
+.btn-icon.info:hover {
   background: #2e8b57; /* Medium Green */
-  transform: translateY(-1px);
-  box-shadow: 0 4px 12px rgba(26, 71, 42, 0.2);
-}
-
-.btn-outline {
-  background: white;
-  color: #64748b; /* Gray text */
-  border: 1px solid #e2e8f0;
-}
-
-.btn-outline:hover {
-  background: #f8fafc;
-  border-color: #1a472a; /* Dark Green */
-  color: #1a472a; /* Dark Green */
+  color: white;
 }
 
 /* Empty State */
 .no-sources {
   text-align: center;
   padding: 80px 20px;
-  background: white;
-  border-radius: 12px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
 }
 
 .empty-state {
@@ -526,13 +657,71 @@
   line-height: 1.5;
 }
 
+.empty-state-actions {
+  display: flex;
+  gap: 12px;
+  margin-top: 20px;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+
+/* Buttons */
+.btn {
+  padding: 14px 24px;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  transition: all 0.3s ease;
+  text-decoration: none;
+}
+
+.btn-primary {
+  background: #1a472a; /* Dark Green */
+  color: white; /* White text */
+}
+
+.btn-primary:hover {
+  background: #2e8b57; /* Medium Green */
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(26, 71, 42, 0.2);
+}
+
+.btn-secondary {
+  background: #d4af37; /* Gold */
+  color: #1e293b; /* Dark text */
+  border: 1px solid #b8941f;
+}
+
+.btn-secondary:hover {
+  background: #b8941f; /* Darker Gold */
+  color: #1e293b;
+  transform: translateY(-1px);
+}
+
+.btn-outline {
+  background: white;
+  color: #64748b; /* Gray text */
+  border: 1px solid #e2e8f0;
+}
+
+.btn-outline:hover {
+  background: #f8fafc;
+  border-color: #1a472a; /* Dark Green */
+  color: #1a472a; /* Dark Green */
+}
+
 /* Quick Actions */
 .quick-actions {
   background: white;
   padding: 24px;
   border-radius: 12px;
   border: 1px solid #e2e8f0;
-  margin-top: 24px;
+  margin-bottom: 32px;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
 }
 
@@ -544,139 +733,55 @@
 }
 
 .action-buttons-grid {
-  display: flex;
-  gap: 16px;
-  flex-wrap: wrap;
-}
-
-/* Loading State */
-.sources-loading {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  padding: 120px 20px;
-  background: white;
-  border-radius: 12px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
-}
-
-.sources-loading i {
-  font-size: 48px;
-  margin-bottom: 24px;
-  color: #1a472a; /* Dark Green */
-  animation: spin 2s linear infinite;
-}
-
-.sources-loading p {
-  color: #64748b; /* Gray text */
-  font-size: 16px;
-  font-weight: 600;
-}
-
-@keyframes spin {
-  0% { transform: rotate(0deg); }
-  100% { transform: rotate(360deg); }
-}
-
-/* Integration Badges */
-.last-updated {
-  font-size: 12px;
-  color: #ffffff; /* White text */
-  margin-top: 4px;
-}
-
-.source-badge {
-  font-size: 10px;
-  padding: 2px 8px;
-  border-radius: 12px;
-  font-weight: 700;
-  margin-left: 8px;
-  text-transform: uppercase;
-  color: white; /* White text */
-}
-
-.grants-gov-badge {
-  background: #1a472a; /* Dark Green */
-  border: 1px solid #2d5a27;
-}
-
-.grantwatch-badge {
-  background: #d4af37; /* Gold */
-  color: #1e293b; /* Dark text on gold */
-  border: 1px solid #b8941f;
-}
-
-.imported-badge {
-  background: #2e8b57; /* Medium Green */
-  border: 1px solid #1a472a;
-}
-
-.source-name-wrapper {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-}
-
-.opportunity-number {
-  font-size: 11px;
-  color: #64748b; /* Gray text */
-  font-family: 'Courier New', monospace;
-  background: #f8f9fa;
-  padding: 2px 6px;
-  border-radius: 4px;
-  display: inline-block;
-}
-
-.grants-gov-row {
-  background: #f0f9f0 !important; /* Light green background */
-  border-left: 3px solid #1a472a; /* Dark Green */
-}
-
-.grants-gov-row:hover {
-  background: #e8f5e8 !important; /* Lighter green on hover */
-}
-
-.grantwatch-row {
-  background: #fefce8 !important; /* Light gold background */
-  border-left: 3px solid #d4af37; /* Gold */
-}
-
-.grantwatch-row:hover {
-  background: #fef9c3 !important; /* Lighter gold on hover */
-}
-
-.deadline-passed {
-  font-size: 10px;
-  color: #dc2626; /* Red */
-  margin-left: 6px;
-  font-weight: 600;
-}
-
-.empty-state-actions {
-  display: flex;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
   gap: 12px;
-  margin-top: 20px;
-  justify-content: center;
+}
+
+/* Integration Banners */
+.integration-banners {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.integration-banner {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 20px;
+  border-radius: 12px;
+  border: 1px solid;
 }
 
 .grants-gov-banner {
   background: linear-gradient(135deg, #f0f9f0 0%, #e8f5e8 100%); /* Light greens */
-  border: 1px solid #1a472a; /* Dark Green */
-  border-radius: 12px;
-  padding: 20px;
-  margin-top: 30px;
+  border-color: #1a472a; /* Dark Green */
+}
+
+.grantwatch-banner {
+  background: linear-gradient(135deg, #fefce8 0%, #fef9c3 100%); /* Light golds */
+  border-color: #d4af37; /* Gold */
 }
 
 .banner-content {
   display: flex;
   align-items: center;
   gap: 20px;
+  width: 100%;
 }
 
 .banner-icon {
   font-size: 24px;
+  flex-shrink: 0;
+}
+
+.grants-gov-banner .banner-icon {
   color: #1a472a; /* Dark Green */
+}
+
+.grantwatch-banner .banner-icon {
+  color: #d4af37; /* Gold */
 }
 
 .banner-text {
@@ -685,108 +790,36 @@
 
 .banner-text h4 {
   margin: 0 0 8px 0;
-  color: #1a472a; /* Dark Green */
   font-size: 16px;
   font-weight: 600;
 }
 
+.grants-gov-banner .banner-text h4 {
+  color: #1a472a; /* Dark Green */
+}
+
+.grantwatch-banner .banner-text h4 {
+  color: #1e293b; /* Dark text */
+}
+
 .banner-text p {
   margin: 0;
-  color: #1a472a; /* Dark Green */
-  opacity: 0.9;
   font-size: 14px;
-}
-
-.banner-actions {
-  display: flex;
-  gap: 12px;
-}
-
-.action-buttons-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-  gap: 12px;
-}
-
-.sources-loading .loading-details {
-  margin-top: 10px;
-  color: #64748b; /* Gray text */
-}
-
-/* Error Handling */
-.error-banner {
-  background: linear-gradient(135deg, #dc2626, #b91c1c); /* Red gradient */
-  color: white; /* White text */
-  padding: 12px 20px;
-  border-radius: 8px;
-  margin-bottom: 20px;
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  animation: slideInDown 0.3s ease;
-}
-
-.error-banner i {
-  font-size: 1.2em;
-}
-
-.close-error {
-  background: none;
-  border: none;
-  color: white;
-  cursor: pointer;
-  margin-left: auto;
-  padding: 4px 8px;
-  border-radius: 4px;
-  transition: background-color 0.2s;
-}
-
-.close-error:hover {
-  background: rgba(255, 255, 255, 0.2);
-}
-
-/* Integration Banner */
-.integration-banner {
-  display: flex;
-  align-items: center;
-  gap: 16px;
-  padding: 20px;
-  border-radius: 12px;
-  margin-bottom: 32px;
-  border: 1px solid;
-}
-
-.integration-banner.warning {
-  background: #fefce8; /* Light gold */
-  border-color: #d4af37; /* Gold */
-  color: #1e293b; /* Dark text */
-}
-
-.banner-icon {
-  font-size: 1.5rem;
-  color: #d4af37; /* Gold */
-}
-
-.banner-content {
-  flex: 1;
-}
-
-.banner-content h4 {
-  margin: 0 0 4px 0;
-  font-weight: 600;
-  color: #1e293b; /* Dark text */
-}
-
-.banner-content p {
-  margin: 0;
-  font-size: 0.9rem;
   opacity: 0.9;
+}
+
+.grants-gov-banner .banner-text p {
+  color: #1a472a; /* Dark Green */
+}
+
+.grantwatch-banner .banner-text p {
   color: #1e293b; /* Dark text */
 }
 
 .banner-actions {
   display: flex;
   gap: 8px;
+  flex-shrink: 0;
 }
 
 /* Responsive Design */
@@ -801,12 +834,20 @@
     padding: 20px;
   }
   
-  .sources-header h1 {
-    font-size: 28px;
+  .header-content {
+    flex-direction: column;
+    gap: 16px;
+    align-items: stretch;
   }
   
-  .sources-content {
-    padding: 16px;
+  .header-actions {
+    justify-content: center;
+    width: 100%;
+  }
+  
+  .integration-buttons {
+    width: 100%;
+    justify-content: center;
   }
   
   .sources-toolbar {
@@ -822,6 +863,12 @@
   
   .filters {
     justify-content: space-between;
+    width: 100%;
+  }
+  
+  .filter-select {
+    flex: 1;
+    min-width: 120px;
   }
   
   .sources-table-container {
@@ -853,6 +900,22 @@
   .action-buttons-grid {
     grid-template-columns: 1fr;
   }
+  
+  .banner-content {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 12px;
+  }
+  
+  .banner-actions {
+    width: 100%;
+    justify-content: stretch;
+  }
+  
+  .banner-actions .btn {
+    flex: 1;
+    justify-content: center;
+  }
 }
 
 @media (max-width: 480px) {
@@ -864,13 +927,18 @@
     padding: 20px;
   }
   
-  .sources-header h1 {
+  .header-title h1 {
     font-size: 24px;
   }
   
   .btn {
-    padding: 14px 16px;
+    padding: 12px 16px;
     font-size: 13px;
+  }
+  
+  .integration-btn {
+    padding: 8px 12px;
+    font-size: 12px;
   }
 }
 
@@ -878,18 +946,9 @@
 .btn:focus,
 .btn-icon:focus,
 .search-box input:focus,
-.filter-select:focus {
+.filter-select:focus,
+.sync-btn:focus,
+.integration-btn:focus {
   outline: 2px solid #1a472a; /* Dark Green */
   outline-offset: 2px;
-}
-
-@keyframes slideInDown {
-  from {
-    transform: translateY(-20px);
-    opacity: 0;
-  }
-  to {
-    transform: translateY(0);
-    opacity: 1;
-  }
 }

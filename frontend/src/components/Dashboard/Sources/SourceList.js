@@ -1,4 +1,5 @@
 import React from 'react';
+import './SourceList.css';
 
 const SourceList = ({
   sources,
@@ -7,10 +8,14 @@ const SourceList = ({
   onCreateSource,
   onDeleteSource,
   onImportFromGrantsGov,
+  onImportFromGrantWatch,
   onRefreshGrantsGov,
+  onRefreshGrantWatch,
+  onSyncAllSources,
   filter,
   onFilterChange,
-  lastUpdated
+  lastUpdated,
+  stats
 }) => {
   const getTypeBadgeClass = (type) => {
     switch (type) {
@@ -56,18 +61,22 @@ const SourceList = ({
     if (source.source === 'grants.gov') {
       return <span className="source-badge grants-gov-badge">Grants.gov</span>;
     }
+    if (source.source === 'grantwatch') {
+      return <span className="source-badge grantwatch-badge">GrantWatch</span>;
+    }
     if (source.imported) {
       return <span className="source-badge imported-badge">Imported</span>;
     }
     return null;
   };
 
-  // Calculate stats
+  // Calculate stats for display
   const totalSources = sources.length;
   const activeSources = sources.filter(s => s.status === 'active').length;
   const upcomingSources = sources.filter(s => s.status === 'upcoming').length;
   const highMatchSources = sources.filter(s => s.matchScore >= 80).length;
   const grantsGovSources = sources.filter(s => s.source === 'grants.gov').length;
+  const grantwatchSources = sources.filter(s => s.source === 'grantwatch').length;
   const manualSources = sources.filter(s => !s.source || s.source === 'manual').length;
 
   return (
@@ -77,7 +86,7 @@ const SourceList = ({
         <div className="header-content">
           <div className="header-title">
             <h1>Grant Sources</h1>
-            <p>Discover and manage funding opportunities</p>
+            <p>Discover and manage funding opportunities from multiple platforms</p>
             {lastUpdated && (
               <div className="last-updated">
                 Last updated: {new Date(lastUpdated).toLocaleString()}
@@ -85,14 +94,24 @@ const SourceList = ({
             )}
           </div>
           <div className="header-actions">
-            <button 
-              className="btn btn-secondary"
-              onClick={onImportFromGrantsGov}
-              title="Import from Grants.gov"
-            >
-              <i className="fas fa-database"></i>
-              Import from Grants.gov
-            </button>
+            <div className="integration-buttons">
+              <button 
+                className="btn btn-secondary integration-btn grants-gov"
+                onClick={onImportFromGrantsGov}
+                title="Import from Grants.gov"
+              >
+                <i className="fas fa-government-flag"></i>
+                Grants.gov
+              </button>
+              <button 
+                className="btn btn-secondary integration-btn grantwatch"
+                onClick={onImportFromGrantWatch}
+                title="Import from GrantWatch"
+              >
+                <i className="fas fa-database"></i>
+                GrantWatch
+              </button>
+            </div>
             <button 
               className="btn btn-primary"
               onClick={onCreateSource}
@@ -122,6 +141,10 @@ const SourceList = ({
                 <span className="breakdown-item">
                   <span className="dot grants-gov"></span>
                   {grantsGovSources} Grants.gov
+                </span>
+                <span className="breakdown-item">
+                  <span className="dot grantwatch"></span>
+                  {grantwatchSources} GrantWatch
                 </span>
               </div>
             </div>
@@ -201,7 +224,19 @@ const SourceList = ({
               <option value="">All Sources</option>
               <option value="manual">Manual Entries</option>
               <option value="grants.gov">Grants.gov</option>
+              <option value="grantwatch">GrantWatch</option>
             </select>
+          </div>
+
+          <div className="toolbar-actions">
+            <button 
+              className="btn btn-outline sync-btn"
+              onClick={onSyncAllSources}
+              title="Sync all data sources"
+            >
+              <i className="fas fa-sync-alt"></i>
+              Sync All
+            </button>
           </div>
         </div>
 
@@ -227,7 +262,7 @@ const SourceList = ({
                     <div className="empty-state">
                       <i className="fas fa-inbox"></i>
                       <h3>No Grant Sources Found</h3>
-                      <p>Get started by adding your first grant source or importing from Grants.gov.</p>
+                      <p>Get started by adding your first grant source or importing from external platforms.</p>
                       <div className="empty-state-actions">
                         <button 
                           className="btn btn-primary"
@@ -240,8 +275,15 @@ const SourceList = ({
                           className="btn btn-secondary"
                           onClick={onImportFromGrantsGov}
                         >
-                          <i className="fas fa-database"></i>
+                          <i className="fas fa-government-flag"></i>
                           Import from Grants.gov
+                        </button>
+                        <button 
+                          className="btn btn-secondary"
+                          onClick={onImportFromGrantWatch}
+                        >
+                          <i className="fas fa-database"></i>
+                          Import from GrantWatch
                         </button>
                       </div>
                     </div>
@@ -249,7 +291,7 @@ const SourceList = ({
                 </tr>
               ) : (
                 sources.map(source => (
-                  <tr key={source.id} className={`source-row ${source.source === 'grants.gov' ? 'grants-gov-row' : ''}`}>
+                  <tr key={source.id} className={`source-row ${source.source === 'grants.gov' ? 'grants-gov-row' : source.source === 'grantwatch' ? 'grantwatch-row' : ''}`}>
                     <td>
                       <div className="source-info">
                         <div className="source-name-wrapper">
@@ -263,6 +305,12 @@ const SourceList = ({
                           {source.opportunityNumber && (
                             <div className="opportunity-number">
                               #{source.opportunityNumber}
+                            </div>
+                          )}
+                          {source.region && source.source === 'grantwatch' && (
+                            <div className="grantwatch-region">
+                              <i className="fas fa-map-marker-alt"></i>
+                              {source.region}
                             </div>
                           )}
                         </div>
@@ -322,7 +370,7 @@ const SourceList = ({
                         >
                           <i className="fas fa-eye"></i>
                         </button>
-                        {source.source !== 'grants.gov' && (
+                        {(source.source !== 'grants.gov' && source.source !== 'grantwatch') && (
                           <>
                             <button 
                               className="btn-icon"
@@ -349,6 +397,15 @@ const SourceList = ({
                             <i className="fas fa-external-link-alt"></i>
                           </button>
                         )}
+                        {source.source === 'grantwatch' && (
+                          <button 
+                            className="btn-icon info"
+                            onClick={() => window.open(source.website, '_blank')}
+                            title="View on GrantWatch"
+                          >
+                            <i className="fas fa-external-link-alt"></i>
+                          </button>
+                        )}
                       </div>
                     </td>
                   </tr>
@@ -366,15 +423,36 @@ const SourceList = ({
               className="btn btn-outline"
               onClick={onImportFromGrantsGov}
             >
-              <i className="fas fa-database"></i>
+              <i className="fas fa-government-flag"></i>
               Import from Grants.gov
+            </button>
+            <button 
+              className="btn btn-outline"
+              onClick={onImportFromGrantWatch}
+            >
+              <i className="fas fa-database"></i>
+              Import from GrantWatch
             </button>
             <button 
               className="btn btn-outline"
               onClick={onRefreshGrantsGov}
             >
               <i className="fas fa-sync"></i>
-              Refresh Grants.gov Data
+              Refresh Grants.gov
+            </button>
+            <button 
+              className="btn btn-outline"
+              onClick={onRefreshGrantWatch}
+            >
+              <i className="fas fa-sync"></i>
+              Refresh GrantWatch
+            </button>
+            <button 
+              className="btn btn-outline"
+              onClick={onSyncAllSources}
+            >
+              <i className="fas fa-sync-alt"></i>
+              Sync All Sources
             </button>
             <button className="btn btn-outline">
               <i className="fas fa-download"></i>
@@ -387,39 +465,74 @@ const SourceList = ({
           </div>
         </div>
 
-        {/* Grants.gov Info Banner */}
-        {grantsGovSources > 0 && (
-          <div className="grants-gov-banner">
-            <div className="banner-content">
-              <div className="banner-icon">
-                <i className="fas fa-database"></i>
-              </div>
-              <div className="banner-text">
-                <h4>Grants.gov Integration Active</h4>
-                <p>
-                  You have {grantsGovSources} federal grant opportunities from Grants.gov. 
-                  These are automatically updated and provide real-time federal funding information.
-                </p>
-              </div>
-              <div className="banner-actions">
-                <button 
-                  className="btn btn-outline"
-                  onClick={onImportFromGrantsGov}
-                >
-                  <i className="fas fa-plus"></i>
-                  Import More
-                </button>
-                <button 
-                  className="btn btn-outline"
-                  onClick={onRefreshGrantsGov}
-                >
-                  <i className="fas fa-sync"></i>
-                  Refresh Data
-                </button>
+        {/* Integration Banners */}
+        <div className="integration-banners">
+          {grantsGovSources > 0 && (
+            <div className="integration-banner grants-gov-banner">
+              <div className="banner-content">
+                <div className="banner-icon">
+                  <i className="fas fa-government-flag"></i>
+                </div>
+                <div className="banner-text">
+                  <h4>Grants.gov Integration Active</h4>
+                  <p>
+                    You have {grantsGovSources} federal grant opportunities from Grants.gov. 
+                    These are automatically updated and provide real-time federal funding information.
+                  </p>
+                </div>
+                <div className="banner-actions">
+                  <button 
+                    className="btn btn-outline"
+                    onClick={onImportFromGrantsGov}
+                  >
+                    <i className="fas fa-plus"></i>
+                    Import More
+                  </button>
+                  <button 
+                    className="btn btn-outline"
+                    onClick={onRefreshGrantsGov}
+                  >
+                    <i className="fas fa-sync"></i>
+                    Refresh Data
+                  </button>
+                </div>
               </div>
             </div>
-          </div>
-        )}
+          )}
+
+          {grantwatchSources > 0 && (
+            <div className="integration-banner grantwatch-banner">
+              <div className="banner-content">
+                <div className="banner-icon">
+                  <i className="fas fa-database"></i>
+                </div>
+                <div className="banner-text">
+                  <h4>GrantWatch Integration Active</h4>
+                  <p>
+                    You have {grantwatchSources} grant opportunities from GrantWatch. 
+                    These include foundation, corporate, and state-level funding opportunities.
+                  </p>
+                </div>
+                <div className="banner-actions">
+                  <button 
+                    className="btn btn-outline"
+                    onClick={onImportFromGrantWatch}
+                  >
+                    <i className="fas fa-plus"></i>
+                    Import More
+                  </button>
+                  <button 
+                    className="btn btn-outline"
+                    onClick={onRefreshGrantWatch}
+                  >
+                    <i className="fas fa-sync"></i>
+                    Refresh Data
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
+        </div>
       </div>
     </div>
   );

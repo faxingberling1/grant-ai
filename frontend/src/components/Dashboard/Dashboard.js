@@ -11,6 +11,8 @@ import Sources from './Sources/Sources';
 import Matching from './Matching/Matching';
 import AIWriting from './AIWriting/AIWriting';
 import Reports from './Reports/Reports';
+import Profile from './Profile/Profile';
+import Settings from './Settings/Settings';
 
 import './Dashboard.css';
 
@@ -97,124 +99,9 @@ const Dashboard = () => {
       case 'reports':
         return <Reports />;
       case 'profile':
-        return (
-          <div className="page-content">
-            <div className="page-header">
-              <h1>My Profile</h1>
-              <p>Manage your account settings and preferences</p>
-            </div>
-            <div className="profile-content">
-              <div className="profile-card">
-                <div className="profile-header">
-                  <div className="profile-avatar">
-                    <img 
-                      src={currentUser?.photoURL || `https://ui-avatars.com/api/?name=${encodeURIComponent(currentUser?.name || 'User')}&background=667eea&color=fff`} 
-                      alt={currentUser?.name || 'User'} 
-                    />
-                  </div>
-                  <div className="profile-info">
-                    <h2>{currentUser?.name || 'User'}</h2>
-                    <p>{currentUser?.email || 'No email provided'}</p>
-                    <span className="profile-role">Grant Manager</span>
-                  </div>
-                </div>
-                <div className="profile-stats">
-                  <div className="profile-stat">
-                    <span className="stat-number">24</span>
-                    <span className="stat-label">Active Grants</span>
-                  </div>
-                  <div className="profile-stat">
-                    <span className="stat-number">18</span>
-                    <span className="stat-label">Submitted</span>
-                  </div>
-                  <div className="profile-stat">
-                    <span className="stat-number">$245K</span>
-                    <span className="stat-label">Secured</span>
-                  </div>
-                </div>
-              </div>
-              
-              <div className="profile-sections">
-                <div className="profile-section">
-                  <h3>Account Settings</h3>
-                  <div className="setting-item">
-                    <label>Email Notifications</label>
-                    <div className="toggle-switch">
-                      <input type="checkbox" defaultChecked />
-                      <span className="toggle-slider"></span>
-                    </div>
-                  </div>
-                  <div className="setting-item">
-                    <label>Weekly Reports</label>
-                    <div className="toggle-switch">
-                      <input type="checkbox" defaultChecked />
-                      <span className="toggle-slider"></span>
-                    </div>
-                  </div>
-                </div>
-                
-                <div className="profile-section">
-                  <h3>Preferences</h3>
-                  <div className="preference-item">
-                    <label>Default Grant View</label>
-                    <select defaultValue="grid">
-                      <option value="grid">Grid View</option>
-                      <option value="list">List View</option>
-                    </select>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        );
+        return <Profile />;
       case 'settings':
-        return (
-          <div className="page-content">
-            <div className="page-header">
-              <h1>Settings</h1>
-              <p>Configure your application preferences</p>
-            </div>
-            <div className="settings-content">
-              <div className="settings-section">
-                <h3>Application Settings</h3>
-                <div className="setting-group">
-                  <label>Theme</label>
-                  <select defaultValue="light">
-                    <option value="light">Light</option>
-                    <option value="dark">Dark</option>
-                    <option value="auto">Auto</option>
-                  </select>
-                </div>
-                <div className="setting-group">
-                  <label>Language</label>
-                  <select defaultValue="en">
-                    <option value="en">English</option>
-                    <option value="es">Spanish</option>
-                    <option value="fr">French</option>
-                  </select>
-                </div>
-              </div>
-              
-              <div className="settings-section">
-                <h3>Notification Preferences</h3>
-                <div className="setting-item">
-                  <label>Grant Deadline Alerts</label>
-                  <div className="toggle-switch">
-                    <input type="checkbox" defaultChecked />
-                    <span className="toggle-slider"></span>
-                  </div>
-                </div>
-                <div className="setting-item">
-                  <label>New Grant Opportunities</label>
-                  <div className="toggle-switch">
-                    <input type="checkbox" defaultChecked />
-                    <span className="toggle-slider"></span>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        );
+        return <Settings />;
       case 'help':
         return (
           <div className="page-content">

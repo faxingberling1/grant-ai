@@ -1,0 +1,529 @@
+/* Disable Confirmation Modal Styles */
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.6);
+  backdrop-filter: blur(4px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 10000;
+  padding: 20px;
+  animation: overlayFadeIn 0.3s ease-out;
+}
+
+@keyframes overlayFadeIn {
+  from {
+    opacity: 0;
+    backdrop-filter: blur(0px);
+  }
+  to {
+    opacity: 1;
+    backdrop-filter: blur(4px);
+  }
+}
+
+.disable-confirmation-modal {
+  background: white;
+  border-radius: 20px;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+  max-width: 500px;
+  width: 100%;
+  position: relative;
+  animation: modalSlideIn 0.3s ease-out;
+  border: 2px solid #e2e8f0;
+  overflow: hidden;
+}
+
+@keyframes modalSlideIn {
+  from {
+    opacity: 0;
+    transform: translateY(-20px) scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+/* Header */
+.modal-header {
+  background: linear-gradient(135deg, #2d5a27 0%, #4a7c59 100%);
+  padding: 32px;
+  color: white;
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  position: relative;
+  overflow: hidden;
+}
+
+.modal-header::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 100" fill="rgba(255,255,255,0.1)"><polygon points="0,0 1000,50 1000,100 0,100"/></svg>');
+  background-size: cover;
+}
+
+.modal-icon {
+  font-size: 2.5rem;
+  color: #d4af37;
+  z-index: 2;
+  flex-shrink: 0;
+}
+
+.modal-title {
+  z-index: 2;
+}
+
+.modal-title h3 {
+  margin: 0 0 8px 0;
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: white;
+}
+
+.modal-title p {
+  margin: 0;
+  opacity: 0.9;
+  color: #e2e8f0;
+  font-size: 1rem;
+}
+
+/* Body */
+.modal-body {
+  padding: 32px;
+  background: #f8fafc;
+}
+
+/* Warning Section */
+.warning-section {
+  display: flex;
+  gap: 20px;
+  margin-bottom: 24px;
+}
+
+.warning-icon {
+  width: 48px;
+  height: 48px;
+  background: #fffbeb;
+  border: 2px solid #d97706;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #d97706;
+  font-size: 1.5rem;
+  flex-shrink: 0;
+}
+
+.warning-content h4 {
+  margin: 0 0 12px 0;
+  color: #2d5a27;
+  font-size: 1.2rem;
+  font-weight: 600;
+}
+
+.warning-content p {
+  margin: 0 0 16px 0;
+  color: #64748b;
+  font-size: 0.95rem;
+  line-height: 1.5;
+}
+
+.consequences-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.consequences-list li {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  color: #64748b;
+  font-size: 0.9rem;
+  line-height: 1.4;
+}
+
+.consequences-list li i {
+  color: #d97706;
+  font-size: 0.8rem;
+  flex-shrink: 0;
+}
+
+/* Data Warning */
+.data-warning {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 16px;
+  background: #f0f9f0;
+  border: 1px solid #2d5a27;
+  border-radius: 10px;
+  color: #2d5a27;
+  font-size: 0.9rem;
+  font-weight: 500;
+}
+
+.data-warning i {
+  font-size: 1.1rem;
+  flex-shrink: 0;
+}
+
+/* Cooldown Section */
+.cooldown-section {
+  display: flex;
+  gap: 20px;
+  align-items: center;
+}
+
+.cooldown-icon {
+  width: 64px;
+  height: 64px;
+  background: linear-gradient(135deg, #2d5a27, #4a7c59);
+  border-radius: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-size: 1.75rem;
+  flex-shrink: 0;
+  animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+  0%, 100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.05);
+  }
+}
+
+.cooldown-content {
+  flex: 1;
+}
+
+.cooldown-content h4 {
+  margin: 0 0 8px 0;
+  color: #2d5a27;
+  font-size: 1.2rem;
+  font-weight: 600;
+}
+
+.cooldown-content p {
+  margin: 0 0 20px 0;
+  color: #64748b;
+  font-size: 0.95rem;
+  line-height: 1.5;
+}
+
+.cooldown-timer {
+  background: white;
+  border: 2px solid #e2e8f0;
+  border-radius: 12px;
+  padding: 20px;
+}
+
+.timer-display {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+}
+
+.timer-label {
+  color: #64748b;
+  font-size: 0.9rem;
+  font-weight: 500;
+}
+
+.timer-value {
+  color: #2d5a27;
+  font-size: 1.5rem;
+  font-weight: 700;
+  font-family: 'Courier New', monospace;
+}
+
+.progress-bar {
+  height: 8px;
+  background: #e2e8f0;
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.progress-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #2d5a27, #4a7c59);
+  border-radius: 4px;
+  transition: width 1s linear;
+}
+
+/* Footer */
+.modal-footer {
+  padding: 24px 32px;
+  background: white;
+  border-top: 1px solid #e2e8f0;
+  display: flex;
+  gap: 12px;
+  justify-content: flex-end;
+}
+
+.modal-footer .btn {
+  padding: 12px 24px;
+  border-radius: 10px;
+  font-weight: 600;
+  font-size: 0.95rem;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  transition: all 0.3s ease;
+}
+
+.btn-warning {
+  background: #d97706;
+  color: white;
+  border: none;
+}
+
+.btn-warning:hover {
+  background: #b45309;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(217, 119, 6, 0.3);
+}
+
+.btn-outline {
+  background: transparent;
+  color: #64748b;
+  border: 2px solid #e2e8f0;
+}
+
+.btn-outline:hover {
+  background: #f8fafc;
+  border-color: #cbd5e1;
+  color: #374151;
+}
+
+.btn-primary {
+  background: #2d5a27;
+  color: white;
+  border: none;
+}
+
+.btn-primary:hover {
+  background: #23421f;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(45, 90, 39, 0.3);
+}
+
+/* Close Button */
+.modal-close-btn {
+  position: absolute;
+  top: 20px;
+  right: 20px;
+  width: 40px;
+  height: 40px;
+  background: rgba(255, 255, 255, 0.2);
+  border: none;
+  border-radius: 50%;
+  color: white;
+  font-size: 1.1rem;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.3s ease;
+  z-index: 3;
+}
+
+.modal-close-btn:hover {
+  background: rgba(255, 255, 255, 0.3);
+  transform: rotate(90deg);
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .modal-overlay {
+    padding: 16px;
+  }
+  
+  .disable-confirmation-modal {
+    max-width: 100%;
+  }
+  
+  .modal-header {
+    padding: 24px;
+    flex-direction: column;
+    text-align: center;
+    gap: 16px;
+  }
+  
+  .modal-body {
+    padding: 24px;
+  }
+  
+  .warning-section {
+    flex-direction: column;
+    text-align: center;
+  }
+  
+  .cooldown-section {
+    flex-direction: column;
+    text-align: center;
+  }
+  
+  .modal-footer {
+    padding: 20px 24px;
+    flex-direction: column;
+  }
+  
+  .modal-footer .btn {
+    width: 100%;
+    justify-content: center;
+  }
+  
+  .timer-display {
+    flex-direction: column;
+    gap: 8px;
+    text-align: center;
+  }
+}
+
+@media (max-width: 480px) {
+  .modal-header {
+    padding: 20px;
+  }
+  
+  .modal-body {
+    padding: 20px;
+  }
+  
+  .modal-footer {
+    padding: 16px 20px;
+  }
+  
+  .modal-close-btn {
+    top: 12px;
+    right: 12px;
+    width: 36px;
+    height: 36px;
+  }
+}
+
+/* Reduced Motion Support */
+@media (prefers-reduced-motion: reduce) {
+  .disable-confirmation-modal {
+    animation: none;
+  }
+  
+  .modal-close-btn:hover {
+    transform: none;
+  }
+  
+  .cooldown-icon {
+    animation: none;
+  }
+  
+  .progress-fill {
+    transition: none;
+  }
+  
+  .btn:hover {
+    transform: none;
+  }
+}
+
+/* Timer Note */
+.timer-note {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px;
+  background: #f0f9f0;
+  border: 1px solid #2d5a27;
+  border-radius: 8px;
+  color: #2d5a27;
+  font-size: 0.85rem;
+  margin-top: 16px;
+  font-weight: 500;
+}
+
+.timer-note i {
+  flex-shrink: 0;
+}
+
+/* Disabled button state */
+.btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: none !important;
+}
+
+.btn:disabled:hover {
+  transform: none !important;
+  box-shadow: none !important;
+}
+
+/* Enhanced progress bar animation */
+.progress-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #2d5a27, #4a7c59);
+  border-radius: 4px;
+  transition: width 1s linear;
+  position: relative;
+  overflow: hidden;
+}
+
+.progress-fill::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.4), transparent);
+  animation: shimmer 2s infinite;
+}
+
+@keyframes shimmer {
+  0% {
+    left: -100%;
+  }
+  100% {
+    left: 100%;
+  }
+}
+
+/* Add this to your DisableConfirmationModal.css */
+.cooldown-note {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  margin-top: 16px;
+  padding: 12px;
+  background: #f8f9fa;
+  border-radius: 6px;
+  border-left: 4px solid #17a2b8;
+}
+
+.cooldown-note i {
+  color: #17a2b8;
+  margin-top: 2px;
+}
+
+.cooldown-note span {
+  font-size: 14px;
+  color: #495057;
+  line-height: 1.4;
+}

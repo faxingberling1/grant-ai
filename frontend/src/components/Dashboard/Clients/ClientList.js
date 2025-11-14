@@ -19,7 +19,7 @@ const ClientList = ({
   if (loading) {
     return (
       <div className="clients-loading">
-        <i className="fas fa-spinner"></i>
+        <i className="fas fa-spinner fa-spin"></i>
         <p>Loading clients...</p>
       </div>
     );
@@ -38,15 +38,37 @@ const ClientList = ({
     }
   };
 
+  const getOrganizationTypeIcon = (type) => {
+    const icons = {
+      'Nonprofit 501(c)(3)': 'fas fa-hands-helping',
+      'Nonprofit 501(c)(4)': 'fas fa-hand-holding-heart',
+      'Nonprofit 501(c)(6)': 'fas fa-building',
+      'Government Agency': 'fas fa-landmark',
+      'Educational Institution': 'fas fa-graduation-cap',
+      'For-Profit Corporation': 'fas fa-briefcase',
+      'Small Business': 'fas fa-store',
+      'Startup': 'fas fa-rocket',
+      'Community Organization': 'fas fa-users',
+      'Religious Organization': 'fas fa-church',
+      'Foundation': 'fas fa-gem',
+      'Other': 'fas fa-building'
+    };
+    return icons[type] || 'fas fa-building';
+  };
+
+  // Helper function to safely get values from new or old structure
+  const getClientValue = (client, newField, oldField) => {
+    return client[newField] || client[oldField] || '';
+  };
+
   return (
     <div className="clients-list">
       <div className="clients-header">
         <div className="clients-header-content">
           <div className="clients-header-title">
-            <h1>Client Management</h1>
+            <h1><i className="fas fa-users"></i> Client Management</h1>
             <p>Manage your client portfolio and communications</p>
           </div>
-          {/* Header actions removed - now in navigation */}
         </div>
       </div>
 
@@ -56,7 +78,7 @@ const ClientList = ({
             <i className="fas fa-search"></i>
             <input
               type="text"
-              placeholder="Search clients by name, organization, or email..."
+              placeholder="Search clients by name, organization, email, or tags..."
               value={searchTerm}
               onChange={(e) => onSearchChange(e.target.value)}
             />
@@ -72,6 +94,7 @@ const ClientList = ({
               <option>Sort by: Recent</option>
               <option>Sort by: Name</option>
               <option>Sort by: Funding</option>
+              <option>Sort by: Organization</option>
             </select>
           </div>
         </div>
@@ -82,12 +105,13 @@ const ClientList = ({
               <table className="clients-table">
                 <thead>
                   <tr>
-                    <th>Client</th>
                     <th>Organization</th>
-                    <th>Contact</th>
+                    <th>Primary Contact</th>
+                    <th>Organization Type</th>
                     <th>Status</th>
                     <th>Grants</th>
                     <th>Funding</th>
+                    <th>Focus Areas</th>
                     <th>Last Contact</th>
                     <th>Actions</th>
                   </tr>
@@ -97,25 +121,60 @@ const ClientList = ({
                     <tr key={client.id} className="clients-row">
                       <td>
                         <div className="clients-client-info">
-                          <img src={client.avatar} alt={client.name} className="clients-client-avatar" />
+                          <img src={client.avatar} alt={getClientValue(client, 'organizationName', 'organization')} className="clients-client-avatar" />
                           <div className="clients-client-details">
                             <span className="clients-client-name" onClick={() => onViewClient(client)}>
-                              {client.name}
+                              {getClientValue(client, 'organizationName', 'organization')}
                             </span>
-                            <div className="clients-client-email">{client.email}</div>
+                            <div className="clients-client-email">
+                              <i className="fas fa-envelope"></i>
+                              {getClientValue(client, 'emailAddress', 'email')}
+                            </div>
+                            {client.website && (
+                              <div className="clients-client-website">
+                                <i className="fas fa-globe"></i>
+                                <a href={client.website} target="_blank" rel="noopener noreferrer">
+                                  {client.website.replace(/^https?:\/\//, '')}
+                                </a>
+                              </div>
+                            )}
                           </div>
                         </div>
                       </td>
                       <td>
-                        <div className="clients-organization">{client.organization}</div>
-                      </td>
-                      <td>
                         <div className="clients-contact-info">
-                          <div className="clients-phone">{client.phone}</div>
+                          <div className="clients-contact-name">
+                            <strong>{getClientValue(client, 'primaryContactName', 'name')}</strong>
+                          </div>
+                          <div className="clients-contact-role">
+                            <i className="fas fa-briefcase"></i>
+                            {client.titleRole || 'Not specified'}
+                          </div>
+                          <div className="clients-phone">
+                            <i className="fas fa-phone"></i>
+                            {getClientValue(client, 'phoneNumbers', 'phone')}
+                          </div>
                         </div>
                       </td>
                       <td>
+                        <div className="clients-organization-type">
+                          <i className={getOrganizationTypeIcon(client.organizationType)}></i>
+                          <span>{client.organizationType || 'Not specified'}</span>
+                        </div>
+                        {client.annualBudget && (
+                          <div className="clients-budget">
+                            <i className="fas fa-money-bill-wave"></i>
+                            {client.annualBudget}
+                          </div>
+                        )}
+                      </td>
+                      <td>
                         {getStatusBadge(client.status)}
+                        {client.staffCount && (
+                          <div className="clients-staff-size">
+                            <small>{client.staffCount} staff</small>
+                          </div>
+                        )}
                       </td>
                       <td>
                         <div className="clients-grants-stats">
@@ -124,11 +183,36 @@ const ClientList = ({
                           </div>
                           <div className="clients-grant-success">
                             <strong>{client.grantsAwarded}</strong> awarded
+                            {client.grantsSubmitted > 0 && (
+                              <span className="clients-success-rate">
+                                ({Math.round((client.grantsAwarded / client.grantsSubmitted) * 100)}%)
+                              </span>
+                            )}
                           </div>
                         </div>
                       </td>
                       <td>
                         <div className="clients-funding-amount">{client.totalFunding}</div>
+                      </td>
+                      <td>
+                        <div className="clients-focus-areas">
+                          {client.focusAreas && client.focusAreas.length > 0 ? (
+                            <div className="clients-tags">
+                              {client.focusAreas.slice(0, 2).map((area, index) => (
+                                <span key={index} className="clients-tag">
+                                  {area}
+                                </span>
+                              ))}
+                              {client.focusAreas.length > 2 && (
+                                <span className="clients-tag-more">
+                                  +{client.focusAreas.length - 2} more
+                                </span>
+                              )}
+                            </div>
+                          ) : (
+                            <span className="clients-no-focus">No focus areas</span>
+                          )}
+                        </div>
                       </td>
                       <td>
                         <div className="clients-last-contact">
@@ -218,6 +302,43 @@ const ClientList = ({
                 <div className="clients-summary-content">
                   <h3>{clients.reduce((total, client) => total + client.grantsSubmitted, 0)}</h3>
                   <p>Grants Submitted</p>
+                </div>
+              </div>
+            </div>
+
+            {/* Additional Statistics */}
+            <div className="clients-additional-stats">
+              <div className="clients-stat-card">
+                <div className="clients-stat-icon">
+                  <i className="fas fa-map-marker-alt"></i>
+                </div>
+                <div className="clients-stat-content">
+                  <h4>Service Areas</h4>
+                  <p>
+                    {[...new Set(clients.map(c => c.serviceArea).filter(Boolean))].join(', ') || 'Not specified'}
+                  </p>
+                </div>
+              </div>
+              <div className="clients-stat-card">
+                <div className="clients-stat-icon">
+                  <i className="fas fa-tags"></i>
+                </div>
+                <div className="clients-stat-content">
+                  <h4>Organization Types</h4>
+                  <p>
+                    {[...new Set(clients.map(c => c.organizationType).filter(Boolean))].length} types
+                  </p>
+                </div>
+              </div>
+              <div className="clients-stat-card">
+                <div className="clients-stat-icon">
+                  <i className="fas fa-bullseye"></i>
+                </div>
+                <div className="clients-stat-content">
+                  <h4>Focus Areas</h4>
+                  <p>
+                    {[...new Set(clients.flatMap(c => c.focusAreas || []))].length} unique areas
+                  </p>
                 </div>
               </div>
             </div>
