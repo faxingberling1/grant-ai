@@ -13,6 +13,8 @@ import AIWriting from './AIWriting/AIWriting';
 import Reports from './Reports/Reports';
 import Profile from './Profile/Profile';
 import Settings from './Settings/Settings';
+import EmailTemplates from './CommunicationHub/EmailTemplates';
+import EmailComposer from './CommunicationHub/EmailComposer';
 
 import './Dashboard.css';
 
@@ -21,6 +23,8 @@ const Dashboard = () => {
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [activePage, setActivePage] = useState('dashboard');
   const [sourcesData, setSourcesData] = useState([]);
+  const [selectedTemplate, setSelectedTemplate] = useState(null);
+  const [emailComposerData, setEmailComposerData] = useState(null);
 
   const toggleSidebar = () => {
     setSidebarOpen(!sidebarOpen);
@@ -30,6 +34,25 @@ const Dashboard = () => {
   const updateSourcesData = (data) => {
     console.log('📊 Dashboard: Sources data updated', data);
     setSourcesData(data);
+  };
+
+  // Function to handle template selection for email composition
+  const handleUseTemplate = (template) => {
+    console.log('📧 Using template:', template);
+    setSelectedTemplate(template);
+    setEmailComposerData({
+      template: template,
+      subject: template.subject,
+      content: template.fullContent
+    });
+    setActivePage('email-composer');
+  };
+
+  // Function to handle direct email composition
+  const handleComposeEmail = (initialData = null) => {
+    console.log('📝 Composing email with data:', initialData);
+    setEmailComposerData(initialData);
+    setActivePage('email-composer');
   };
 
   const renderPageContent = () => {
@@ -44,6 +67,8 @@ const Dashboard = () => {
             onNavigateToSources={() => setActivePage('sources')}
             onNavigateToAIWriting={() => setActivePage('ai-writing')}
             onNavigateToReports={() => setActivePage('reports')}
+            onNavigateToEmailTemplates={() => setActivePage('email-templates')}
+            onNavigateToEmailComposer={handleComposeEmail}
           />
         );
       case 'clients':
@@ -102,6 +127,30 @@ const Dashboard = () => {
         return <Profile />;
       case 'settings':
         return <Settings />;
+      case 'email-templates':
+        return (
+          <EmailTemplates 
+            onBack={() => setActivePage('dashboard')}
+            onUseTemplate={handleUseTemplate}
+          />
+        );
+      case 'email-composer':
+        return (
+          <EmailComposer 
+            onBack={() => setActivePage('email-templates')}
+            initialData={emailComposerData}
+            onSend={(emailData) => {
+              console.log('📤 Email sent:', emailData);
+              alert(`Email sent successfully to ${emailData.to}!\n\nSubject: ${emailData.subject}`);
+              setActivePage('email-templates');
+            }}
+            onSaveDraft={(emailData) => {
+              console.log('💾 Email draft saved:', emailData);
+              alert('Email draft saved successfully!');
+              setActivePage('email-templates');
+            }}
+          />
+        );
       case 'help':
         return (
           <div className="page-content">
@@ -162,6 +211,8 @@ const Dashboard = () => {
             onNavigateToClients={() => setActivePage('clients')} 
             onNavigateToFindGrants={() => setActivePage('find-grants')}
             onNavigateToSources={() => setActivePage('sources')}
+            onNavigateToEmailTemplates={() => setActivePage('email-templates')}
+            onNavigateToEmailComposer={handleComposeEmail}
           />
         );
     }
@@ -198,7 +249,9 @@ const DashboardContent = ({
   onNavigateToFindGrants, 
   onNavigateToSources,
   onNavigateToAIWriting,
-  onNavigateToReports 
+  onNavigateToReports,
+  onNavigateToEmailTemplates,
+  onNavigateToEmailComposer 
 }) => {
   const { currentUser } = useAuth();
   const [activeClientTab, setActiveClientTab] = useState('all');
@@ -371,9 +424,9 @@ const DashboardContent = ({
             <i className="fas fa-robot"></i>
             Start AI Grant Writing
           </button>
-          <button className="btn btn-outline">
-            <i className="fas fa-play-circle"></i>
-            Take Tour
+          <button className="btn btn-outline" onClick={onNavigateToEmailComposer}>
+            <i className="fas fa-envelope"></i>
+            Compose Email
           </button>
         </div>
       </div>
@@ -468,7 +521,38 @@ const DashboardContent = ({
             </div>
           </div>
           
-          <div className="action-card info" onClick={onNavigateToReports}>
+          <div className="action-card info" onClick={onNavigateToEmailComposer}>
+            <div className="action-icon">
+              <i className="fas fa-envelope"></i>
+            </div>
+            <div className="action-content">
+              <h3>Compose Email</h3>
+              <p>Create and send emails to clients and partners</p>
+            </div>
+            <div className="action-arrow">
+              <i className="fas fa-arrow-right"></i>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Additional Quick Actions Row */}
+      <div className="quick-actions-grid">
+        <div className="actions-grid">
+          <div className="action-card secondary" onClick={onNavigateToEmailTemplates}>
+            <div className="action-icon">
+              <i className="fas fa-file-alt"></i>
+            </div>
+            <div className="action-content">
+              <h3>Email Templates</h3>
+              <p>Use pre-built templates for client communication</p>
+            </div>
+            <div className="action-arrow">
+              <i className="fas fa-arrow-right"></i>
+            </div>
+          </div>
+          
+          <div className="action-card tertiary" onClick={onNavigateToReports}>
             <div className="action-icon">
               <i className="fas fa-chart-line"></i>
             </div>
@@ -691,9 +775,16 @@ const DashboardContent = ({
                             <i className="fas fa-edit"></i>
                             <span className="client-action-tooltip">Edit Client</span>
                           </button>
-                          <button className="client-action-btn">
+                          <button 
+                            className="client-action-btn"
+                            onClick={() => onNavigateToEmailComposer({
+                              to: client.email,
+                              subject: `Follow-up: ${client.company}`,
+                              content: `Dear ${client.name},\n\nI hope this email finds you well...`
+                            })}
+                          >
                             <i className="fas fa-envelope"></i>
-                            <span className="client-action-tooltip">Send Message</span>
+                            <span className="client-action-tooltip">Send Email</span>
                           </button>
                           <button className="client-action-btn primary">
                             <i className="fas fa-eye"></i>
