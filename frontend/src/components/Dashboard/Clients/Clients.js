@@ -5,14 +5,11 @@ import ClientDetails from './ClientDetails';
 import ClientEmails from './ClientEmails';
 import ClientCommunication from './ClientCommunication';
 import CommunicationHistory from './CommunicationHistory';
-import EmailTemplates from './EmailTemplates';
 import BulkEmail from './BulkEmail';
-import EmailComposer from './EmailComposer';
 import CommunicationHub from './CommunicationHub';
 import './Clients.css';
 import './CommunicationHub.css';
-import './EmailTemplates.css';
-import './EmailComposer.css';
+
 
 const Clients = () => {
   const [view, setView] = useState('list');

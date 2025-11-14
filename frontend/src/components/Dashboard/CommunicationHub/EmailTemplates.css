@@ -1,16 +1,17 @@
-/* EmailTemplates.css - Professional Dark Green & Gold Theme */
+/* EmailTemplates.css - Professional Dark Green & Gold Theme for CommunicationHub */
 
 /* Email Templates Container */
-.clients-email-templates {
+.communication-hub-email-templates {
   background: #fff;
   border-radius: 20px;
   box-shadow: 0 8px 32px rgba(26, 71, 42, 0.1);
   overflow: hidden;
   border: 1px solid #e1e5e9;
+  min-height: 100vh;
 }
 
 /* Email Templates Header */
-.clients-templates-header {
+.communication-hub-templates-header {
   background: linear-gradient(135deg, #1a472a 0%, #2d5a3a 100%);
   color: #fff;
   padding: 3rem 2rem;
@@ -18,7 +19,7 @@
   overflow: hidden;
 }
 
-.clients-templates-header::before {
+.communication-hub-templates-header::before {
   content: '';
   position: absolute;
   top: 0;
@@ -28,7 +29,7 @@
   background: radial-gradient(circle, rgba(212, 175, 55, 0.1) 0%, transparent 70%);
 }
 
-.clients-templates-header-content {
+.communication-hub-templates-header-content {
   display: flex;
   justify-content: space-between;
   align-items: flex-start;
@@ -38,7 +39,7 @@
   z-index: 2;
 }
 
-.clients-templates-title h1 {
+.communication-hub-templates-title h1 {
   margin: 0 0 0.75rem 0;
   font-size: 2.5rem;
   font-weight: 800;
@@ -46,40 +47,44 @@
   text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
 }
 
-.clients-templates-title p {
+.communication-hub-templates-title p {
   margin: 0;
   opacity: 0.9;
   font-size: 1.2rem;
   color: rgba(255, 255, 255, 0.9);
 }
 
-.clients-templates-actions {
+.communication-hub-templates-actions {
   display: flex;
   gap: 1rem;
   align-items: center;
   flex-wrap: wrap;
 }
 
-/* Back Button Styling - Gold Theme */
-.clients-templates-back-btn {
+/* Button Styles */
+.communication-hub-btn {
   display: inline-flex;
   align-items: center;
   justify-content: center;
   gap: 0.5rem;
   padding: 0.75rem 1.5rem;
-  border: 2px solid #d4af37;
+  border: 2px solid;
   border-radius: 10px;
-  background: #d4af37;
-  color: #1a472a;
   font-size: 0.95rem;
   font-weight: 700;
   cursor: pointer;
   transition: all 0.3s ease;
   white-space: nowrap;
+}
+
+.communication-hub-btn-primary {
+  background: #d4af37;
+  border-color: #d4af37;
+  color: #1a472a;
   box-shadow: 0 4px 15px rgba(212, 175, 55, 0.3);
 }
 
-.clients-templates-back-btn:hover {
+.communication-hub-btn-primary:hover {
   background: #e6c44a;
   border-color: #e6c44a;
   transform: translateY(-2px);
@@ -87,7 +92,7 @@
 }
 
 /* Email Templates Toolbar */
-.clients-templates-toolbar {
+.communication-hub-templates-toolbar {
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -97,13 +102,13 @@
   gap: 1.5rem;
 }
 
-.clients-templates-search-box {
+.communication-hub-templates-search-box {
   position: relative;
   flex: 1;
   max-width: 450px;
 }
 
-.clients-templates-search-box i {
+.communication-hub-templates-search-box i {
   position: absolute;
   left: 1.25rem;
   top: 50%;
@@ -112,7 +117,7 @@
   font-size: 1.1rem;
 }
 
-.clients-templates-search-box input {
+.communication-hub-templates-search-box input {
   width: 100%;
   padding: 1rem 1rem 1rem 3rem;
   border: 2px solid #e1e5e9;
@@ -122,20 +127,20 @@
   background: #f8f9fa;
 }
 
-.clients-templates-search-box input:focus {
+.communication-hub-templates-search-box input:focus {
   outline: none;
   border-color: #1a472a;
   background: #fff;
   box-shadow: 0 0 0 3px rgba(26, 71, 42, 0.1);
 }
 
-.clients-templates-filters {
+.communication-hub-templates-filters {
   display: flex;
   gap: 1rem;
   align-items: center;
 }
 
-.clients-templates-filter-select {
+.communication-hub-templates-filter-select {
   padding: 1rem 1.25rem;
   border: 2px solid #e1e5e9;
   border-radius: 12px;
@@ -147,23 +152,24 @@
   font-weight: 500;
 }
 
-.clients-templates-filter-select:focus {
+.communication-hub-templates-filter-select:focus {
   outline: none;
   border-color: #1a472a;
   box-shadow: 0 0 0 3px rgba(26, 71, 42, 0.1);
 }
 
 /* Templates Grid */
-.clients-templates-grid {
+.communication-hub-templates-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(380px, 1fr));
   gap: 1.5rem;
   padding: 2rem;
   background: #f8f9fa;
+  min-height: 60vh;
 }
 
 /* Template Card */
-.clients-template-card {
+.communication-hub-template-card {
   background: #fff;
   border-radius: 16px;
   padding: 2rem;
@@ -175,7 +181,7 @@
   overflow: hidden;
 }
 
-.clients-template-card::before {
+.communication-hub-template-card::before {
   content: '';
   position: absolute;
   top: 0;
@@ -186,17 +192,24 @@
   transition: left 0.5s ease;
 }
 
-.clients-template-card:hover::before {
+.communication-hub-template-card:hover::before {
   left: 100%;
 }
 
-.clients-template-card:hover {
+.communication-hub-template-card:hover {
   transform: translateY(-4px);
   box-shadow: 0 8px 30px rgba(26, 71, 42, 0.15);
   border-color: #1a472a;
 }
 
-.clients-template-icon {
+.communication-hub-template-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 1rem;
+}
+
+.communication-hub-template-icon {
   width: 60px;
   height: 60px;
   border-radius: 12px;
@@ -204,35 +217,79 @@
   align-items: center;
   justify-content: center;
   font-size: 1.5rem;
-  margin-bottom: 1.5rem;
   background: rgba(26, 71, 42, 0.1);
   color: #1a472a;
   border: 2px solid #1a472a;
   transition: all 0.3s ease;
 }
 
-.clients-template-card:hover .clients-template-icon {
+.communication-hub-template-card:hover .communication-hub-template-icon {
   background: #1a472a;
   color: #fff;
   transform: scale(1.1);
 }
 
-.clients-template-title {
+.communication-hub-template-actions-menu {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.communication-hub-template-action-btn {
+  background: rgba(26, 71, 42, 0.1);
+  border: 1px solid rgba(26, 71, 42, 0.2);
+  border-radius: 8px;
+  padding: 0.5rem;
+  cursor: pointer;
+  color: #1a472a;
+  transition: all 0.3s ease;
+  font-size: 0.9rem;
+  width: 36px;
+  height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.communication-hub-template-action-btn:hover {
+  background: #1a472a;
+  border-color: #1a472a;
+  color: white;
+  transform: translateY(-1px);
+}
+
+.communication-hub-template-delete-btn:hover {
+  background: #dc3545;
+  border-color: #dc3545;
+  color: white;
+}
+
+.communication-hub-template-title {
   font-size: 1.25rem;
   font-weight: 700;
   color: #1a472a;
-  margin-bottom: 0.75rem;
+  margin-bottom: 0.5rem;
   line-height: 1.3;
 }
 
-.clients-template-description {
+.communication-hub-template-subject {
+  color: #6c757d;
+  font-size: 0.95rem;
+  font-weight: 600;
+  margin-bottom: 0.75rem;
+  line-height: 1.4;
+  font-style: italic;
+  border-left: 3px solid #d4af37;
+  padding-left: 0.75rem;
+}
+
+.communication-hub-template-description {
   color: #6c757d;
   font-size: 0.95rem;
   line-height: 1.5;
   margin-bottom: 1.25rem;
 }
 
-.clients-template-preview {
+.communication-hub-template-preview {
   background: #f8f9fa;
   padding: 1.25rem;
   border-radius: 8px;
@@ -243,7 +300,7 @@
   overflow: hidden;
 }
 
-.clients-template-preview::before {
+.communication-hub-template-preview::before {
   content: '"';
   position: absolute;
   top: 0.5rem;
@@ -254,7 +311,7 @@
   line-height: 1;
 }
 
-.clients-template-preview-text {
+.communication-hub-template-preview-text {
   color: #495057;
   font-size: 0.9rem;
   line-height: 1.5;
@@ -267,13 +324,13 @@
   overflow: hidden;
 }
 
-.clients-template-actions {
+.communication-hub-template-actions {
   display: flex;
   gap: 0.75rem;
   align-items: center;
 }
 
-.clients-template-use-btn {
+.communication-hub-template-use-btn {
   flex: 1;
   padding: 0.875rem 1.5rem;
   border: 2px solid #1a472a;
@@ -290,14 +347,14 @@
   font-size: 0.95rem;
 }
 
-.clients-template-use-btn:hover {
+.communication-hub-template-use-btn:hover {
   background: #2d5a3a;
   border-color: #2d5a3a;
   transform: translateY(-2px);
   box-shadow: 0 6px 20px rgba(26, 71, 42, 0.3);
 }
 
-.clients-template-preview-btn {
+.communication-hub-template-preview-btn {
   padding: 0.875rem 1.5rem;
   border: 2px solid #e1e5e9;
   border-radius: 10px;
@@ -313,14 +370,14 @@
   font-size: 0.95rem;
 }
 
-.clients-template-preview-btn:hover {
+.communication-hub-template-preview-btn:hover {
   border-color: #d4af37;
   color: #d4af37;
   transform: translateY(-2px);
 }
 
 /* Template Category Badge */
-.clients-template-category {
+.communication-hub-template-category {
   display: inline-flex;
   align-items: center;
   gap: 0.5rem;
@@ -336,7 +393,7 @@
 }
 
 /* Template Stats */
-.clients-template-stats {
+.communication-hub-template-stats {
   display: flex;
   align-items: center;
   gap: 1rem;
@@ -348,20 +405,20 @@
   color: #6c757d;
 }
 
-.clients-template-stat {
+.communication-hub-template-stat {
   display: flex;
   align-items: center;
   gap: 0.5rem;
   font-weight: 500;
 }
 
-.clients-template-stat i {
+.communication-hub-template-stat i {
   color: #1a472a;
   font-size: 0.8rem;
 }
 
 /* Empty State */
-.clients-no-templates {
+.communication-hub-no-templates {
   padding: 6rem 2rem;
   text-align: center;
   background: #fff;
@@ -370,26 +427,26 @@
   margin: 2rem;
 }
 
-.clients-templates-empty-state {
+.communication-hub-templates-empty-state {
   max-width: 450px;
   margin: 0 auto;
 }
 
-.clients-templates-empty-state i {
+.communication-hub-templates-empty-state i {
   font-size: 5rem;
   color: #1a472a;
   margin-bottom: 2rem;
   opacity: 0.7;
 }
 
-.clients-templates-empty-state h3 {
+.communication-hub-templates-empty-state h3 {
   margin: 0 0 1.5rem 0;
   color: #1a472a;
   font-size: 2rem;
   font-weight: 700;
 }
 
-.clients-templates-empty-state p {
+.communication-hub-templates-empty-state p {
   margin: 0 0 3rem 0;
   color: #6c757d;
   line-height: 1.6;
@@ -398,7 +455,7 @@
 }
 
 /* Template Categories Navigation */
-.clients-templates-categories {
+.communication-hub-templates-categories {
   display: flex;
   gap: 0.75rem;
   padding: 1.5rem 2rem;
@@ -407,7 +464,7 @@
   overflow-x: auto;
 }
 
-.clients-template-category-btn {
+.communication-hub-template-category-btn {
   padding: 0.75rem 1.5rem;
   border: 2px solid #e1e5e9;
   border-radius: 25px;
@@ -418,22 +475,25 @@
   transition: all 0.3s ease;
   white-space: nowrap;
   font-size: 0.9rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
 }
 
-.clients-template-category-btn:hover {
+.communication-hub-template-category-btn:hover {
   border-color: #1a472a;
   color: #1a472a;
   transform: translateY(-1px);
 }
 
-.clients-template-category-btn.active {
+.communication-hub-template-category-btn.active {
   background: #1a472a;
   border-color: #1a472a;
   color: white;
 }
 
 /* Template Preview Modal */
-.clients-template-preview-modal {
+.communication-hub-template-preview-modal {
   position: fixed;
   top: 0;
   left: 0;
@@ -448,7 +508,7 @@
   backdrop-filter: blur(5px);
 }
 
-.clients-template-preview-container {
+.communication-hub-template-preview-container {
   background: white;
   border-radius: 20px;
   box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
@@ -460,7 +520,7 @@
   flex-direction: column;
 }
 
-.clients-template-preview-header {
+.communication-hub-template-preview-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -469,13 +529,13 @@
   color: white;
 }
 
-.clients-template-preview-header h3 {
+.communication-hub-template-preview-header h3 {
   margin: 0;
   font-size: 1.5rem;
   font-weight: 700;
 }
 
-.clients-template-preview-close {
+.communication-hub-template-preview-close {
   background: rgba(255, 255, 255, 0.2);
   border: none;
   color: white;
@@ -489,31 +549,139 @@
   transition: all 0.3s ease;
 }
 
-.clients-template-preview-close:hover {
+.communication-hub-template-preview-close:hover {
   background: rgba(255, 255, 255, 0.3);
   transform: rotate(90deg);
 }
 
-.clients-template-preview-content {
+.communication-hub-template-preview-content {
   padding: 2rem;
   flex: 1;
   overflow: auto;
 }
 
-.clients-template-full-preview {
+/* Form Styles */
+.communication-hub-template-form {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.communication-hub-form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.communication-hub-form-group label {
+  font-weight: 600;
+  color: #1a472a;
+  font-size: 0.95rem;
+}
+
+.communication-hub-form-input,
+.communication-hub-form-select,
+.communication-hub-form-textarea {
+  padding: 1rem;
+  border: 2px solid #e1e5e9;
+  border-radius: 8px;
+  font-size: 1rem;
+  transition: all 0.3s ease;
+  background: #fff;
+  font-family: inherit;
+}
+
+.communication-hub-form-input:focus,
+.communication-hub-form-select:focus,
+.communication-hub-form-textarea:focus {
+  outline: none;
+  border-color: #1a472a;
+  box-shadow: 0 0 0 3px rgba(26, 71, 42, 0.1);
+}
+
+.communication-hub-form-textarea {
+  resize: vertical;
+  min-height: 80px;
+}
+
+.communication-hub-template-info {
   background: #f8f9fa;
-  border: 1px solid #e1e5e9;
   border-radius: 12px;
-  padding: 2rem;
+  padding: 1.5rem;
+  margin-bottom: 1.5rem;
+  border: 1px solid #e1e5e9;
+}
+
+.communication-hub-template-info-item {
+  margin-bottom: 0.75rem;
+  color: #495057;
+  font-size: 0.95rem;
+  line-height: 1.5;
+}
+
+.communication-hub-template-info-item:last-child {
+  margin-bottom: 0;
+}
+
+.communication-hub-template-info-item strong {
+  color: #1a472a;
+  min-width: 100px;
+  display: inline-block;
+}
+
+.communication-hub-template-subject-preview {
+  background: #f8f9fa;
+  padding: 1rem 1.5rem;
+  border-radius: 8px;
+  border: 1px solid #e1e5e9;
+  margin-bottom: 1.5rem;
+  font-size: 1rem;
+  color: #495057;
+}
+
+.communication-hub-template-subject-preview strong {
+  color: #1a472a;
+}
+
+/* FIXED: Template Content Preview - Remove green color and make it look like editing view */
+.communication-hub-template-full-preview {
+  background: #fff;
+  border: 2px solid #e1e5e9;
+  border-radius: 8px;
+  padding: 1.5rem;
   margin-bottom: 2rem;
   line-height: 1.6;
-  color: #495057;
+  color: #2d3748;
   font-size: 1rem;
   min-height: 300px;
   white-space: pre-wrap;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  overflow: auto;
+  background: #fafafa;
 }
 
-.clients-template-preview-actions {
+.communication-hub-template-content-preview {
+  margin: 0;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  white-space: pre-wrap;
+  word-wrap: break-word;
+  line-height: 1.6;
+  color: #2d3748;
+  font-size: 1rem;
+  background: transparent;
+}
+
+/* Make variables stand out in the preview */
+.communication-hub-template-content-preview .variable {
+  background: rgba(212, 175, 55, 0.2);
+  color: #b8941f;
+  padding: 0.125rem 0.25rem;
+  border-radius: 4px;
+  font-weight: 600;
+  border: 1px solid rgba(212, 175, 55, 0.3);
+}
+
+.communication-hub-template-preview-actions {
   display: flex;
   gap: 1rem;
   justify-content: flex-end;
@@ -521,7 +689,7 @@
   border-top: 1px solid #e1e5e9;
 }
 
-.clients-template-edit-btn {
+.communication-hub-template-edit-btn {
   padding: 0.875rem 1.75rem;
   border: 2px solid #d4af37;
   border-radius: 10px;
@@ -536,14 +704,14 @@
   font-size: 0.95rem;
 }
 
-.clients-template-edit-btn:hover {
+.communication-hub-template-edit-btn:hover {
   background: #e6c44a;
   border-color: #e6c44a;
   transform: translateY(-2px);
   box-shadow: 0 6px 20px rgba(212, 175, 55, 0.4);
 }
 
-.clients-template-draft-btn {
+.communication-hub-template-draft-btn {
   padding: 0.875rem 1.75rem;
   border: 2px solid #1a472a;
   border-radius: 10px;
@@ -558,22 +726,45 @@
   font-size: 0.95rem;
 }
 
-.clients-template-draft-btn:hover {
+.communication-hub-template-draft-btn:hover {
   background: #2d5a3a;
   border-color: #2d5a3a;
   transform: translateY(-2px);
   box-shadow: 0 6px 20px rgba(26, 71, 42, 0.3);
 }
 
-/* Template Editor */
-.clients-template-editor {
-  background: #fff;
-  border-radius: 12px;
-  border: 1px solid #e1e5e9;
-  margin-bottom: 1.5rem;
+.communication-hub-template-delete-btn {
+  padding: 0.875rem 1.75rem;
+  border: 2px solid #dc3545;
+  border-radius: 10px;
+  background: #dc3545;
+  color: white;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.95rem;
 }
 
-.clients-template-editor-header {
+.communication-hub-template-delete-btn:hover {
+  background: #c82333;
+  border-color: #c82333;
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(220, 53, 69, 0.3);
+}
+
+/* Template Editor */
+.communication-hub-template-editor {
+  background: #fff;
+  border-radius: 12px;
+  border: 2px solid #e1e5e9;
+  margin-bottom: 1.5rem;
+  overflow: hidden;
+}
+
+.communication-hub-template-editor-header {
   padding: 1rem 1.5rem;
   background: #f8f9fa;
   border-bottom: 1px solid #e1e5e9;
@@ -582,36 +773,38 @@
   align-items: center;
 }
 
-.clients-template-editor-title {
+.communication-hub-template-editor-title {
   font-weight: 600;
   color: #1a472a;
+  font-size: 0.95rem;
 }
 
-.clients-template-editor-content {
-  padding: 1.5rem;
+.communication-hub-template-editor-content {
+  padding: 0;
 }
 
-.clients-template-editor-textarea {
+.communication-hub-template-editor-textarea {
   width: 100%;
   min-height: 300px;
   padding: 1rem;
-  border: 2px solid #e1e5e9;
-  border-radius: 8px;
+  border: none;
+  border-radius: 0;
   font-size: 1rem;
   line-height: 1.5;
-  font-family: inherit;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
   resize: vertical;
   transition: all 0.3s ease;
+  background: #fff;
+  color: #2d3748;
 }
 
-.clients-template-editor-textarea:focus {
+.communication-hub-template-editor-textarea:focus {
   outline: none;
-  border-color: #1a472a;
-  box-shadow: 0 0 0 3px rgba(26, 71, 42, 0.1);
+  background: #fafafa;
 }
 
 /* Template Variables */
-.clients-template-variables {
+.communication-hub-template-variables {
   background: rgba(212, 175, 55, 0.1);
   border: 1px solid rgba(212, 175, 55, 0.3);
   border-radius: 8px;
@@ -619,22 +812,28 @@
   margin-bottom: 1.5rem;
 }
 
-.clients-template-variables h4 {
+.communication-hub-template-variables h4 {
   color: #b8941f;
-  margin: 0 0 0.75rem 0;
+  margin: 0 0 0.5rem 0;
   font-size: 0.9rem;
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.5px;
 }
 
-.clients-template-variables-list {
+.communication-hub-template-variables p {
+  margin: 0 0 0.75rem 0;
+  color: #b8941f;
+  font-size: 0.85rem;
+}
+
+.communication-hub-template-variables-list {
   display: flex;
   flex-wrap: wrap;
   gap: 0.5rem;
 }
 
-.clients-template-variable {
+.communication-hub-template-variable {
   padding: 0.375rem 0.75rem;
   background: rgba(212, 175, 55, 0.2);
   color: #b8941f;
@@ -642,111 +841,148 @@
   font-size: 0.8rem;
   font-weight: 600;
   border: 1px solid rgba(212, 175, 55, 0.4);
+  transition: all 0.3s ease;
+  font-family: 'Courier New', monospace;
+}
+
+.communication-hub-template-variable.clickable {
+  cursor: pointer;
+}
+
+.communication-hub-template-variable.clickable:hover {
+  background: rgba(212, 175, 55, 0.3);
+  transform: translateY(-1px);
+  box-shadow: 0 2px 8px rgba(212, 175, 55, 0.3);
+}
+
+/* Delete Confirmation */
+.communication-hub-delete-confirmation {
+  text-align: center;
+  padding: 2rem 1rem;
+}
+
+.communication-hub-delete-icon {
+  font-size: 3rem;
+  color: #dc3545;
+  margin-bottom: 1rem;
+}
+
+.communication-hub-delete-confirmation h4 {
+  margin: 0 0 1rem 0;
+  color: #2c3e50;
+  font-size: 1.25rem;
+}
+
+.communication-hub-delete-confirmation p {
+  margin: 0 0 2rem 0;
+  color: #6c757d;
+  line-height: 1.5;
+  font-size: 1rem;
 }
 
 /* Responsive Design */
 @media (max-width: 1200px) {
-  .clients-templates-grid {
+  .communication-hub-templates-grid {
     grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
   }
 }
 
 @media (max-width: 1024px) {
-  .clients-templates-header-content {
+  .communication-hub-templates-header-content {
     flex-direction: column;
     gap: 1.5rem;
     text-align: center;
   }
   
-  .clients-templates-actions {
+  .communication-hub-templates-actions {
     justify-content: center;
   }
   
-  .clients-templates-toolbar {
+  .communication-hub-templates-toolbar {
     flex-direction: column;
     align-items: stretch;
     gap: 1rem;
   }
   
-  .clients-templates-search-box {
+  .communication-hub-templates-search-box {
     max-width: none;
   }
 }
 
 @media (max-width: 768px) {
-  .clients-templates-grid {
+  .communication-hub-templates-grid {
     grid-template-columns: 1fr;
     padding: 1.5rem;
     gap: 1rem;
   }
   
-  .clients-template-card {
+  .communication-hub-template-card {
     padding: 1.5rem;
   }
   
-  .clients-templates-categories {
+  .communication-hub-templates-categories {
     padding: 1rem 1.5rem;
   }
   
-  .clients-template-category-btn {
+  .communication-hub-template-category-btn {
     padding: 0.75rem 1.25rem;
     font-size: 0.85rem;
   }
   
-  .clients-templates-header {
+  .communication-hub-templates-header {
     padding: 2rem 1.5rem;
   }
   
-  .clients-templates-title h1 {
+  .communication-hub-templates-title h1 {
     font-size: 2rem;
   }
   
-  .clients-templates-title p {
+  .communication-hub-templates-title p {
     font-size: 1rem;
   }
   
-  .clients-template-actions {
+  .communication-hub-template-actions {
     flex-direction: column;
   }
   
-  .clients-template-preview-actions {
+  .communication-hub-template-preview-actions {
     flex-direction: column;
   }
 }
 
 @media (max-width: 480px) {
-  .clients-templates-header {
+  .communication-hub-templates-header {
     padding: 1.5rem 1rem;
   }
   
-  .clients-templates-toolbar {
+  .communication-hub-templates-toolbar {
     padding: 1.5rem 1rem;
   }
   
-  .clients-templates-grid {
+  .communication-hub-templates-grid {
     padding: 1rem;
   }
   
-  .clients-template-card {
+  .communication-hub-template-card {
     padding: 1.25rem;
   }
   
-  .clients-template-preview-modal {
+  .communication-hub-template-preview-modal {
     padding: 1rem;
   }
   
-  .clients-template-preview-container {
+  .communication-hub-template-preview-container {
     border-radius: 16px;
   }
   
-  .clients-template-preview-header,
-  .clients-template-preview-content {
+  .communication-hub-template-preview-header,
+  .communication-hub-template-preview-content {
     padding: 1.5rem;
   }
 }
 
 /* Animation for template cards */
-@keyframes clients-templateAppear {
+@keyframes communication-hub-templateAppear {
   from {
     opacity: 0;
     transform: translateY(20px);
@@ -757,14 +993,33 @@
   }
 }
 
-.clients-template-card {
-  animation: clients-templateAppear 0.4s ease;
+.communication-hub-template-card {
+  animation: communication-hub-templateAppear 0.4s ease;
 }
 
 /* Stagger animation for grid */
-.clients-template-card:nth-child(1) { animation-delay: 0.1s; }
-.clients-template-card:nth-child(2) { animation-delay: 0.2s; }
-.clients-template-card:nth-child(3) { animation-delay: 0.3s; }
-.clients-template-card:nth-child(4) { animation-delay: 0.4s; }
-.clients-template-card:nth-child(5) { animation-delay: 0.5s; }
-.clients-template-card:nth-child(6) { animation-delay: 0.6s; }
+.communication-hub-template-card:nth-child(1) { animation-delay: 0.1s; }
+.communication-hub-template-card:nth-child(2) { animation-delay: 0.2s; }
+.communication-hub-template-card:nth-child(3) { animation-delay: 0.3s; }
+.communication-hub-template-card:nth-child(4) { animation-delay: 0.4s; }
+.communication-hub-template-card:nth-child(5) { animation-delay: 0.5s; }
+.communication-hub-template-card:nth-child(6) { animation-delay: 0.6s; }
+
+/* Additional styles for better CommunicationHub integration */
+.communication-hub-templates-categories::-webkit-scrollbar {
+  height: 6px;
+}
+
+.communication-hub-templates-categories::-webkit-scrollbar-track {
+  background: #f1f1f1;
+  border-radius: 3px;
+}
+
+.communication-hub-templates-categories::-webkit-scrollbar-thumb {
+  background: #c1c1c1;
+  border-radius: 3px;
+}
+
+.communication-hub-templates-categories::-webkit-scrollbar-thumb:hover {
+  background: #a8a8a8;
+}
