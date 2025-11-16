@@ -7,9 +7,11 @@ import ClientCommunication from './ClientCommunication';
 import CommunicationHistory from './CommunicationHistory';
 import BulkEmail from './BulkEmail';
 import CommunicationHub from './CommunicationHub';
+import EmailTemplates from '../CommunicationHub/EmailTemplates';
+import EmailComposer from '../CommunicationHub/EmailComposer';
 import './Clients.css';
 import './CommunicationHub.css';
-
+import apiService from '../../../services/api';
 
 const Clients = () => {
   const [view, setView] = useState('list');
@@ -19,213 +21,135 @@ const Clients = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [communicationTab, setCommunicationTab] = useState('emails');
   const [selectedTemplate, setSelectedTemplate] = useState(null);
+  const [error, setError] = useState(null);
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [connectionStatus, setConnectionStatus] = useState('checking');
+  const [environment, setEnvironment] = useState('production');
 
-  // Mock data - Updated with new comprehensive fields
+  // Check authentication and connection on component mount
   useEffect(() => {
-    const mockClients = [
-      {
-        id: 1,
-        // Core fields (for backward compatibility)
-        name: 'Sarah Chen',
-        email: 'sarah.chen@greentech.org',
-        phone: '+1 (555) 123-4567',
-        organization: 'GreenTech Initiative',
-        status: 'active',
-        lastContact: '2024-01-15',
-        grantsSubmitted: 12,
-        grantsAwarded: 8,
-        totalFunding: '$450,000',
-        avatar: 'https://i.pravatar.cc/150?img=1',
-        notes: 'Very responsive and organized. Great partnership potential.',
-        tags: ['Environment', 'Technology', 'Non-Profit'],
-        communicationHistory: [
-          {
-            id: 1,
-            type: 'email',
-            direction: 'outgoing',
-            subject: 'Grant Proposal Feedback',
-            preview: 'Thank you for submitting the draft proposal...',
-            date: '2024-01-15T10:30:00',
-            status: 'sent',
-            important: true
-          },
-          {
-            id: 2,
-            type: 'call',
-            direction: 'incoming',
-            subject: 'Follow-up call',
-            preview: 'Discussed next steps for the NSF grant...',
-            date: '2024-01-12T14:20:00',
-            duration: '15m',
-            status: 'completed'
-          }
-        ],
-        
-        // New comprehensive fields
-        organizationName: 'GreenTech Initiative',
-        primaryContactName: 'Sarah Chen',
-        titleRole: 'Executive Director',
-        emailAddress: 'sarah.chen@greentech.org',
-        phoneNumbers: '+1 (555) 123-4567',
-        additionalContactName: 'Michael Rodriguez',
-        additionalContactTitle: 'Program Manager',
-        additionalContactEmail: 'm.rodriguez@greentech.org',
-        additionalContactPhone: '+1 (555) 123-4568',
-        mailingAddress: '123 Green Street, Eco City, EC 12345',
-        website: 'https://greentech.org',
-        socialMediaLinks: [
-          { platform: 'LinkedIn', url: 'https://linkedin.com/company/greentech' },
-          { platform: 'Twitter', url: 'https://twitter.com/greentech' },
-          { platform: 'Facebook', url: 'https://facebook.com/greentech' }
-        ],
-        taxIdEIN: '12-3456789',
-        organizationType: 'Nonprofit 501(c)(3)',
-        missionStatement: 'To promote sustainable technology solutions for environmental conservation and climate change mitigation through innovative research and community engagement.',
-        focusAreas: ['Renewable Energy', 'Climate Tech', 'Sustainable Agriculture', 'Environmental Education'],
-        serviceArea: 'National',
-        annualBudget: '$1,000,000 - $5,000,000',
-        staffCount: '26-50'
-      },
-      {
-        id: 2,
-        // Core fields
-        name: 'David Kim',
-        email: 'david.kim@communityhealth.org',
-        phone: '+1 (555) 987-6543',
-        organization: 'Community Health Alliance',
-        status: 'active',
-        lastContact: '2024-01-10',
-        grantsSubmitted: 8,
-        grantsAwarded: 5,
-        totalFunding: '$280,000',
-        avatar: 'https://i.pravatar.cc/150?img=32',
-        notes: 'Focuses on healthcare access in underserved communities.',
-        tags: ['Healthcare', 'Community', 'Non-Profit'],
-        communicationHistory: [
-          {
-            id: 1,
-            type: 'email',
-            direction: 'incoming',
-            subject: 'Question about budget',
-            preview: 'Could you clarify the budget allocation for...',
-            date: '2024-01-10T09:15:00',
-            status: 'read',
-            important: false
-          }
-        ],
-        
-        // New comprehensive fields
-        organizationName: 'Community Health Alliance',
-        primaryContactName: 'David Kim',
-        titleRole: 'Program Director',
-        emailAddress: 'david.kim@communityhealth.org',
-        phoneNumbers: '+1 (555) 987-6543',
-        additionalContactName: 'Maria Gonzalez',
-        additionalContactTitle: 'Outreach Coordinator',
-        additionalContactEmail: 'maria.gonzalez@communityhealth.org',
-        additionalContactPhone: '+1 (555) 987-6544',
-        mailingAddress: '456 Health Avenue, Medtown, MT 67890',
-        website: 'https://communityhealth.org',
-        socialMediaLinks: [
-          { platform: 'Facebook', url: 'https://facebook.com/communityhealth' },
-          { platform: 'Instagram', url: 'https://instagram.com/communityhealth' }
-        ],
-        taxIdEIN: '98-7654321',
-        organizationType: 'Nonprofit 501(c)(3)',
-        missionStatement: 'To provide accessible healthcare services and health education to underserved communities while promoting wellness and preventive care.',
-        focusAreas: ['Healthcare Access', 'Community Wellness', 'Preventive Care', 'Health Education'],
-        serviceArea: 'Regional',
-        annualBudget: '$500,000 - $1,000,000',
-        staffCount: '11-25'
-      },
-      {
-        id: 3,
-        // Core fields
-        name: 'James Wilson',
-        email: 'j.wilson@youthfuture.org',
-        phone: '+1 (555) 456-7890',
-        organization: 'Youth Future Foundation',
-        status: 'inactive',
-        lastContact: '2023-12-20',
-        grantsSubmitted: 15,
-        grantsAwarded: 10,
-        totalFunding: '$620,000',
-        avatar: 'https://i.pravatar.cc/150?img=8',
-        notes: 'Excellent track record with education grants.',
-        tags: ['Education', 'Youth', 'Foundation'],
-        communicationHistory: [],
-        
-        // New comprehensive fields
-        organizationName: 'Youth Future Foundation',
-        primaryContactName: 'James Wilson',
-        titleRole: 'Foundation Director',
-        emailAddress: 'j.wilson@youthfuture.org',
-        phoneNumbers: '+1 (555) 456-7890',
-        additionalContactName: 'Lisa Thompson',
-        additionalContactTitle: 'Grants Manager',
-        additionalContactEmail: 'lisa.thompson@youthfuture.org',
-        additionalContactPhone: '+1 (555) 456-7891',
-        mailingAddress: '789 Future Drive, Progress City, PC 34567',
-        website: 'https://youthfuture.org',
-        socialMediaLinks: [
-          { platform: 'LinkedIn', url: 'https://linkedin.com/company/youthfuture' },
-          { platform: 'Twitter', url: 'https://twitter.com/youthfuture' },
-          { platform: 'YouTube', url: 'https://youtube.com/c/youthfuture' }
-        ],
-        taxIdEIN: '45-6789012',
-        organizationType: 'Foundation',
-        missionStatement: 'Empowering youth through education, mentorship, and opportunity creation for a brighter future.',
-        focusAreas: ['Youth Education', 'Mentorship Programs', 'Career Development', 'Scholarships'],
-        serviceArea: 'National',
-        annualBudget: '$5,000,000 - $10,000,000',
-        staffCount: '51-100'
-      },
-      {
-        id: 4,
-        // Core fields
-        name: 'TechStart Inc',
-        email: 'info@techstart.com',
-        phone: '+1 (555) 234-5678',
-        organization: 'TechStart Accelerator',
-        status: 'active',
-        lastContact: '2024-01-08',
-        grantsSubmitted: 6,
-        grantsAwarded: 3,
-        totalFunding: '$150,000',
-        avatar: 'https://i.pravatar.cc/150?img=11',
-        notes: 'Early-stage startup with strong growth potential.',
-        tags: ['Technology', 'Startup', 'Innovation'],
-        communicationHistory: [],
-        
-        // New comprehensive fields
-        organizationName: 'TechStart Accelerator',
-        primaryContactName: 'Alex Johnson',
-        titleRole: 'CEO',
-        emailAddress: 'alex.johnson@techstart.com',
-        phoneNumbers: '+1 (555) 234-5678',
-        additionalContactName: 'Sarah Martinez',
-        additionalContactTitle: 'CTO',
-        additionalContactEmail: 'sarah.martinez@techstart.com',
-        additionalContactPhone: '+1 (555) 234-5679',
-        mailingAddress: '321 Innovation Blvd, Tech Valley, TV 89012',
-        website: 'https://techstart.com',
-        socialMediaLinks: [
-          { platform: 'LinkedIn', url: 'https://linkedin.com/company/techstart' },
-          { platform: 'Twitter', url: 'https://twitter.com/techstart' }
-        ],
-        taxIdEIN: '78-9012345',
-        organizationType: 'For-Profit Corporation',
-        missionStatement: 'Accelerating technology innovation by supporting early-stage startups with funding, mentorship, and resources.',
-        focusAreas: ['Technology Innovation', 'Startup Acceleration', 'Venture Funding', 'Tech Education'],
-        serviceArea: 'International',
-        annualBudget: 'Over $10,000,000',
-        staffCount: '26-50'
-      }
-    ];
-    
-    setClients(mockClients);
-    setLoading(false);
+    initializeApp();
   }, []);
+
+  // Fetch clients when authenticated or search term changes
+  useEffect(() => {
+    if (isAuthenticated && connectionStatus === 'connected') {
+      fetchClients();
+    }
+  }, [searchTerm, isAuthenticated, connectionStatus]);
+
+  const initializeApp = async () => {
+    // Detect environment based on API URL
+    const apiUrl = process.env.REACT_APP_API_URL || '';
+    if (apiUrl.includes('localhost') || apiUrl.includes('127.0.0.1')) {
+      setEnvironment('development');
+    } else {
+      setEnvironment('production');
+    }
+
+    await checkConnection();
+    checkAuthentication();
+  };
+
+  const checkConnection = async () => {
+    setConnectionStatus('checking');
+    try {
+      let result;
+      if (environment === 'development') {
+        result = await apiService.testLocalConnection();
+      } else {
+        result = await apiService.testProductionConnection();
+      }
+      
+      setConnectionStatus('connected');
+      setError(null);
+      console.log(`✅ ${environment} connection successful:`, result);
+    } catch (error) {
+      console.error(`${environment} connection check failed:`, error);
+      setConnectionStatus('disconnected');
+      setError(`Cannot connect to ${environment} server: ${error.message}`);
+    }
+  };
+
+  const checkAuthentication = () => {
+    const token = localStorage.getItem('token');
+    const user = localStorage.getItem('user');
+    
+    console.log('🔐 Auth check:', { 
+      hasToken: !!token, 
+      hasUser: !!user,
+      connection: connectionStatus,
+      environment: environment
+    });
+    
+    setIsAuthenticated(!!token);
+    
+    if (!token) {
+      setError('Please log in to access clients.');
+      setLoading(false);
+    }
+  };
+
+  // Fetch clients from API
+  const fetchClients = async () => {
+    if (!isAuthenticated || connectionStatus !== 'connected') return;
+    
+    setLoading(true);
+    setError(null);
+    try {
+      console.log(`🔄 Fetching clients from ${environment} server...`);
+      const clientsData = await apiService.getClients(searchTerm);
+      console.log(`✅ Loaded ${clientsData.length} clients from ${environment}`);
+      setClients(clientsData);
+    } catch (error) {
+      console.error(`❌ Error fetching clients from ${environment}:`, error);
+      if (error.message.includes('Authentication failed') || error.message.includes('No token')) {
+        setIsAuthenticated(false);
+        setError('Session expired. Please log in again.');
+      } else if (error.message.includes('Network error') || error.message.includes('Cannot connect')) {
+        setConnectionStatus('disconnected');
+        setError(`Cannot connect to ${environment} server. Please check your connection.`);
+      } else {
+        setError(`Failed to load clients: ${error.message}`);
+      }
+      setClients([]);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Login with demo account
+  const handleDemoLogin = async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      console.log(`🔐 Attempting demo login to ${environment} server...`);
+      const result = await apiService.login({
+        email: 'demo@grantfunds.com',
+        password: 'demo123'
+      });
+      
+      if (result.success) {
+        console.log(`✅ ${environment} demo login successful, storing token...`);
+        localStorage.setItem('token', result.token);
+        localStorage.setItem('user', JSON.stringify(result.user));
+        setIsAuthenticated(true);
+        setConnectionStatus('connected');
+        setError(null);
+        await fetchClients();
+      }
+    } catch (error) {
+      console.error(`❌ ${environment} login error:`, error);
+      setError(`Login failed: ${error.message}`);
+      
+      // If login fails due to connection, update status
+      if (error.message.includes('Network error') || error.message.includes('Cannot connect')) {
+        setConnectionStatus('disconnected');
+      }
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const handleAddClient = () => {
     setSelectedClient(null);
@@ -261,92 +185,74 @@ const Clients = () => {
     setView('communication-hub');
   };
 
-  const handleSaveClient = (clientData) => {
-    if (selectedClient) {
-      // Update existing client - map new form data to client structure
-      setClients(clients.map(client => 
-        client.id === selectedClient.id 
-          ? { 
-              ...client,
-              // Map new form fields to existing client structure
-              name: clientData.primaryContactName || client.name,
-              email: clientData.emailAddress || client.email,
-              phone: clientData.phoneNumbers || client.phone,
-              organization: clientData.organizationName || client.organization,
-              status: clientData.status || client.status,
-              notes: clientData.notes || client.notes,
-              tags: clientData.tags || client.tags,
-              // Add new fields
-              organizationName: clientData.organizationName,
-              primaryContactName: clientData.primaryContactName,
-              titleRole: clientData.titleRole,
-              emailAddress: clientData.emailAddress,
-              phoneNumbers: clientData.phoneNumbers,
-              additionalContactName: clientData.additionalContactName,
-              additionalContactTitle: clientData.additionalContactTitle,
-              additionalContactEmail: clientData.additionalContactEmail,
-              additionalContactPhone: clientData.additionalContactPhone,
-              mailingAddress: clientData.mailingAddress,
-              website: clientData.website,
-              socialMediaLinks: clientData.socialMediaLinks,
-              taxIdEIN: clientData.taxIdEIN,
-              organizationType: clientData.organizationType,
-              missionStatement: clientData.missionStatement,
-              focusAreas: clientData.focusAreas,
-              serviceArea: clientData.serviceArea,
-              annualBudget: clientData.annualBudget,
-              staffCount: clientData.staffCount
-            }
-          : client
-      ));
-    } else {
-      // Add new client with complete structure
-      const newClient = {
-        // Core client data (for backward compatibility)
-        id: Date.now(),
-        name: clientData.primaryContactName,
-        email: clientData.emailAddress,
-        phone: clientData.phoneNumbers,
-        organization: clientData.organizationName,
-        status: clientData.status,
-        notes: clientData.notes,
-        tags: clientData.tags,
-        grantsSubmitted: 0,
-        grantsAwarded: 0,
-        totalFunding: '$0',
-        avatar: `https://i.pravatar.cc/150?img=${Math.floor(Math.random() * 70)}`,
-        lastContact: new Date().toISOString().split('T')[0],
-        communicationHistory: [],
-        
-        // New comprehensive client data
-        organizationName: clientData.organizationName,
-        primaryContactName: clientData.primaryContactName,
-        titleRole: clientData.titleRole,
-        emailAddress: clientData.emailAddress,
-        phoneNumbers: clientData.phoneNumbers,
-        additionalContactName: clientData.additionalContactName,
-        additionalContactTitle: clientData.additionalContactTitle,
-        additionalContactEmail: clientData.additionalContactEmail,
-        additionalContactPhone: clientData.additionalContactPhone,
-        mailingAddress: clientData.mailingAddress,
-        website: clientData.website,
-        socialMediaLinks: clientData.socialMediaLinks,
-        taxIdEIN: clientData.taxIdEIN,
-        organizationType: clientData.organizationType,
-        missionStatement: clientData.missionStatement,
-        focusAreas: clientData.focusAreas,
-        serviceArea: clientData.serviceArea,
-        annualBudget: clientData.annualBudget,
-        staffCount: clientData.staffCount
+  const handleSaveClient = async (clientData) => {
+    try {
+      // Transform data for API - ensure required fields are present
+      const apiData = {
+        organizationName: clientData.organizationName || '',
+        primaryContactName: clientData.primaryContactName || '',
+        emailAddress: clientData.emailAddress || '',
+        phoneNumbers: clientData.phoneNumbers || '',
+        status: clientData.status || 'active',
+        tags: clientData.tags || [],
+        notes: clientData.notes || '',
+        titleRole: clientData.titleRole || '',
+        additionalContactName: clientData.additionalContactName || '',
+        additionalContactTitle: clientData.additionalContactTitle || '',
+        additionalContactEmail: clientData.additionalContactEmail || '',
+        additionalContactPhone: clientData.additionalContactPhone || '',
+        mailingAddress: clientData.mailingAddress || '',
+        website: clientData.website || '',
+        socialMediaLinks: clientData.socialMediaLinks || [],
+        taxIdEIN: clientData.taxIdEIN || '',
+        organizationType: clientData.organizationType || '',
+        missionStatement: clientData.missionStatement || '',
+        focusAreas: clientData.focusAreas || [],
+        serviceArea: clientData.serviceArea || '',
+        annualBudget: clientData.annualBudget || '',
+        staffCount: clientData.staffCount || '',
       };
-      setClients([...clients, newClient]);
+
+      // Validate required fields
+      if (!apiData.organizationName.trim()) {
+        throw new Error('Organization name is required');
+      }
+      if (!apiData.primaryContactName.trim()) {
+        throw new Error('Primary contact name is required');
+      }
+      if (!apiData.emailAddress.trim()) {
+        throw new Error('Email address is required');
+      }
+
+      console.log(`💾 Saving client to ${environment} database...`);
+
+      if (selectedClient) {
+        // Update existing client
+        const updatedClient = await apiService.updateClient(selectedClient._id, apiData);
+        setClients(clients.map(client => 
+          client._id === selectedClient._id ? updatedClient : client
+        ));
+      } else {
+        // Create new client
+        const newClient = await apiService.createClient(apiData);
+        setClients([newClient, ...clients]);
+      }
+      setView('list');
+    } catch (error) {
+      console.error(`❌ Error saving client to ${environment}:`, error);
+      setError(`Failed to save client: ${error.message}`);
     }
-    setView('list');
   };
 
-  const handleDeleteClient = (clientId) => {
+  const handleDeleteClient = async (clientId) => {
     if (window.confirm('Are you sure you want to delete this client?')) {
-      setClients(clients.filter(client => client.id !== clientId));
+      try {
+        await apiService.deleteClient(clientId);
+        setClients(clients.filter(client => client._id !== clientId));
+      } catch (error) {
+        console.error('Error deleting client:', error);
+        setError('Failed to delete client. Please try again.');
+      }
     }
   };
 
@@ -376,68 +282,379 @@ const Clients = () => {
     setView('email-composer');
   };
 
-  const handleAddCommunication = (communication) => {
+  const handleAddCommunication = async (communication) => {
     if (selectedClient) {
-      const updatedClients = clients.map(client => {
-        if (client.id === selectedClient.id) {
-          return {
-            ...client,
-            communicationHistory: [
-              ...client.communicationHistory,
-              {
-                ...communication,
-                id: Date.now(),
-                date: new Date().toISOString()
-              }
-            ]
-          };
-        }
-        return client;
-      });
-      setClients(updatedClients);
-      setSelectedClient(updatedClients.find(c => c.id === selectedClient.id));
+      try {
+        const updatedClient = await apiService.addCommunication(selectedClient._id, communication);
+        setSelectedClient(updatedClient);
+        
+        // Update client in the list
+        setClients(clients.map(client => 
+          client._id === selectedClient._id ? updatedClient : client
+        ));
+      } catch (error) {
+        console.error('Error adding communication:', error);
+        setError('Failed to add communication. Please try again.');
+      }
     }
   };
 
-  const handleSendEmailFromComposer = (emailData) => {
-    // Handle email sending logic
-    console.log('Sending email:', emailData);
-    
-    // Add to communication history if sending to a specific client
-    if (selectedClient) {
-      const updatedClients = clients.map(client => {
-        if (client.id === selectedClient.id) {
-          return {
-            ...client,
-            communicationHistory: [
-              ...client.communicationHistory,
-              {
-                id: Date.now(),
-                type: 'email',
-                direction: 'outgoing',
-                subject: emailData.subject,
-                preview: emailData.content.substring(0, 100) + '...',
-                date: new Date().toISOString(),
-                status: 'sent',
-                important: false
-              }
-            ]
-          };
-        }
-        return client;
-      });
-      setClients(updatedClients);
+  const handleSendEmailFromComposer = async (emailData) => {
+    try {
+      console.log(`📧 Sending email via ${environment} server...`);
+      
+      // Add to communication history if sending to a specific client
+      if (selectedClient) {
+        const communicationData = {
+          type: 'email',
+          direction: 'outgoing',
+          subject: emailData.subject,
+          content: emailData.content,
+          preview: emailData.content.substring(0, 100) + '...',
+          status: 'sent',
+          important: false
+        };
+        
+        const updatedClient = await apiService.addCommunication(selectedClient._id, communicationData);
+        setSelectedClient(updatedClient);
+        
+        // Update client in the list
+        setClients(clients.map(client => 
+          client._id === selectedClient._id ? updatedClient : client
+        ));
+      }
+      
+      setView('list');
+    } catch (error) {
+      console.error('Error sending email:', error);
+      setError('Failed to send email. Please try again.');
     }
-    
-    setView('list');
   };
 
-  const filteredClients = clients.filter(client =>
-    (client.organizationName || client.organization).toLowerCase().includes(searchTerm.toLowerCase()) ||
-    (client.primaryContactName || client.name).toLowerCase().includes(searchTerm.toLowerCase()) ||
-    (client.emailAddress || client.email).toLowerCase().includes(searchTerm.toLowerCase()) ||
-    client.tags.some(tag => tag.toLowerCase().includes(searchTerm.toLowerCase()))
-  );
+  const handleLogout = () => {
+    localStorage.removeItem('token');
+    localStorage.removeItem('user');
+    setIsAuthenticated(false);
+    setClients([]);
+    setError('Logged out successfully.');
+  };
+
+  const handleRetryConnection = async () => {
+    setError(null);
+    await checkConnection();
+    if (connectionStatus === 'connected' && !isAuthenticated) {
+      checkAuthentication();
+    }
+  };
+
+  // Helper function to transform client data for components expecting the old structure
+  const transformClientForComponents = (client) => {
+    if (!client) return null;
+    
+    return {
+      // Map MongoDB _id to id for compatibility
+      id: client._id,
+      // Core fields (for backward compatibility)
+      name: client.primaryContactName || client.name,
+      email: client.emailAddress || client.email,
+      phone: client.phoneNumbers || client.phone,
+      organization: client.organizationName || client.organization,
+      status: client.status,
+      lastContact: client.lastContact,
+      grantsSubmitted: client.grantsSubmitted,
+      grantsAwarded: client.grantsAwarded,
+      totalFunding: client.totalFunding,
+      avatar: client.avatar,
+      notes: client.notes,
+      tags: client.tags || [],
+      communicationHistory: client.communicationHistory || [],
+      
+      // Include all new comprehensive fields
+      ...client
+    };
+  };
+
+  const filteredClients = clients
+    .map(transformClientForComponents)
+    .filter(client =>
+      (client.organizationName || client.organization).toLowerCase().includes(searchTerm.toLowerCase()) ||
+      (client.primaryContactName || client.name).toLowerCase().includes(searchTerm.toLowerCase()) ||
+      (client.emailAddress || client.email).toLowerCase().includes(searchTerm.toLowerCase()) ||
+      (client.tags || []).some(tag => tag.toLowerCase().includes(searchTerm.toLowerCase()))
+    );
+
+  // Enhanced Connection Status Component
+  const ConnectionStatus = () => {
+    const getStatusText = () => {
+      if (connectionStatus === 'connected') {
+        return `Connected to ${environment === 'production' ? 'Production' : 'Local'} Server`;
+      } else if (connectionStatus === 'checking') {
+        return `Connecting to ${environment === 'production' ? 'Production' : 'Local'} Server...`;
+      } else {
+        return `${environment === 'production' ? 'Production' : 'Local'} Server Disconnected`;
+      }
+    };
+
+    return (
+      <div className={`connection-status ${connectionStatus}`}>
+        <div className="connection-status-content">
+          <div className="connection-status-icon">
+            {connectionStatus === 'connected' && '✓'}
+            {connectionStatus === 'checking' && '⟳'}
+            {connectionStatus === 'disconnected' && '✗'}
+          </div>
+          <span>{getStatusText()}</span>
+        </div>
+        {connectionStatus === 'disconnected' && (
+          <button 
+            className="connection-status-retry-btn"
+            onClick={handleRetryConnection}
+          >
+            Retry Connection
+          </button>
+        )}
+      </div>
+    );
+  };
+
+  // Enhanced Debug Panel Component
+  const DebugPanel = () => {
+    const testConnection = async () => {
+      try {
+        let result;
+        if (environment === 'development') {
+          result = await apiService.testLocalConnection();
+        } else {
+          result = await apiService.testProductionConnection();
+        }
+        console.log(`✅ ${environment} connection test:`, result);
+        alert(`✅ ${environment === 'production' ? 'Production' : 'Local'} server is working! Check console for details.`);
+      } catch (error) {
+        console.error(`❌ ${environment} test failed:`, error);
+        alert(`❌ ${environment === 'production' ? 'Production' : 'Local'} server test failed: ${error.message}`);
+      }
+    };
+
+    return (
+      <div className={`debug-panel ${environment}`}>
+        <div className="debug-panel-header">
+          <div className="debug-panel-icon">
+            {environment === 'production' ? '🚀' : '🔧'}
+          </div>
+          <h3 className="debug-panel-title">
+            GrantFlow CRM - {environment === 'production' ? 'Production' : 'Local Development'}
+          </h3>
+        </div>
+        
+        <div className="debug-panel-actions">
+          <button onClick={testConnection} className="debug-panel-btn primary">
+            <i className="fas fa-bolt"></i>
+            Test {environment === 'production' ? 'Production' : 'Local'} API
+          </button>
+          <button onClick={fetchClients} className="debug-panel-btn success">
+            <i className="fas fa-sync-alt"></i>
+            Refresh Clients
+          </button>
+          <button onClick={handleLogout} className="debug-panel-btn danger">
+            <i className="fas fa-sign-out-alt"></i>
+            Logout
+          </button>
+        </div>
+        
+        <div className="debug-panel-status">
+          <div className="debug-status-item">
+            <div className={`debug-status-indicator ${isAuthenticated ? 'authenticated' : 'disconnected'}`}></div>
+            Status: {isAuthenticated ? 'Authenticated' : 'Not authenticated'}
+          </div>
+          <div className="debug-status-item">
+            <div className={`debug-status-indicator ${connectionStatus}`}></div>
+            Server: {connectionStatus}
+          </div>
+          <div className="debug-status-item">
+            <i className="fas fa-globe"></i>
+            Environment: {environment}
+          </div>
+          <div className="debug-status-item">
+            <i className="fas fa-users"></i>
+            Clients: {clients.length}
+          </div>
+        </div>
+      </div>
+    );
+  };
+
+  // Enhanced Login Helper Component
+  const LoginHelper = () => {
+    const getLoginConfig = () => {
+      if (environment === 'production') {
+        return {
+          background: 'linear-gradient(135deg, #e3f2fd 0%, #bbdefb 100%)',
+          border: '#2196f3',
+          buttonColor: '#1976d2',
+          title: '🚀 GrantFlow CRM - Production',
+          serverType: 'production server',
+          buttonText: 'Login with Demo Account'
+        };
+      } else {
+        return {
+          background: 'linear-gradient(135deg, #e8f5e8 0%, #c3e6cb 100%)',
+          border: '#4caf50',
+          buttonColor: '#28a745',
+          title: '🔧 GrantFlow CRM - Local Development',
+          serverType: 'local development server',
+          buttonText: 'Login with Demo Account (Local)'
+        };
+      }
+    };
+
+    const config = getLoginConfig();
+
+    return (
+      <div style={{
+        padding: '30px',
+        background: config.background,
+        border: `2px solid ${config.border}`,
+        borderRadius: '16px',
+        margin: '20px',
+        textAlign: 'center',
+        boxShadow: '0 8px 32px rgba(0, 0, 0, 0.1)',
+        animation: 'panelSlideIn 0.6s ease-out'
+      }}>
+        <h3 style={{ 
+          margin: '0 0 15px 0',
+          fontSize: '1.8rem',
+          fontWeight: '700',
+          background: 'linear-gradient(135deg, #1a472a 0%, #2d5a3a 100%)',
+          WebkitBackgroundClip: 'text',
+          WebkitTextFillColor: 'transparent',
+          backgroundClip: 'text'
+        }}>
+          {config.title}
+        </h3>
+        <p style={{ 
+          fontSize: '1.1rem',
+          margin: '0 0 20px 0',
+          color: '#1a472a',
+          fontWeight: '600'
+        }}>
+          You are connected to the <strong>{config.serverType}</strong> at:
+        </p>
+        <code style={{ 
+          background: 'rgba(255, 255, 255, 0.9)',
+          padding: '12px 16px', 
+          borderRadius: '10px',
+          fontSize: '14px',
+          display: 'block',
+          margin: '15px auto',
+          maxWidth: '500px',
+          fontWeight: '600',
+          border: '1px solid rgba(0, 0, 0, 0.1)',
+          boxShadow: '0 2px 8px rgba(0, 0, 0, 0.1)'
+        }}>
+          {process.env.REACT_APP_API_URL || 'http://localhost:5000'}
+        </code>
+        <p style={{ 
+          margin: '20px 0',
+          fontSize: '1rem',
+          color: '#1a472a'
+        }}>
+          Please log in with the demo account to access clients.
+        </p>
+        <button 
+          onClick={handleDemoLogin}
+          disabled={loading || connectionStatus === 'disconnected'}
+          style={{
+            padding: '14px 28px',
+            background: connectionStatus === 'disconnected' ? '#6c757d' : config.buttonColor,
+            color: 'white',
+            border: 'none',
+            borderRadius: '10px',
+            cursor: connectionStatus === 'disconnected' ? 'not-allowed' : 'pointer',
+            fontSize: '16px',
+            marginTop: '15px',
+            fontWeight: 'bold',
+            transition: 'all 0.3s ease',
+            boxShadow: connectionStatus === 'disconnected' ? 'none' : '0 4px 15px rgba(0, 0, 0, 0.2)'
+          }}
+          onMouseOver={(e) => {
+            if (connectionStatus !== 'disconnected') {
+              e.target.style.transform = 'translateY(-2px)';
+              e.target.style.boxShadow = '0 6px 20px rgba(0, 0, 0, 0.3)';
+            }
+          }}
+          onMouseOut={(e) => {
+            if (connectionStatus !== 'disconnected') {
+              e.target.style.transform = 'translateY(0)';
+              e.target.style.boxShadow = '0 4px 15px rgba(0, 0, 0, 0.2)';
+            }
+          }}
+        >
+          {loading ? (
+            <>
+              <i className="fas fa-spinner fa-spin" style={{ marginRight: '8px' }}></i>
+              Logging in...
+            </>
+          ) : connectionStatus === 'disconnected' ? (
+            environment === 'production' ? 'Server Offline' : 'Backend Not Running'
+          ) : (
+            config.buttonText
+          )}
+        </button>
+        <div style={{ 
+          marginTop: '20px', 
+          padding: '15px',
+          background: 'rgba(255, 255, 255, 0.7)',
+          borderRadius: '10px',
+          border: '1px solid rgba(0, 0, 0, 0.1)'
+        }}>
+          <strong style={{ color: '#1a472a' }}>Demo Credentials:</strong><br />
+          <div style={{ marginTop: '8px', lineHeight: '1.6' }}>
+            <span style={{ fontWeight: '600' }}>Email:</span> demo@grantfunds.com<br />
+            <span style={{ fontWeight: '600' }}>Password:</span> demo123
+          </div>
+        </div>
+        {connectionStatus === 'disconnected' && (
+          <div style={{ 
+            marginTop: '20px', 
+            padding: '15px',
+            background: 'rgba(248, 215, 218, 0.8)',
+            color: '#721c24',
+            borderRadius: '10px',
+            border: '1px solid #f5c6cb'
+          }}>
+            <strong>🚫 Server not detected!</strong><br />
+            <div style={{ marginTop: '8px', fontSize: '0.9rem' }}>
+              {environment === 'production' 
+                ? 'Make sure your production backend is deployed and running on Render'
+                : 'Make sure your backend is running on localhost:5000'
+              }
+            </div>
+            <div style={{ marginTop: '5px', fontSize: '0.85rem', opacity: '0.8' }}>
+              {environment === 'production' 
+                ? 'Check: https://grant-ai.onrender.com/api/health'
+                : 'Run: cd backend && npm start'
+              }
+            </div>
+          </div>
+        )}
+        {connectionStatus === 'connected' && (
+          <div style={{ 
+            marginTop: '20px', 
+            padding: '15px',
+            background: 'rgba(209, 236, 241, 0.8)',
+            color: '#0c5460',
+            borderRadius: '10px',
+            border: '1px solid #bee5eb'
+          }}>
+            <strong>✅ Server is running!</strong><br />
+            <div style={{ marginTop: '5px', fontSize: '0.9rem' }}>
+              You can now log in and test the application
+            </div>
+          </div>
+        )}
+      </div>
+    );
+  };
 
   // Simplified logic for determining active states
   const isClientsActive = view === 'list' || view === 'form' || view === 'details' || 
@@ -446,6 +663,9 @@ const Clients = () => {
   const isCommunicationHubActive = view === 'communication-hub';
 
   const renderView = () => {
+    // Transform selected client for components
+    const transformedSelectedClient = transformClientForComponents(selectedClient);
+
     switch (view) {
       case 'list':
         return (
@@ -470,7 +690,7 @@ const Clients = () => {
       case 'form':
         return (
           <ClientForm
-            client={selectedClient}
+            client={transformedSelectedClient}
             onSave={handleSaveClient}
             onCancel={() => setView('list')}
           />
@@ -478,7 +698,7 @@ const Clients = () => {
       case 'details':
         return (
           <ClientDetails
-            client={selectedClient}
+            client={transformedSelectedClient}
             onEdit={() => handleEditClient(selectedClient)}
             onBack={() => setView('list')}
             onSendEmail={() => handleSendEmail(selectedClient)}
@@ -490,7 +710,7 @@ const Clients = () => {
       case 'emails':
         return (
           <ClientEmails
-            client={selectedClient}
+            client={transformedSelectedClient}
             onBack={() => setView('list')}
             onSendEmail={() => handleSendEmail(selectedClient)}
             onUseTemplate={handleUseTemplate}
@@ -499,7 +719,7 @@ const Clients = () => {
       case 'communication':
         return (
           <ClientCommunication
-            client={selectedClient}
+            client={transformedSelectedClient}
             onSendEmail={() => handleSendEmail(selectedClient)}
             onAddCommunication={handleAddCommunication}
             onBack={() => setView('list')}
@@ -510,7 +730,7 @@ const Clients = () => {
       case 'history':
         return (
           <CommunicationHistory
-            client={selectedClient}
+            client={transformedSelectedClient}
             onBack={() => setView('list')}
             onSendEmail={() => handleSendEmail(selectedClient)}
           />
@@ -525,7 +745,7 @@ const Clients = () => {
       case 'bulk-email':
         return (
           <BulkEmail
-            clients={clients}
+            clients={clients.map(transformClientForComponents)}
             onSend={() => setView('list')}
             onCancel={() => setView('list')}
           />
@@ -533,7 +753,7 @@ const Clients = () => {
       case 'email-composer':
         return (
           <EmailComposer
-            client={selectedClient}
+            client={transformedSelectedClient}
             template={selectedTemplate}
             onSend={handleSendEmailFromComposer}
             onCancel={() => setView('list')}
@@ -547,87 +767,159 @@ const Clients = () => {
             onTemplates={handleViewTemplates}
             onBulkEmail={handleBulkEmail}
             onComposeEmail={handleComposeEmail}
-            clients={clients}
+            clients={clients.map(transformClientForComponents)}
           />
         );
       default:
-        return null;
+        return (
+          <div className="clients-loading">
+            <i className="fas fa-exclamation-triangle"></i>
+            <p>View not found: {view}</p>
+            <button 
+              className="clients-btn clients-btn-primary"
+              onClick={() => setView('list')}
+            >
+              Return to Client List
+            </button>
+          </div>
+        );
     }
   };
 
   return (
     <div className="clients-container">
-      {/* Enhanced Navigation Bar - Fixed to show all buttons */}
-      <div className="clients-nav">
-        <div className="clients-nav-buttons">
-          {/* Clients Section */}
-          <div className="clients-nav-section">
-            <button 
-              className={`clients-nav-button ${isClientsActive ? 'active' : ''}`}
-              onClick={() => setView('list')}
-            >
-              <i className="fas fa-users"></i>
-              Clients
-              {clients.filter(c => c.status === 'active').length > 0 && (
-                <span className="clients-nav-badge">
-                  {clients.filter(c => c.status === 'active').length}
-                </span>
-              )}
-            </button>
+      {/* Enhanced Connection Status */}
+      <ConnectionStatus />
+      
+      {/* Show login helper if not authenticated */}
+      {!isAuthenticated ? (
+        <LoginHelper />
+      ) : (
+        <>
+          {/* Enhanced Debug Panel */}
+          <DebugPanel />
+          
+          {/* Error Message */}
+          {error && (
+            <div className="error-message" style={{
+              background: 'linear-gradient(135deg, #f8d7da 0%, #f5c6cb 100%)',
+              color: '#721c24',
+              padding: '15px',
+              borderRadius: '12px',
+              margin: '0 2rem 1.5rem',
+              border: '2px solid #dc3545',
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'center',
+              boxShadow: '0 4px 15px rgba(220, 53, 69, 0.2)',
+              animation: 'statusSlideIn 0.5s ease-out'
+            }}>
+              <span style={{ fontWeight: '600' }}>{error}</span>
+              <button 
+                onClick={() => setError(null)} 
+                style={{
+                  background: 'none',
+                  border: 'none',
+                  fontSize: '18px',
+                  cursor: 'pointer',
+                  color: '#721c24',
+                  fontWeight: 'bold',
+                  padding: '0',
+                  width: '24px',
+                  height: '24px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  borderRadius: '50%',
+                  transition: 'all 0.3s ease'
+                }}
+                onMouseOver={(e) => {
+                  e.target.style.background = '#dc3545';
+                  e.target.style.color = 'white';
+                }}
+                onMouseOut={(e) => {
+                  e.target.style.background = 'none';
+                  e.target.style.color = '#721c24';
+                }}
+              >
+                ×
+              </button>
+            </div>
+          )}
+
+          {/* Enhanced Navigation Bar */}
+          <div className="clients-nav">
+            <div className="clients-nav-buttons">
+              {/* Clients Section */}
+              <div className="clients-nav-section">
+                <button 
+                  className={`clients-nav-button ${isClientsActive ? 'active' : ''}`}
+                  onClick={() => setView('list')}
+                >
+                  <i className="fas fa-users"></i>
+                  Clients
+                  {clients.filter(c => c.status === 'active').length > 0 && (
+                    <span className="clients-nav-badge">
+                      {clients.filter(c => c.status === 'active').length}
+                    </span>
+                  )}
+                </button>
+              </div>
+
+              {/* Communication Section */}
+              <div className="clients-nav-section">
+                <button 
+                  className={`clients-nav-button ${isCommunicationHubActive ? 'active' : ''}`}
+                  onClick={handleCommunicationHub}
+                >
+                  <i className="fas fa-comments"></i>
+                  Communication Hub
+                  <span className="clients-nav-badge">3</span>
+                </button>
+                
+                {/* Communication Actions - Always Visible */}
+                <button 
+                  className="clients-nav-action-btn"
+                  onClick={handleViewTemplates}
+                >
+                  <i className="fas fa-layer-group"></i>
+                  Email Templates
+                </button>
+                
+                {/* Compose Email Button - Added before Bulk Email */}
+                <button 
+                  className="clients-nav-action-btn primary"
+                  onClick={() => handleComposeEmail()}
+                >
+                  <i className="fas fa-edit"></i>
+                  Compose Email
+                </button>
+                
+                <button 
+                  className="clients-nav-action-btn primary"
+                  onClick={handleBulkEmail}
+                >
+                  <i className="fas fa-mail-bulk"></i>
+                  Bulk Email
+                </button>
+              </div>
+            </div>
+            
+            <div className="clients-nav-actions">
+              {/* Add Client Button - Moved to right side */}
+              <button className="clients-nav-add-btn" onClick={handleAddClient}>
+                <i className="fas fa-plus"></i>
+                Add Client
+              </button>
+            </div>
           </div>
 
-          {/* Communication Section */}
-          <div className="clients-nav-section">
-            <button 
-              className={`clients-nav-button ${isCommunicationHubActive ? 'active' : ''}`}
-              onClick={handleCommunicationHub}
-            >
-              <i className="fas fa-comments"></i>
-              Communication Hub
-              <span className="clients-nav-badge">3</span>
-            </button>
-            
-            {/* Communication Actions - Always Visible */}
-            <button 
-              className="clients-nav-action-btn"
-              onClick={handleViewTemplates}
-            >
-              <i className="fas fa-layer-group"></i>
-              Email Templates
-            </button>
-            
-            {/* Compose Email Button - Added before Bulk Email */}
-            <button 
-              className="clients-nav-action-btn primary"
-              onClick={() => handleComposeEmail()}
-            >
-              <i className="fas fa-edit"></i>
-              Compose Email
-            </button>
-            
-            <button 
-              className="clients-nav-action-btn primary"
-              onClick={handleBulkEmail}
-            >
-              <i className="fas fa-mail-bulk"></i>
-              Bulk Email
-            </button>
+          {/* Main Content */}
+          <div className="clients-content">
+            {renderView()}
           </div>
-        </div>
-        
-        <div className="clients-nav-actions">
-          {/* Add Client Button - Moved to right side */}
-          <button className="clients-nav-add-btn" onClick={handleAddClient}>
-            <i className="fas fa-plus"></i>
-            Add Client
-          </button>
-        </div>
-      </div>
-
-      {/* Main Content */}
-      <div className="clients-content">
-        {renderView()}
-      </div>
+        </>
+      )}
     </div>
   );
 };

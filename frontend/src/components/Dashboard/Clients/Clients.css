@@ -1,10 +1,350 @@
-/* Clients.css - Professional Dark Green & Gold Theme */
+/* Clients.css - Professional Dark Green & Gold Theme with Enhanced Indicators */
 
 /* Reset and Base Styles */
 .clients-container {
   min-height: 100vh;
   background: #f8f9fa;
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
+}
+
+/* Enhanced Connection Status Styles */
+.connection-status {
+  padding: 12px 16px;
+  border-radius: 12px;
+  margin: 0 2rem 1rem;
+  font-weight: 600;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+  border: 2px solid transparent;
+  animation: statusSlideIn 0.5s ease-out;
+  position: relative;
+  overflow: hidden;
+}
+
+.connection-status::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(135deg, rgba(255,255,255,0.1) 0%, transparent 100%);
+  z-index: 1;
+}
+
+.connection-status-content {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  z-index: 2;
+  position: relative;
+}
+
+.connection-status-icon {
+  width: 20px;
+  height: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  animation: iconPulse 2s infinite;
+}
+
+.connection-status.connected {
+  background: linear-gradient(135deg, #d4edda 0%, #c3e6cb 100%);
+  color: #155724;
+  border-color: #28a745;
+}
+
+.connection-status.connected .connection-status-icon {
+  background: #28a745;
+  box-shadow: 0 0 0 4px rgba(40, 167, 69, 0.3);
+}
+
+.connection-status.checking {
+  background: linear-gradient(135deg, #fff3cd 0%, #ffeaa7 100%);
+  color: #856404;
+  border-color: #ffc107;
+}
+
+.connection-status.checking .connection-status-icon {
+  background: #ffc107;
+  box-shadow: 0 0 0 4px rgba(255, 193, 7, 0.3);
+  animation: iconSpin 1.5s linear infinite;
+}
+
+.connection-status.disconnected {
+  background: linear-gradient(135deg, #f8d7da 0%, #f5c6cb 100%);
+  color: #721c24;
+  border-color: #dc3545;
+}
+
+.connection-status.disconnected .connection-status-icon {
+  background: #dc3545;
+  box-shadow: 0 0 0 4px rgba(220, 53, 69, 0.3);
+}
+
+.connection-status-retry-btn {
+  padding: 8px 16px;
+  background: linear-gradient(135deg, #007bff 0%, #0056b3 100%);
+  color: white;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  font-weight: 600;
+  transition: all 0.3s ease;
+  z-index: 2;
+  position: relative;
+  box-shadow: 0 2px 8px rgba(0, 123, 255, 0.3);
+}
+
+.connection-status-retry-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 123, 255, 0.4);
+}
+
+/* Enhanced Debug Panel Styles */
+.debug-panel {
+  padding: 16px;
+  border-radius: 16px;
+  margin: 0 2rem 1.5rem;
+  box-shadow: 0 6px 25px rgba(0, 0, 0, 0.1);
+  border: 2px solid;
+  background: #fff;
+  animation: panelSlideIn 0.6s ease-out;
+  position: relative;
+  overflow: hidden;
+}
+
+.debug-panel::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(135deg, rgba(255,255,255,0.8) 0%, transparent 100%);
+}
+
+.debug-panel.production {
+  background: linear-gradient(135deg, #e3f2fd 0%, #bbdefb 100%);
+  border-color: #2196f3;
+}
+
+.debug-panel.development {
+  background: linear-gradient(135deg, #e8f5e8 0%, #c3e6cb 100%);
+  border-color: #4caf50;
+}
+
+.debug-panel-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 16px;
+  position: relative;
+  z-index: 2;
+}
+
+.debug-panel-icon {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.2rem;
+  animation: debugIconFloat 3s ease-in-out infinite;
+}
+
+.debug-panel.production .debug-panel-icon {
+  background: linear-gradient(135deg, #2196f3 0%, #1976d2 100%);
+  color: white;
+  box-shadow: 0 4px 15px rgba(33, 150, 243, 0.4);
+}
+
+.debug-panel.development .debug-panel-icon {
+  background: linear-gradient(135deg, #4caf50 0%, #388e3c 100%);
+  color: white;
+  box-shadow: 0 4px 15px rgba(76, 175, 80, 0.4);
+}
+
+.debug-panel-title {
+  font-size: 1.3rem;
+  font-weight: 700;
+  margin: 0;
+  background: linear-gradient(135deg, #1a472a 0%, #2d5a3a 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.debug-panel-actions {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-bottom: 16px;
+  position: relative;
+  z-index: 2;
+}
+
+.debug-panel-btn {
+  padding: 10px 20px;
+  border: none;
+  border-radius: 10px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+  position: relative;
+  overflow: hidden;
+}
+
+.debug-panel-btn::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.4), transparent);
+  transition: left 0.5s ease;
+}
+
+.debug-panel-btn:hover::before {
+  left: 100%;
+}
+
+.debug-panel-btn.primary {
+  background: linear-gradient(135deg, #007bff 0%, #0056b3 100%);
+  color: white;
+}
+
+.debug-panel-btn.success {
+  background: linear-gradient(135deg, #28a745 0%, #1e7e34 100%);
+  color: white;
+}
+
+.debug-panel-btn.danger {
+  background: linear-gradient(135deg, #dc3545 0%, #c82333 100%);
+  color: white;
+}
+
+.debug-panel-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+}
+
+.debug-panel-status {
+  display: flex;
+  gap: 20px;
+  flex-wrap: wrap;
+  font-size: 0.9rem;
+  position: relative;
+  z-index: 2;
+}
+
+.debug-status-item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  background: rgba(255, 255, 255, 0.7);
+  border-radius: 20px;
+  font-weight: 600;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+}
+
+.debug-status-indicator {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  animation: statusPulse 2s infinite;
+}
+
+.debug-status-indicator.connected {
+  background: #28a745;
+  box-shadow: 0 0 0 2px rgba(40, 167, 69, 0.3);
+}
+
+.debug-status-indicator.authenticated {
+  background: #17a2b8;
+  box-shadow: 0 0 0 2px rgba(23, 162, 184, 0.3);
+}
+
+.debug-status-indicator.disconnected {
+  background: #dc3545;
+  box-shadow: 0 0 0 2px rgba(220, 53, 69, 0.3);
+}
+
+/* Animations */
+@keyframes statusSlideIn {
+  from {
+    opacity: 0;
+    transform: translateY(-20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes panelSlideIn {
+  from {
+    opacity: 0;
+    transform: translateY(-15px) scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes iconPulse {
+  0%, 100% {
+    transform: scale(1);
+    box-shadow: 0 0 0 4px rgba(40, 167, 69, 0.3);
+  }
+  50% {
+    transform: scale(1.1);
+    box-shadow: 0 0 0 6px rgba(40, 167, 69, 0.5);
+  }
+}
+
+@keyframes iconSpin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes debugIconFloat {
+  0%, 100% {
+    transform: translateY(0) rotate(0deg);
+  }
+  33% {
+    transform: translateY(-3px) rotate(2deg);
+  }
+  66% {
+    transform: translateY(2px) rotate(-2deg);
+  }
+}
+
+@keyframes statusPulse {
+  0%, 100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.7;
+    transform: scale(1.1);
+  }
 }
 
 /* Clients Navigation Bar Styles */
@@ -884,6 +1224,11 @@
     padding: 0.7rem 1.25rem;
     font-size: 0.9rem;
   }
+  
+  .connection-status,
+  .debug-panel {
+    margin: 0 1.5rem 1rem;
+  }
 }
 
 @media (max-width: 768px) {
@@ -927,6 +1272,25 @@
   
   .clients-content {
     padding: 1rem;
+  }
+  
+  .connection-status,
+  .debug-panel {
+    margin: 0 1rem 1rem;
+  }
+  
+  .debug-panel-actions {
+    flex-direction: column;
+  }
+  
+  .debug-panel-btn {
+    width: 100%;
+    justify-content: center;
+  }
+  
+  .debug-panel-status {
+    flex-direction: column;
+    gap: 10px;
   }
   
   .clients-header-content {
@@ -1002,6 +1366,17 @@
   
   .clients-header-title p {
     font-size: 1rem;
+  }
+  
+  .connection-status-content {
+    flex-direction: column;
+    gap: 8px;
+    text-align: center;
+  }
+  
+  .connection-status-retry-btn {
+    width: 100%;
+    margin-top: 8px;
   }
 }
 
