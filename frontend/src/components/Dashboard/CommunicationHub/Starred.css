@@ -1,0 +1,162 @@
+.starred-container {
+  background: #f8fafc;
+  border-radius: 12px;
+  padding: 24px;
+  height: calc(100vh - 200px);
+  display: flex;
+  flex-direction: column;
+}
+
+.starred-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 24px;
+  padding-bottom: 16px;
+  border-bottom: 2px solid #e2e8f0;
+}
+
+.starred-header h2 {
+  color: #2d5a27;
+  margin: 0;
+  font-size: 1.75rem;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.starred-icon {
+  color: #d4af37;
+}
+
+.starred-count {
+  background: #fffbeb;
+  color: #d97706;
+  padding: 8px 16px;
+  border-radius: 20px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  border: 1px solid #fef3c7;
+}
+
+.starred-content {
+  flex: 1;
+  background: white;
+  border-radius: 8px;
+  border: 1px solid #e2e8f0;
+  padding: 24px;
+  overflow-y: auto;
+}
+
+.starred-list {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.starred-item {
+  padding: 20px;
+  background: #fffbeb;
+  border: 1px solid #fef3c7;
+  border-radius: 12px;
+  transition: all 0.3s ease;
+}
+
+.starred-item:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(212, 175, 55, 0.1);
+  border-color: #d4af37;
+}
+
+.starred-item-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 12px;
+}
+
+.sender-info {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.sender-info strong {
+  color: #374151;
+  font-size: 1rem;
+}
+
+.sender-info span {
+  color: #64748b;
+  font-size: 0.85rem;
+}
+
+.email-date {
+  color: #94a3b8;
+  font-size: 0.85rem;
+  white-space: nowrap;
+}
+
+.starred-subject {
+  font-weight: 600;
+  color: #1a202c;
+  margin-bottom: 8px;
+  font-size: 1.1rem;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.starred-indicator {
+  color: #d4af37;
+}
+
+.starred-preview {
+  color: #64748b;
+  line-height: 1.5;
+  margin-bottom: 16px;
+}
+
+.starred-actions {
+  display: flex;
+  gap: 12px;
+}
+
+.empty-state {
+  text-align: center;
+  padding: 60px 20px;
+  color: #64748b;
+}
+
+.empty-icon {
+  font-size: 4rem;
+  color: #e2e8f0;
+  margin-bottom: 20px;
+}
+
+.empty-state h3 {
+  color: #374151;
+  margin-bottom: 12px;
+  font-size: 1.5rem;
+}
+
+.empty-state p {
+  font-size: 1rem;
+  line-height: 1.5;
+}
+
+@media (max-width: 768px) {
+  .starred-item-header {
+    flex-direction: column;
+    gap: 8px;
+  }
+  
+  .starred-actions {
+    flex-direction: column;
+  }
+  
+  .starred-actions .btn {
+    width: 100%;
+    justify-content: center;
+  }
+}

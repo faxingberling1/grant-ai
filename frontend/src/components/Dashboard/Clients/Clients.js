@@ -25,6 +25,7 @@ const Clients = () => {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [connectionStatus, setConnectionStatus] = useState('checking');
   const [environment, setEnvironment] = useState('production');
+  const [showDebugPanel, setShowDebugPanel] = useState(false);
 
   // Check authentication and connection on component mount
   useEffect(() => {
@@ -256,29 +257,9 @@ const Clients = () => {
     }
   };
 
-  const handleBulkEmail = () => {
-    setView('bulk-email');
-  };
-
   const handleSendEmail = (client) => {
     setSelectedClient(client);
     setSelectedTemplate(null);
-    setView('email-composer');
-  };
-
-  const handleComposeEmail = (client = null, template = null) => {
-    setSelectedClient(client);
-    setSelectedTemplate(template);
-    setView('email-composer');
-  };
-
-  const handleViewTemplates = () => {
-    setView('templates');
-  };
-
-  const handleUseTemplate = (template) => {
-    setSelectedTemplate(template);
-    setSelectedClient(null);
     setView('email-composer');
   };
 
@@ -383,42 +364,55 @@ const Clients = () => {
       (client.tags || []).some(tag => tag.toLowerCase().includes(searchTerm.toLowerCase()))
     );
 
-  // Enhanced Connection Status Component
-  const ConnectionStatus = () => {
-    const getStatusText = () => {
+  // Compact Connection Status Component for Footer
+  const CompactConnectionStatus = () => {
+    const getStatusConfig = () => {
       if (connectionStatus === 'connected') {
-        return `Connected to ${environment === 'production' ? 'Production' : 'Local'} Server`;
+        return {
+          icon: '✓',
+          text: `Connected to ${environment === 'production' ? 'Production' : 'Local'}`,
+          color: '#28a745',
+          bgColor: 'rgba(40, 167, 69, 0.1)'
+        };
       } else if (connectionStatus === 'checking') {
-        return `Connecting to ${environment === 'production' ? 'Production' : 'Local'} Server...`;
+        return {
+          icon: '⟳',
+          text: `Connecting to ${environment === 'production' ? 'Production' : 'Local'}...`,
+          color: '#ffc107',
+          bgColor: 'rgba(255, 193, 7, 0.1)'
+        };
       } else {
-        return `${environment === 'production' ? 'Production' : 'Local'} Server Disconnected`;
+        return {
+          icon: '✗',
+          text: `${environment === 'production' ? 'Production' : 'Local'} Disconnected`,
+          color: '#dc3545',
+          bgColor: 'rgba(220, 53, 69, 0.1)'
+        };
       }
     };
 
+    const config = getStatusConfig();
+
     return (
-      <div className={`connection-status ${connectionStatus}`}>
-        <div className="connection-status-content">
-          <div className="connection-status-icon">
-            {connectionStatus === 'connected' && '✓'}
-            {connectionStatus === 'checking' && '⟳'}
-            {connectionStatus === 'disconnected' && '✗'}
-          </div>
-          <span>{getStatusText()}</span>
-        </div>
-        {connectionStatus === 'disconnected' && (
-          <button 
-            className="connection-status-retry-btn"
-            onClick={handleRetryConnection}
-          >
-            Retry Connection
-          </button>
-        )}
+      <div 
+        className="compact-status-item"
+        style={{
+          background: config.bgColor,
+          border: `1px solid ${config.color}`,
+          color: config.color,
+        }}
+        onClick={handleRetryConnection}
+      >
+        <span className="compact-status-icon" style={{ color: config.color }}>
+          {config.icon}
+        </span>
+        <span className="compact-status-text">{config.text}</span>
       </div>
     );
   };
 
-  // Enhanced Debug Panel Component
-  const DebugPanel = () => {
+  // Compact Debug Panel for Footer
+  const CompactDebugPanel = () => {
     const testConnection = async () => {
       try {
         let result;
@@ -436,49 +430,57 @@ const Clients = () => {
     };
 
     return (
-      <div className={`debug-panel ${environment}`}>
-        <div className="debug-panel-header">
-          <div className="debug-panel-icon">
+      <div className="compact-debug-panel">
+        <div className="compact-debug-header">
+          <div className="compact-debug-icon">
             {environment === 'production' ? '🚀' : '🔧'}
           </div>
-          <h3 className="debug-panel-title">
-            GrantFlow CRM - {environment === 'production' ? 'Production' : 'Local Development'}
-          </h3>
-        </div>
-        
-        <div className="debug-panel-actions">
-          <button onClick={testConnection} className="debug-panel-btn primary">
-            <i className="fas fa-bolt"></i>
-            Test {environment === 'production' ? 'Production' : 'Local'} API
-          </button>
-          <button onClick={fetchClients} className="debug-panel-btn success">
-            <i className="fas fa-sync-alt"></i>
-            Refresh Clients
-          </button>
-          <button onClick={handleLogout} className="debug-panel-btn danger">
-            <i className="fas fa-sign-out-alt"></i>
-            Logout
+          <span className="compact-debug-title">
+            GrantFlow CRM - {environment === 'production' ? 'Production' : 'Local'}
+          </span>
+          <button 
+            className="compact-debug-toggle"
+            onClick={() => setShowDebugPanel(!showDebugPanel)}
+          >
+            {showDebugPanel ? '▲' : '▼'}
           </button>
         </div>
-        
-        <div className="debug-panel-status">
-          <div className="debug-status-item">
-            <div className={`debug-status-indicator ${isAuthenticated ? 'authenticated' : 'disconnected'}`}></div>
-            Status: {isAuthenticated ? 'Authenticated' : 'Not authenticated'}
+
+        {showDebugPanel && (
+          <div className="compact-debug-content">
+            <div className="compact-debug-actions">
+              <button onClick={testConnection} className="compact-debug-btn">
+                <i className="fas fa-bolt"></i>
+                Test API
+              </button>
+              <button onClick={fetchClients} className="compact-debug-btn">
+                <i className="fas fa-sync-alt"></i>
+                Refresh
+              </button>
+              <button onClick={handleLogout} className="compact-debug-btn danger">
+                <i className="fas fa-sign-out-alt"></i>
+                Logout
+              </button>
+            </div>
+            
+            <div className="compact-debug-status">
+              <div className="compact-status-indicators">
+                <div className="compact-status-indicator">
+                  <div className={`status-dot ${isAuthenticated ? 'authenticated' : 'disconnected'}`}></div>
+                  {isAuthenticated ? 'Authenticated' : 'Not authenticated'}
+                </div>
+                <div className="compact-status-indicator">
+                  <div className={`status-dot ${connectionStatus}`}></div>
+                  Server: {connectionStatus}
+                </div>
+                <div className="compact-status-indicator">
+                  <i className="fas fa-users"></i>
+                  Clients: {clients.length}
+                </div>
+              </div>
+            </div>
           </div>
-          <div className="debug-status-item">
-            <div className={`debug-status-indicator ${connectionStatus}`}></div>
-            Server: {connectionStatus}
-          </div>
-          <div className="debug-status-item">
-            <i className="fas fa-globe"></i>
-            Environment: {environment}
-          </div>
-          <div className="debug-status-item">
-            <i className="fas fa-users"></i>
-            Clients: {clients.length}
-          </div>
-        </div>
+        )}
       </div>
     );
   };
@@ -678,11 +680,9 @@ const Clients = () => {
             onDeleteClient={handleDeleteClient}
             onSendEmail={handleSendEmail}
             onEmails={handleEmails}
-            onBulkEmail={handleBulkEmail}
             onCommunication={handleCommunication}
             onViewHistory={handleViewHistory}
             onCommunicationHub={handleCommunicationHub}
-            onViewTemplates={handleViewTemplates}
             searchTerm={searchTerm}
             onSearchChange={setSearchTerm}
           />
@@ -713,7 +713,6 @@ const Clients = () => {
             client={transformedSelectedClient}
             onBack={() => setView('list')}
             onSendEmail={() => handleSendEmail(selectedClient)}
-            onUseTemplate={handleUseTemplate}
           />
         );
       case 'communication':
@@ -735,38 +734,11 @@ const Clients = () => {
             onSendEmail={() => handleSendEmail(selectedClient)}
           />
         );
-      case 'templates':
-        return (
-          <EmailTemplates
-            onBack={() => setView('list')}
-            onUseTemplate={handleUseTemplate}
-          />
-        );
-      case 'bulk-email':
-        return (
-          <BulkEmail
-            clients={clients.map(transformClientForComponents)}
-            onSend={() => setView('list')}
-            onCancel={() => setView('list')}
-          />
-        );
-      case 'email-composer':
-        return (
-          <EmailComposer
-            client={transformedSelectedClient}
-            template={selectedTemplate}
-            onSend={handleSendEmailFromComposer}
-            onCancel={() => setView('list')}
-          />
-        );
       case 'communication-hub':
         return (
           <CommunicationHub
             onBack={() => setView('list')}
             onEmails={() => setView('emails')}
-            onTemplates={handleViewTemplates}
-            onBulkEmail={handleBulkEmail}
-            onComposeEmail={handleComposeEmail}
             clients={clients.map(transformClientForComponents)}
           />
         );
@@ -788,17 +760,11 @@ const Clients = () => {
 
   return (
     <div className="clients-container">
-      {/* Enhanced Connection Status */}
-      <ConnectionStatus />
-      
       {/* Show login helper if not authenticated */}
       {!isAuthenticated ? (
         <LoginHelper />
       ) : (
         <>
-          {/* Enhanced Debug Panel */}
-          <DebugPanel />
-          
           {/* Error Message */}
           {error && (
             <div className="error-message" style={{
@@ -847,7 +813,7 @@ const Clients = () => {
             </div>
           )}
 
-          {/* Enhanced Navigation Bar */}
+          {/* Clean Navigation Bar */}
           <div className="clients-nav">
             <div className="clients-nav-buttons">
               {/* Clients Section */}
@@ -866,7 +832,7 @@ const Clients = () => {
                 </button>
               </div>
 
-              {/* Communication Section */}
+              {/* Communication Section - Simplified */}
               <div className="clients-nav-section">
                 <button 
                   className={`clients-nav-button ${isCommunicationHubActive ? 'active' : ''}`}
@@ -876,37 +842,11 @@ const Clients = () => {
                   Communication Hub
                   <span className="clients-nav-badge">3</span>
                 </button>
-                
-                {/* Communication Actions - Always Visible */}
-                <button 
-                  className="clients-nav-action-btn"
-                  onClick={handleViewTemplates}
-                >
-                  <i className="fas fa-layer-group"></i>
-                  Email Templates
-                </button>
-                
-                {/* Compose Email Button - Added before Bulk Email */}
-                <button 
-                  className="clients-nav-action-btn primary"
-                  onClick={() => handleComposeEmail()}
-                >
-                  <i className="fas fa-edit"></i>
-                  Compose Email
-                </button>
-                
-                <button 
-                  className="clients-nav-action-btn primary"
-                  onClick={handleBulkEmail}
-                >
-                  <i className="fas fa-mail-bulk"></i>
-                  Bulk Email
-                </button>
               </div>
             </div>
             
             <div className="clients-nav-actions">
-              {/* Add Client Button - Moved to right side */}
+              {/* Add Client Button */}
               <button className="clients-nav-add-btn" onClick={handleAddClient}>
                 <i className="fas fa-plus"></i>
                 Add Client
@@ -914,9 +854,15 @@ const Clients = () => {
             </div>
           </div>
 
-          {/* Main Content */}
+          {/* Main Content - Full Width */}
           <div className="clients-content">
             {renderView()}
+          </div>
+
+          {/* Compact Footer with Status and Debug Panel */}
+          <div className="clients-footer">
+            <CompactConnectionStatus />
+            <CompactDebugPanel />
           </div>
         </>
       )}

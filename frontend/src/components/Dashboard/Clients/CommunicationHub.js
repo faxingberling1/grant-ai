@@ -1,9 +1,20 @@
 import React, { useState } from 'react';
 import CalendarModal from './CalendarModal';
+import Inbox from '../CommunicationHub/Inbox';
+import Sent from '../CommunicationHub/Sent';
+import Starred from '../CommunicationHub/Starred';
+import Spam from '../CommunicationHub/Spam';
+import Trash from '../CommunicationHub/Trash';
+import Drafts from '../CommunicationHub/Drafts';
+import EmailComposer from '../CommunicationHub/EmailComposer';
+import EmailTemplates from '../CommunicationHub/EmailTemplates';
+import './CommunicationHub.css';
 
-const CommunicationHub = ({ onBack, onEmails, onTemplates, onBulkEmail, clients }) => {
+const CommunicationHub = ({ onBack, clients }) => {
   const [showCalendar, setShowCalendar] = useState(false);
   const [showComingSoon, setShowComingSoon] = useState(false);
+  const [activeEmailTab, setActiveEmailTab] = useState(null);
+  const [composeOpen, setComposeOpen] = useState(false);
   
   const communicationStats = {
     totalEmails: 45,
@@ -16,6 +27,10 @@ const CommunicationHub = ({ onBack, onEmails, onTemplates, onBulkEmail, clients 
     setShowComingSoon(true);
   };
 
+  const handleEmailNavigation = (tab) => {
+    setActiveEmailTab(tab);
+  };
+
   const quickActions = [
     {
       id: 'emails',
@@ -23,7 +38,7 @@ const CommunicationHub = ({ onBack, onEmails, onTemplates, onBulkEmail, clients 
       description: 'Manage client emails, inbox, and sent items',
       icon: 'fas fa-envelope',
       color: '#1a472a',
-      action: handleQuickAction,
+      action: () => handleEmailNavigation('inbox'),
       stats: `${communicationStats.totalEmails} Total Emails`
     },
     {
@@ -32,7 +47,7 @@ const CommunicationHub = ({ onBack, onEmails, onTemplates, onBulkEmail, clients 
       description: 'Create and manage email templates for quick communication',
       icon: 'fas fa-layer-group',
       color: '#d4af37',
-      action: handleQuickAction,
+      action: () => handleEmailNavigation('templates'),
       stats: '12 Templates Available'
     },
     {
@@ -42,7 +57,7 @@ const CommunicationHub = ({ onBack, onEmails, onTemplates, onBulkEmail, clients 
       icon: 'fas fa-mail-bulk',
       color: '#2d5a3a',
       action: handleQuickAction,
-      stats: `${clients.length} Clients Available`
+      stats: `${clients?.length || 0} Clients Available`
     },
     {
       id: 'analytics',
@@ -110,9 +125,134 @@ const CommunicationHub = ({ onBack, onEmails, onTemplates, onBulkEmail, clients 
     title: comm.title
   }));
 
+  const renderEmailContent = () => {
+    switch (activeEmailTab) {
+      case 'inbox':
+        return <Inbox />;
+      case 'sent':
+        return <Sent />;
+      case 'starred':
+        return <Starred />;
+      case 'spam':
+        return <Spam />;
+      case 'trash':
+        return <Trash />;
+      case 'drafts':
+        return <Drafts />;
+      case 'templates':
+        return <EmailTemplates />;
+      default:
+        return null;
+    }
+  };
+
+  // Email Management Mode
+  if (activeEmailTab) {
+    return (
+      <div className="communication-hub-email-mode">
+        {/* Email Navigation Header */}
+        <div className="email-navigation-header">
+          <button 
+            className="btn btn-outline"
+            onClick={() => setActiveEmailTab(null)}
+          >
+            <i className="fas fa-arrow-left"></i>
+            Back to Communication Hub
+          </button>
+          
+          <div className="email-nav-tabs">
+            <button 
+              className={`email-nav-tab ${activeEmailTab === 'inbox' ? 'active' : ''}`}
+              onClick={() => setActiveEmailTab('inbox')}
+            >
+              <i className="fas fa-inbox"></i>
+              Inbox
+            </button>
+            <button 
+              className={`email-nav-tab ${activeEmailTab === 'sent' ? 'active' : ''}`}
+              onClick={() => setActiveEmailTab('sent')}
+            >
+              <i className="fas fa-paper-plane"></i>
+              Sent
+            </button>
+            <button 
+              className={`email-nav-tab ${activeEmailTab === 'starred' ? 'active' : ''}`}
+              onClick={() => setActiveEmailTab('starred')}
+            >
+              <i className="fas fa-star"></i>
+              Starred
+            </button>
+            <button 
+              className={`email-nav-tab ${activeEmailTab === 'drafts' ? 'active' : ''}`}
+              onClick={() => setActiveEmailTab('drafts')}
+            >
+              <i className="fas fa-edit"></i>
+              Drafts
+            </button>
+            <button 
+              className={`email-nav-tab ${activeEmailTab === 'templates' ? 'active' : ''}`}
+              onClick={() => setActiveEmailTab('templates')}
+            >
+              <i className="fas fa-file-alt"></i>
+              Templates
+            </button>
+            <button 
+              className={`email-nav-tab ${activeEmailTab === 'spam' ? 'active' : ''}`}
+              onClick={() => setActiveEmailTab('spam')}
+            >
+              <i className="fas fa-shield-alt"></i>
+              Spam
+            </button>
+            <button 
+              className={`email-nav-tab ${activeEmailTab === 'trash' ? 'active' : ''}`}
+              onClick={() => setActiveEmailTab('trash')}
+            >
+              <i className="fas fa-trash"></i>
+              Trash
+            </button>
+          </div>
+
+          <button 
+            className="btn btn-primary"
+            onClick={() => setComposeOpen(true)}
+          >
+            <i className="fas fa-plus"></i>
+            Compose
+          </button>
+        </div>
+
+        {/* Email Content */}
+        <div className="email-content-area">
+          {renderEmailContent()}
+        </div>
+
+        {/* Compose Modal */}
+        {composeOpen && (
+          <div className="compose-modal-overlay">
+            <div className="compose-modal">
+              <div className="compose-modal-header">
+                <h3>Compose New Email</h3>
+                <button 
+                  className="compose-modal-close"
+                  onClick={() => setComposeOpen(false)}
+                >
+                  <i className="fas fa-times"></i>
+                </button>
+              </div>
+              <div className="compose-modal-content">
+                <EmailComposer onClose={() => setComposeOpen(false)} />
+              </div>
+            </div>
+          </div>
+        )}
+      </div>
+    );
+  }
+
+  // Dashboard Mode
   return (
     <div className="clients-communication-hub">
-      {/* Updated Header with new CSS classes */}
+      {/* Header */}
       <div className="clients-hub-header">
         <div className="clients-hub-header-content">
           <div className="clients-hub-title">
@@ -253,6 +393,7 @@ const CommunicationHub = ({ onBack, onEmails, onTemplates, onBulkEmail, clients 
                           className={`clients-communication-action-btn ${
                             index === 0 ? 'primary' : 'outline'
                           }`}
+                          onClick={handleQuickAction}
                         >
                           {action}
                         </button>
@@ -267,7 +408,7 @@ const CommunicationHub = ({ onBack, onEmails, onTemplates, onBulkEmail, clients 
             <div className="clients-recent-communications">
               <div className="clients-recent-header">
                 <h3>Recent Communications</h3>
-                <button className="clients-btn-link">View All</button>
+                <button className="clients-btn-link" onClick={handleQuickAction}>View All</button>
               </div>
               <div className="clients-recent-table-container">
                 <table className="clients-recent-table">
@@ -375,7 +516,7 @@ const CommunicationHub = ({ onBack, onEmails, onTemplates, onBulkEmail, clients 
                     <i className="fas fa-eye"></i>
                     Preview
                   </button>
-                  <button className="clients-quick-action-btn primary" onClick={handleQuickAction}>
+                  <button className="clients-quick-action-btn primary" onClick={() => handleEmailNavigation('templates')}>
                     <i className="fas fa-edit"></i>
                     Edit
                   </button>
@@ -394,7 +535,7 @@ const CommunicationHub = ({ onBack, onEmails, onTemplates, onBulkEmail, clients 
               <div className="clients-quick-action-content">
                 <div className="clients-quick-action-stats">
                   <i className="fas fa-users"></i>
-                  {clients.filter(c => c.status === 'active').length} Active Clients
+                  {clients?.filter(c => c.status === 'active').length || 0} Active Clients
                 </div>
                 <div className="clients-quick-action-buttons">
                   <button className="clients-quick-action-btn outline" onClick={handleQuickAction}>

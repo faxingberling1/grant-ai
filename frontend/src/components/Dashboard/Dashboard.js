@@ -16,6 +16,15 @@ import Settings from './Settings/Settings';
 import EmailTemplates from './CommunicationHub/EmailTemplates';
 import EmailComposer from './CommunicationHub/EmailComposer';
 
+// Communication Hub Components
+import CommunicationHub from './Clients/CommunicationHub';
+import Inbox from './CommunicationHub/Inbox';
+import Sent from './CommunicationHub/Sent';
+import Starred from './CommunicationHub/Starred';
+import Spam from './CommunicationHub/Spam';
+import Trash from './CommunicationHub/Trash';
+import Drafts from './CommunicationHub/Drafts';
+
 import './Dashboard.css';
 
 const Dashboard = () => {
@@ -127,30 +136,46 @@ const Dashboard = () => {
         return <Profile />;
       case 'settings':
         return <Settings />;
+      
+      // Communication Hub Pages
+      case 'communication-hub':
+        return <CommunicationHub onBack={() => setActivePage('clients')} />;
+      case 'inbox':
+        return <Inbox />;
+      case 'sent':
+        return <Sent />;
+      case 'starred':
+        return <Starred />;
+      case 'drafts':
+        return <Drafts />;
       case 'email-templates':
         return (
           <EmailTemplates 
-            onBack={() => setActivePage('dashboard')}
+            onBack={() => setActivePage('communication-hub')}
             onUseTemplate={handleUseTemplate}
           />
         );
       case 'email-composer':
         return (
           <EmailComposer 
-            onBack={() => setActivePage('email-templates')}
+            onBack={() => setActivePage('communication-hub')}
             initialData={emailComposerData}
             onSend={(emailData) => {
               console.log('📤 Email sent:', emailData);
               alert(`Email sent successfully to ${emailData.to}!\n\nSubject: ${emailData.subject}`);
-              setActivePage('email-templates');
+              setActivePage('communication-hub');
             }}
             onSaveDraft={(emailData) => {
               console.log('💾 Email draft saved:', emailData);
               alert('Email draft saved successfully!');
-              setActivePage('email-templates');
+              setActivePage('communication-hub');
             }}
           />
         );
+      case 'spam':
+        return <Spam />;
+      case 'trash':
+        return <Trash />;
       case 'help':
         return (
           <div className="page-content">
@@ -243,7 +268,7 @@ const Dashboard = () => {
   );
 };
 
-// Main Dashboard Content Component
+// Main Dashboard Content Component (keep your existing DashboardContent exactly as is)
 const DashboardContent = ({ 
   onNavigateToClients, 
   onNavigateToFindGrants, 

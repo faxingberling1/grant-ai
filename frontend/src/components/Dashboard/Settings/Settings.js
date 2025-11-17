@@ -4,6 +4,7 @@ import './Settings.css';
 import PreferencesSettings from './PreferencesSettings';
 import SecuritySettings from './SecuritySettings';
 import IntegrationSettings from './IntegrationSettings';
+import SMTPSettings from './SMTPSettings';
 
 const Settings = () => {
   const [activeTab, setActiveTab] = useState('preferences');
@@ -46,6 +47,17 @@ const Settings = () => {
       slack: false,
       calendar: false,
       zapier: false
+    },
+    smtp: {
+      enabled: false,
+      host: '',
+      port: 587,
+      secure: false,
+      username: '',
+      password: '',
+      fromEmail: '',
+      fromName: '',
+      testEmail: ''
     }
   });
 
@@ -81,6 +93,16 @@ const Settings = () => {
           setSettings(prev => ({
             ...prev,
             security: { ...prev.security, ...security }
+          }));
+        }
+
+        // Load SMTP settings
+        const savedSmtp = localStorage.getItem('grantFlowSmtp');
+        if (savedSmtp) {
+          const smtp = JSON.parse(savedSmtp);
+          setSettings(prev => ({
+            ...prev,
+            smtp: { ...prev.smtp, ...smtp }
           }));
         }
       } catch (error) {
@@ -217,6 +239,26 @@ const Settings = () => {
     }
   };
 
+  const handleSmtpUpdate = (smtpUpdates) => {
+    console.log('Updating SMTP settings:', smtpUpdates);
+    
+    setSettings(prev => ({
+      ...prev,
+      smtp: { ...prev.smtp, ...smtpUpdates }
+    }));
+
+    // Save to localStorage
+    try {
+      const currentSmtp = JSON.parse(localStorage.getItem('grantFlowSmtp') || '{}');
+      localStorage.setItem('grantFlowSmtp', JSON.stringify({
+        ...currentSmtp,
+        ...smtpUpdates
+      }));
+    } catch (error) {
+      console.error('Error saving SMTP settings to localStorage:', error);
+    }
+  };
+
   const handleExportSettings = () => {
     const settingsData = {
       preferences: settings.preferences,
@@ -225,6 +267,7 @@ const Settings = () => {
         twoFactorEnabled: settings.security.twoFactorEnabled,
         lastLogin: settings.security.lastLogin
       },
+      smtp: settings.smtp,
       exportDate: new Date().toISOString(),
       version: '1.0'
     };
@@ -256,7 +299,8 @@ const Settings = () => {
           ...prev,
           preferences: { ...prev.preferences, ...importedSettings.preferences },
           integrations: { ...prev.integrations, ...importedSettings.integrations },
-          security: { ...prev.security, ...importedSettings.security }
+          security: { ...prev.security, ...importedSettings.security },
+          smtp: { ...prev.smtp, ...importedSettings.smtp }
         }));
 
         // Save to localStorage
@@ -268,6 +312,9 @@ const Settings = () => {
         }
         if (importedSettings.security) {
           localStorage.setItem('grantFlowSecurity', JSON.stringify(importedSettings.security));
+        }
+        if (importedSettings.smtp) {
+          localStorage.setItem('grantFlowSmtp', JSON.stringify(importedSettings.smtp));
         }
 
         alert('Settings imported successfully!');
@@ -314,6 +361,17 @@ const Settings = () => {
           lastLogin: new Date().toISOString(),
           loginHistory: [],
           trustedDevices: []
+        },
+        smtp: {
+          enabled: false,
+          host: '',
+          port: 587,
+          secure: false,
+          username: '',
+          password: '',
+          fromEmail: '',
+          fromName: '',
+          testEmail: ''
         }
       };
 
@@ -323,6 +381,7 @@ const Settings = () => {
       localStorage.setItem('grantFlowPreferences', JSON.stringify(defaultSettings.preferences));
       localStorage.setItem('grantFlowIntegrations', JSON.stringify(defaultSettings.integrations));
       localStorage.setItem('grantFlowSecurity', JSON.stringify(defaultSettings.security));
+      localStorage.setItem('grantFlowSmtp', JSON.stringify(defaultSettings.smtp));
 
       alert('Settings have been reset to defaults.');
     }
@@ -349,6 +408,13 @@ const Settings = () => {
           <IntegrationSettings 
             integrations={settings.integrations}
             onUpdate={handleIntegrationUpdate}
+          />
+        );
+      case 'smtp':
+        return (
+          <SMTPSettings 
+            smtpSettings={settings.smtp}
+            onUpdate={handleSmtpUpdate}
           />
         );
       default:
@@ -432,6 +498,15 @@ const Settings = () => {
                 <span className="nav-badge">{activeIntegrationsCount}</span>
               )}
             </div>
+            <div 
+              className={`settings-nav-item ${activeTab === 'smtp' ? 'active' : ''}`}
+              onClick={() => setActiveTab('smtp')}
+            >
+              <svg className="nav-icon" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M20 4H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 4l-8 5-8-5V6l8 5 8-5v2z"/>
+              </svg>
+              Email Settings
+            </div>
           </div>
 
           {/* Quick Stats Sidebar */}
@@ -466,6 +541,17 @@ const Settings = () => {
                   {settings.security.twoFactorEnabled ? 'On' : 'Off'}
                 </span>
                 <span className="quick-stat-label">2FA Status</span>
+              </div>
+            </div>
+            <div className="quick-stat">
+              <div className="quick-stat-icon">
+                <i className="fas fa-envelope"></i>
+              </div>
+              <div className="quick-stat-content">
+                <span className="quick-stat-value">
+                  {settings.smtp.enabled ? 'Configured' : 'Not Set'}
+                </span>
+                <span className="quick-stat-label">SMTP Status</span>
               </div>
             </div>
           </div>
