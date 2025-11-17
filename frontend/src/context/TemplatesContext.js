@@ -1,4 +1,5 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
+import { templateService } from '../services/templateService';
 
 const TemplatesContext = createContext();
 
@@ -12,193 +13,184 @@ export const useTemplates = () => {
 
 export const TemplatesProvider = ({ children }) => {
   const [templates, setTemplates] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
-  // Load templates from localStorage on component mount
+  // Load templates from MongoDB on component mount
   useEffect(() => {
-    const savedTemplates = localStorage.getItem('grantflow_email_templates');
-    if (savedTemplates) {
-      setTemplates(JSON.parse(savedTemplates));
-    } else {
-      // Initialize with default templates if none exist
-      const defaultTemplates = [
-        {
-          id: 1,
-          title: 'Initial Grant Inquiry',
-          subject: 'Grant Opportunity Inquiry - [Client Name]',
-          category: 'proposal',
-          description: 'Template for initial contact about grant opportunities',
-          preview: 'Dear [Client Name], I hope this email finds you well. I am writing to inquire about potential grant opportunities...',
-          fullContent: `Dear [Client Name],
-
-I hope this email finds you well. I am writing to inquire about potential grant opportunities that may be available for your organization.
-
-Based on your work in [Field/Area], I believe there are several funding opportunities that could be a great fit. I would be happy to discuss:
-
-• Current grant opportunities that align with your mission
-• Application timelines and requirements
-• How we can collaborate to strengthen your proposals
-
-Please let me know if you would be available for a brief call next week to explore these possibilities further.
-
-Best regards,
-[Your Name]`,
-          icon: 'fas fa-handshake',
-          usageCount: 45,
-          lastUsed: '2 days ago',
-          variables: ['[Client Name]', '[Field/Area]', '[Your Name]']
-        },
-        {
-          id: 2,
-          title: 'Proposal Follow-up',
-          subject: 'Follow-up: [Grant Name] Proposal Submission',
-          category: 'followup',
-          description: 'Follow up on submitted grant proposal',
-          preview: 'Dear [Client Name], I wanted to follow up on the grant proposal we submitted on [Date]...',
-          fullContent: `Dear [Client Name],
-
-I wanted to follow up on the grant proposal we submitted on [Date] for the [Grant Name] opportunity.
-
-I've been monitoring the application status and wanted to check if you have received any updates or if there are any additional materials needed from our end.
-
-If you have any questions or would like to discuss next steps, please don't hesitate to reach out.
-
-Thank you for your partnership in this important work.
-
-Best regards,
-[Your Name]`,
-          icon: 'fas fa-sync',
-          usageCount: 32,
-          lastUsed: '1 week ago',
-          variables: ['[Client Name]', '[Date]', '[Grant Name]', '[Your Name]']
-        },
-        {
-          id: 3,
-          title: 'Meeting Request',
-          subject: 'Grant Strategy Meeting Request',
-          category: 'meeting',
-          description: 'Request a meeting to discuss grant strategy',
-          preview: 'Dear [Client Name], I would like to schedule a meeting to discuss your grant strategy...',
-          fullContent: `Dear [Client Name],
-
-I would like to schedule a meeting to discuss your grant strategy and explore upcoming funding opportunities that could support your important work.
-
-During our meeting, we could cover:
-
-• Review of current grant pipeline
-• Upcoming deadlines and opportunities
-• Strategy for maximizing funding success
-• Any specific challenges or questions you may have
-
-Please let me know what time works best for you next week. I am available [Available Times].
-
-Looking forward to our conversation.
-
-Best regards,
-[Your Name]`,
-          icon: 'fas fa-calendar',
-          usageCount: 28,
-          lastUsed: '3 days ago',
-          variables: ['[Client Name]', '[Available Times]', '[Your Name]']
-        },
-        {
-          id: 4,
-          title: 'Thank You Note',
-          subject: 'Thank You - [Topic] Discussion',
-          category: 'thankyou',
-          description: 'Express gratitude after a meeting or collaboration',
-          preview: 'Dear [Client Name], Thank you for your time today. I truly enjoyed our conversation about [Topic]...',
-          fullContent: `Dear [Client Name],
-
-Thank you for your time today. I truly enjoyed our conversation about [Topic] and am excited about the potential opportunities we discussed.
-
-I appreciate you sharing insights about [Specific Point] and look forward to exploring how we can work together to achieve your funding goals.
-
-Please don't hesitate to reach out if you have any additional questions in the meantime.
-
-Warm regards,
-[Your Name]`,
-          icon: 'fas fa-heart',
-          usageCount: 22,
-          lastUsed: '5 days ago',
-          variables: ['[Client Name]', '[Topic]', '[Specific Point]', '[Your Name]']
-        },
-        {
-          id: 5,
-          title: 'Deadline Reminder',
-          subject: 'Reminder: [Grant Name] Deadline - [Date]',
-          category: 'reminder',
-          description: 'Remind clients about upcoming grant deadlines',
-          preview: 'Dear [Client Name], This is a friendly reminder about the upcoming deadline for [Grant Name] on [Date]...',
-          fullContent: `Dear [Client Name],
-
-This is a friendly reminder about the upcoming deadline for [Grant Name] on [Date].
-
-To ensure we have enough time to prepare a strong application, please make sure to:
-
-• Review the attached materials by [Review Date]
-• Provide any necessary documents by [Document Deadline]
-• Schedule a final review session if needed
-
-The deadline is approaching quickly, so let's make sure we're on track. Please let me know if you have any questions or need assistance with any part of the process.
-
-Best regards,
-[Your Name]`,
-          icon: 'fas fa-bell',
-          usageCount: 18,
-          lastUsed: '1 day ago',
-          variables: ['[Client Name]', '[Grant Name]', '[Date]', '[Review Date]', '[Document Deadline]', '[Your Name]']
-        }
-      ];
-      setTemplates(defaultTemplates);
-    }
+    console.log('🔄 TemplatesProvider mounted, loading templates...');
+    loadTemplates();
   }, []);
 
-  // Save templates to localStorage whenever they change
-  useEffect(() => {
-    localStorage.setItem('grantflow_email_templates', JSON.stringify(templates));
-  }, [templates]);
-
-  const addTemplate = (newTemplate) => {
-    const template = {
-      ...newTemplate,
-      id: Date.now(), // Simple ID generation
-      usageCount: 0,
-      lastUsed: 'Never',
-      icon: getCategoryIcon(newTemplate.category),
-      preview: newTemplate.content.substring(0, 100) + '...',
-      variables: extractVariables(newTemplate.content + ' ' + newTemplate.subject)
-    };
-    setTemplates(prev => [template, ...prev]);
-    return template;
+  const loadTemplates = async () => {
+    try {
+      setLoading(true);
+      setError(null);
+      console.log('📥 Calling templateService.getTemplates()...');
+      
+      const response = await templateService.getTemplates();
+      console.log('✅ templateService.getTemplates() response:', response);
+      
+      if (response.success) {
+        console.log(`✅ Loaded ${response.data?.length || 0} templates`);
+        setTemplates(response.data || []);
+      } else {
+        console.error('❌ API returned success: false', response);
+        throw new Error(response.message || 'Failed to load templates');
+      }
+    } catch (err) {
+      console.error('❌ Error loading templates from MongoDB:', err);
+      console.error('❌ Error details:', {
+        message: err.message,
+        response: err.response?.data,
+        status: err.response?.status,
+        url: err.config?.url
+      });
+      
+      const errorMessage = err.response?.data?.message || err.message || 'Failed to load templates from server';
+      setError(errorMessage);
+      
+      // Fallback to localStorage if MongoDB fails
+      const savedTemplates = localStorage.getItem('grantflow_email_templates');
+      if (savedTemplates) {
+        console.log('🔄 Falling back to localStorage templates');
+        const parsedTemplates = JSON.parse(savedTemplates);
+        setTemplates(parsedTemplates);
+        console.log(`✅ Loaded ${parsedTemplates.length} templates from localStorage`);
+      } else {
+        console.log('ℹ️  No localStorage templates found');
+        // Initialize with empty array if no templates exist
+        setTemplates([]);
+      }
+    } finally {
+      setLoading(false);
+    }
   };
 
-  const updateTemplate = (id, updatedTemplate) => {
-    setTemplates(prev => prev.map(template => 
-      template.id === id 
-        ? { 
-            ...template, 
-            ...updatedTemplate,
-            preview: updatedTemplate.fullContent ? updatedTemplate.fullContent.substring(0, 100) + '...' : template.preview,
-            variables: updatedTemplate.fullContent ? extractVariables(updatedTemplate.fullContent + ' ' + (updatedTemplate.subject || template.subject)) : template.variables
-          } 
-        : template
-    ));
+  const addTemplate = async (newTemplate) => {
+    try {
+      setError(null);
+      console.log('📝 Creating new template:', newTemplate.title);
+      
+      const response = await templateService.createTemplate(newTemplate);
+      
+      if (response.success) {
+        const savedTemplate = response.data;
+        console.log('✅ Template created successfully:', savedTemplate.title);
+        
+        setTemplates(prev => [savedTemplate, ...prev]);
+        
+        // Update localStorage as backup
+        const updatedTemplates = [savedTemplate, ...templates];
+        localStorage.setItem('grantflow_email_templates', JSON.stringify(updatedTemplates));
+        
+        return savedTemplate;
+      } else {
+        throw new Error(response.message || 'Failed to create template');
+      }
+    } catch (err) {
+      console.error('❌ Error creating template:', err);
+      const errorMessage = err.response?.data?.message || err.message || 'Failed to create template';
+      setError(errorMessage);
+      throw err;
+    }
   };
 
-  const deleteTemplate = (id) => {
-    setTemplates(prev => prev.filter(template => template.id !== id));
+  const updateTemplate = async (id, updatedTemplate) => {
+    try {
+      setError(null);
+      console.log('📝 Updating template:', id);
+      
+      const response = await templateService.updateTemplate(id, updatedTemplate);
+      
+      if (response.success) {
+        const savedTemplate = response.data;
+        console.log('✅ Template updated successfully:', savedTemplate.title);
+        
+        setTemplates(prev => prev.map(template => 
+          template._id === id ? savedTemplate : template
+        ));
+        
+        // Update localStorage as backup
+        const updatedTemplates = templates.map(t => t._id === id ? savedTemplate : t);
+        localStorage.setItem('grantflow_email_templates', JSON.stringify(updatedTemplates));
+        
+        return savedTemplate;
+      } else {
+        throw new Error(response.message || 'Failed to update template');
+      }
+    } catch (err) {
+      console.error('❌ Error updating template:', err);
+      const errorMessage = err.response?.data?.message || err.message || 'Failed to update template';
+      setError(errorMessage);
+      throw err;
+    }
   };
 
-  const incrementUsage = (id) => {
-    setTemplates(prev => prev.map(template => 
-      template.id === id 
-        ? { 
-            ...template, 
-            usageCount: template.usageCount + 1,
-            lastUsed: 'Just now'
-          } 
-        : template
-    ));
+  const deleteTemplate = async (id) => {
+    try {
+      setError(null);
+      console.log('🗑️ Deleting template:', id);
+      
+      const response = await templateService.deleteTemplate(id);
+      
+      if (response.success) {
+        console.log('✅ Template deleted successfully');
+        
+        setTemplates(prev => prev.filter(template => template._id !== id));
+        
+        // Update localStorage as backup
+        const updatedTemplates = templates.filter(template => template._id !== id);
+        localStorage.setItem('grantflow_email_templates', JSON.stringify(updatedTemplates));
+        
+        return true;
+      } else {
+        throw new Error(response.message || 'Failed to delete template');
+      }
+    } catch (err) {
+      console.error('❌ Error deleting template:', err);
+      const errorMessage = err.response?.data?.message || err.message || 'Failed to delete template';
+      setError(errorMessage);
+      throw err;
+    }
+  };
+
+  const incrementUsage = async (id) => {
+    try {
+      console.log('📈 Incrementing usage for template:', id);
+      
+      const response = await templateService.incrementUsage(id);
+      
+      if (response.success) {
+        const updatedTemplate = response.data;
+        console.log('✅ Usage incremented for:', updatedTemplate.title);
+        
+        setTemplates(prev => prev.map(template => 
+          template._id === id ? updatedTemplate : template
+        ));
+        
+        // Update localStorage as backup
+        const updatedTemplates = templates.map(t => t._id === id ? updatedTemplate : t);
+        localStorage.setItem('grantflow_email_templates', JSON.stringify(updatedTemplates));
+        
+        return updatedTemplate;
+      } else {
+        throw new Error(response.message || 'Failed to update usage');
+      }
+    } catch (err) {
+      console.error('❌ Error incrementing usage:', err);
+      // Fallback to local update if API fails
+      console.log('🔄 Falling back to local usage increment');
+      setTemplates(prev => prev.map(template => 
+        template._id === id 
+          ? { 
+              ...template, 
+              usageCount: (template.usageCount || 0) + 1,
+              lastUsed: new Date()
+            } 
+          : template
+      ));
+    }
   };
 
   const getCategoryIcon = (category) => {
@@ -218,12 +210,45 @@ Best regards,
     return matches ? [...new Set(matches)] : ['[Client Name]', '[Your Name]'];
   };
 
+  const formatLastUsed = (date) => {
+    if (!date) return 'Never';
+    
+    const now = new Date();
+    const lastUsedDate = new Date(date);
+    const diffTime = Math.abs(now - lastUsedDate);
+    const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
+    const diffHours = Math.floor(diffTime / (1000 * 60 * 60));
+    const diffMinutes = Math.floor(diffTime / (1000 * 60));
+
+    if (diffMinutes < 1) return 'Just now';
+    if (diffMinutes < 60) return `${diffMinutes} minutes ago`;
+    if (diffHours < 24) return `${diffHours} hours ago`;
+    if (diffDays === 1) return '1 day ago';
+    if (diffDays < 7) return `${diffDays} days ago`;
+    if (diffDays < 30) return `${Math.floor(diffDays / 7)} weeks ago`;
+    return lastUsedDate.toLocaleDateString();
+  };
+
+  // Format templates for display (add formatted lastUsed and ensure required fields)
+  const formattedTemplates = templates.map(template => ({
+    ...template,
+    id: template._id || template.id, // Support both _id and id
+    lastUsed: formatLastUsed(template.lastUsed),
+    icon: template.icon || getCategoryIcon(template.category),
+    preview: template.preview || (template.content ? template.content.substring(0, 100) + '...' : ''),
+    variables: template.variables || extractVariables((template.content || '') + ' ' + (template.subject || ''))
+  }));
+
   const value = {
-    templates,
+    templates: formattedTemplates,
+    loading,
+    error,
     addTemplate,
     updateTemplate,
     deleteTemplate,
-    incrementUsage
+    incrementUsage,
+    refetchTemplates: loadTemplates,
+    clearError: () => setError(null)
   };
 
   return (

@@ -3,7 +3,7 @@ import { useTemplates } from '../../../context/TemplatesContext';
 import './EmailTemplates.css';
 
 const EmailTemplates = ({ onBack, onUseTemplate, activeSection, onSectionChange }) => {
-  const { templates, addTemplate, updateTemplate, deleteTemplate, incrementUsage } = useTemplates();
+  const { templates, addTemplate, updateTemplate, deleteTemplate, incrementUsage, loading, error } = useTemplates();
   const [searchTerm, setSearchTerm] = useState('');
   const [category, setCategory] = useState('all');
   const [selectedCategory, setSelectedCategory] = useState('all');
@@ -18,6 +18,11 @@ const EmailTemplates = ({ onBack, onUseTemplate, activeSection, onSectionChange 
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [templateToDelete, setTemplateToDelete] = useState(null);
+  const [isSaving, setIsSaving] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
+  const [createError, setCreateError] = useState('');
+  const [editError, setEditError] = useState('');
+
   const [newTemplate, setNewTemplate] = useState({
     title: '',
     subject: '',
@@ -36,6 +41,58 @@ const EmailTemplates = ({ onBack, onUseTemplate, activeSection, onSectionChange 
     { id: 'reminder', label: 'Reminders', icon: 'fas fa-bell' }
   ];
 
+  // Loading state
+  if (loading) {
+    return (
+      <div className="communication-hub-email-templates">
+        <div className="communication-hub-templates-header">
+          <div className="communication-hub-templates-header-content">
+            <div className="communication-hub-templates-title">
+              <h1>Email Templates</h1>
+              <p>Pre-built templates for efficient client communication</p>
+            </div>
+          </div>
+        </div>
+        <div className="communication-hub-loading-state">
+          <div className="communication-hub-loading-spinner">
+            <i className="fas fa-spinner fa-spin"></i>
+          </div>
+          <p>Loading templates...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // Error state
+  if (error) {
+    return (
+      <div className="communication-hub-email-templates">
+        <div className="communication-hub-templates-header">
+          <div className="communication-hub-templates-header-content">
+            <div className="communication-hub-templates-title">
+              <h1>Email Templates</h1>
+              <p>Pre-built templates for efficient client communication</p>
+            </div>
+          </div>
+        </div>
+        <div className="communication-hub-error-state">
+          <div className="communication-hub-error-icon">
+            <i className="fas fa-exclamation-triangle"></i>
+          </div>
+          <h3>Unable to Load Templates</h3>
+          <p>{error}</p>
+          <button 
+            className="communication-hub-btn communication-hub-btn-primary"
+            onClick={() => window.location.reload()}
+          >
+            <i className="fas fa-redo"></i>
+            Try Again
+          </button>
+        </div>
+      </div>
+    );
+  }
+
   const filteredTemplates = templates.filter(template => {
     const matchesSearch = template.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
                          template.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -50,36 +107,50 @@ const EmailTemplates = ({ onBack, onUseTemplate, activeSection, onSectionChange 
 
   const handlePreviewTemplate = (template) => {
     setSelectedTemplate(template);
-    setEditedContent(template.fullContent);
+    setEditedContent(template.content || template.fullContent || '');
     setEditedSubject(template.subject);
     setEditedTitle(template.title);
     setEditedDescription(template.description);
     setEditedCategory(template.category);
     setIsPreviewOpen(true);
     setIsEditing(false);
+    setEditError('');
   };
 
   const handleClosePreview = () => {
     setIsPreviewOpen(false);
     setSelectedTemplate(null);
     setIsEditing(false);
+    setEditError('');
   };
 
   const handleEditTemplate = () => {
     setIsEditing(true);
+    setEditError('');
   };
 
-  const handleSaveEdit = () => {
-    if (selectedTemplate) {
-      updateTemplate(selectedTemplate.id, {
+  const handleSaveEdit = async () => {
+    if (!selectedTemplate) return;
+
+    if (!editedTitle.trim() || !editedSubject.trim() || !editedContent.trim()) {
+      setEditError('Please fill in all required fields');
+      return;
+    }
+
+    setIsSaving(true);
+    setEditError('');
+
+    try {
+      await updateTemplate(selectedTemplate._id, {
         title: editedTitle,
         subject: editedSubject,
         description: editedDescription,
         category: editedCategory,
-        fullContent: editedContent,
+        content: editedContent,
         variables: extractVariables(editedContent),
         preview: editedContent.substring(0, 100) + '...'
       });
+      
       setIsEditing(false);
       // Update the selected template with new data
       setSelectedTemplate({
@@ -88,30 +159,45 @@ const EmailTemplates = ({ onBack, onUseTemplate, activeSection, onSectionChange 
         subject: editedSubject,
         description: editedDescription,
         category: editedCategory,
-        fullContent: editedContent,
+        content: editedContent,
         variables: extractVariables(editedContent),
         preview: editedContent.substring(0, 100) + '...'
       });
+    } catch (err) {
+      setEditError('Failed to save template. Please try again.');
+      console.error('Error saving template:', err);
+    } finally {
+      setIsSaving(false);
     }
   };
 
   const handleCancelEdit = () => {
     if (selectedTemplate) {
-      setEditedContent(selectedTemplate.fullContent);
+      setEditedContent(selectedTemplate.content || selectedTemplate.fullContent || '');
       setEditedSubject(selectedTemplate.subject);
       setEditedTitle(selectedTemplate.title);
       setEditedDescription(selectedTemplate.description);
       setEditedCategory(selectedTemplate.category);
     }
     setIsEditing(false);
+    setEditError('');
   };
 
-  const handleUseTemplate = (template) => {
-    incrementUsage(template.id);
-    if (onUseTemplate) {
-      onUseTemplate(template);
+  const handleUseTemplate = async (template) => {
+    try {
+      await incrementUsage(template._id);
+      if (onUseTemplate) {
+        onUseTemplate(template);
+      }
+      setIsPreviewOpen(false);
+    } catch (err) {
+      console.error('Error incrementing usage:', err);
+      // Still allow using the template even if usage tracking fails
+      if (onUseTemplate) {
+        onUseTemplate(template);
+      }
+      setIsPreviewOpen(false);
     }
-    setIsPreviewOpen(false);
   };
 
   const handleDeleteTemplate = (template) => {
@@ -119,14 +205,22 @@ const EmailTemplates = ({ onBack, onUseTemplate, activeSection, onSectionChange 
     setIsDeleteModalOpen(true);
   };
 
-  const handleConfirmDelete = () => {
-    if (templateToDelete) {
-      deleteTemplate(templateToDelete.id);
+  const handleConfirmDelete = async () => {
+    if (!templateToDelete) return;
+
+    setIsDeleting(true);
+    try {
+      await deleteTemplate(templateToDelete._id);
       setIsDeleteModalOpen(false);
       setTemplateToDelete(null);
-      if (isPreviewOpen && selectedTemplate?.id === templateToDelete.id) {
+      if (isPreviewOpen && selectedTemplate?._id === templateToDelete._id) {
         handleClosePreview();
       }
+    } catch (err) {
+      console.error('Error deleting template:', err);
+      alert('Failed to delete template. Please try again.');
+    } finally {
+      setIsDeleting(false);
     }
   };
 
@@ -145,6 +239,7 @@ const EmailTemplates = ({ onBack, onUseTemplate, activeSection, onSectionChange 
       content: '',
       variables: ['[Client Name]', '[Your Name]']
     });
+    setCreateError('');
   };
 
   const handleCloseCreateModal = () => {
@@ -157,36 +252,41 @@ const EmailTemplates = ({ onBack, onUseTemplate, activeSection, onSectionChange 
       content: '',
       variables: ['[Client Name]', '[Your Name]']
     });
+    setCreateError('');
   };
 
-  const handleSaveNewTemplate = () => {
+  const handleSaveNewTemplate = async () => {
     if (!newTemplate.title.trim() || !newTemplate.subject.trim() || !newTemplate.content.trim()) {
-      alert('Please fill in all required fields');
+      setCreateError('Please fill in all required fields');
       return;
     }
 
-    const templateData = {
-      ...newTemplate,
-      variables: extractVariables(newTemplate.content),
-      fullContent: newTemplate.content,
-      usageCount: 0,
-      lastUsed: 'Never',
-      icon: getCategoryIcon(newTemplate.category),
-      preview: newTemplate.content.substring(0, 100) + '...'
-    };
+    setIsSaving(true);
+    setCreateError('');
 
-    addTemplate(templateData);
-    setIsCreateModalOpen(false);
-    setNewTemplate({
-      title: '',
-      subject: '',
-      category: 'proposal',
-      description: '',
-      content: '',
-      variables: ['[Client Name]', '[Your Name]']
-    });
+    try {
+      const templateData = {
+        ...newTemplate,
+        variables: extractVariables(newTemplate.content),
+        preview: newTemplate.content.substring(0, 100) + '...'
+      };
 
-    alert('Template created successfully!');
+      await addTemplate(templateData);
+      setIsCreateModalOpen(false);
+      setNewTemplate({
+        title: '',
+        subject: '',
+        category: 'proposal',
+        description: '',
+        content: '',
+        variables: ['[Client Name]', '[Your Name]']
+      });
+    } catch (err) {
+      setCreateError('Failed to create template. Please try again.');
+      console.error('Error creating template:', err);
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   const handleNewTemplateChange = (field, value) => {
@@ -239,8 +339,13 @@ const EmailTemplates = ({ onBack, onUseTemplate, activeSection, onSectionChange 
         const end = textarea.selectionEnd;
         const newContent = newTemplate.content.substring(0, start) + variable + newTemplate.content.substring(end);
         handleNewTemplateChange('content', newContent);
-        textarea.focus();
-        textarea.setSelectionRange(start + variable.length, start + variable.length);
+        
+        // Set timeout to ensure state update before focusing
+        setTimeout(() => {
+          textarea.focus();
+          const newPosition = start + variable.length;
+          textarea.setSelectionRange(newPosition, newPosition);
+        }, 0);
       }
     } else {
       const textarea = document.querySelector('.communication-hub-template-editor-textarea');
@@ -249,8 +354,13 @@ const EmailTemplates = ({ onBack, onUseTemplate, activeSection, onSectionChange 
         const end = textarea.selectionEnd;
         const newContent = editedContent.substring(0, start) + variable + editedContent.substring(end);
         setEditedContent(newContent);
-        textarea.focus();
-        textarea.setSelectionRange(start + variable.length, start + variable.length);
+        
+        // Set timeout to ensure state update before focusing
+        setTimeout(() => {
+          textarea.focus();
+          const newPosition = start + variable.length;
+          textarea.setSelectionRange(newPosition, newPosition);
+        }, 0);
       }
     }
   };
@@ -268,9 +378,14 @@ const EmailTemplates = ({ onBack, onUseTemplate, activeSection, onSectionChange 
             <button 
               className="communication-hub-btn communication-hub-btn-primary"
               onClick={handleCreateNewTemplate}
+              disabled={isSaving}
             >
-              <i className="fas fa-plus"></i>
-              New Template
+              {isSaving ? (
+                <i className="fas fa-spinner fa-spin"></i>
+              ) : (
+                <i className="fas fa-plus"></i>
+              )}
+              {isSaving ? 'Creating...' : 'New Template'}
             </button>
           </div>
         </div>
@@ -320,7 +435,7 @@ const EmailTemplates = ({ onBack, onUseTemplate, activeSection, onSectionChange 
       {/* Templates Grid */}
       <div className="communication-hub-templates-grid">
         {filteredTemplates.map(template => (
-          <div key={template.id} className="communication-hub-template-card">
+          <div key={template._id} className="communication-hub-template-card">
             <div className="communication-hub-template-header">
               <div className="communication-hub-template-icon">
                 <i className={template.icon}></i>
@@ -361,16 +476,18 @@ const EmailTemplates = ({ onBack, onUseTemplate, activeSection, onSectionChange 
             <div className="communication-hub-template-stats">
               <div className="communication-hub-template-stat">
                 <i className="fas fa-chart-line"></i>
-                Used {template.usageCount} times
+                Used {template.usageCount || 0} times
               </div>
               <div className="communication-hub-template-stat">
                 <i className="fas fa-clock"></i>
-                {template.lastUsed}
+                {template.lastUsed || 'Never'}
               </div>
             </div>
             
             <div className="communication-hub-template-preview">
-              <div className="communication-hub-template-preview-text">{template.preview}</div>
+              <div className="communication-hub-template-preview-text">
+                {template.preview || (template.content ? template.content.substring(0, 100) + '...' : 'No content')}
+              </div>
             </div>
             
             <div className="communication-hub-template-actions">
@@ -423,6 +540,13 @@ const EmailTemplates = ({ onBack, onUseTemplate, activeSection, onSectionChange 
             </div>
             
             <div className="communication-hub-template-preview-content">
+              {editError && (
+                <div className="communication-hub-error-message">
+                  <i className="fas fa-exclamation-circle"></i>
+                  {editError}
+                </div>
+              )}
+
               {isEditing ? (
                 <>
                   <div className="communication-hub-template-form">
@@ -525,7 +649,7 @@ const EmailTemplates = ({ onBack, onUseTemplate, activeSection, onSectionChange 
                   <div className="communication-hub-template-variables">
                     <h4>Available Variables</h4>
                     <div className="communication-hub-template-variables-list">
-                      {selectedTemplate.variables.map((variable, index) => (
+                      {selectedTemplate.variables && selectedTemplate.variables.map((variable, index) => (
                         <span key={index} className="communication-hub-template-variable">
                           {variable}
                         </span>
@@ -537,7 +661,9 @@ const EmailTemplates = ({ onBack, onUseTemplate, activeSection, onSectionChange 
                     <div className="communication-hub-template-preview-header">
                       <h4>Template Content</h4>
                     </div>
-                    <pre className="communication-hub-template-content-preview">{selectedTemplate.fullContent}</pre>
+                    <pre className="communication-hub-template-content-preview">
+                      {selectedTemplate.content || selectedTemplate.fullContent}
+                    </pre>
                   </div>
                 </>
               )}
@@ -545,13 +671,25 @@ const EmailTemplates = ({ onBack, onUseTemplate, activeSection, onSectionChange 
               <div className="communication-hub-template-preview-actions">
                 {isEditing ? (
                   <>
-                    <button className="communication-hub-template-preview-btn" onClick={handleCancelEdit}>
+                    <button 
+                      className="communication-hub-template-preview-btn" 
+                      onClick={handleCancelEdit}
+                      disabled={isSaving}
+                    >
                       <i className="fas fa-times"></i>
                       Cancel
                     </button>
-                    <button className="communication-hub-template-edit-btn" onClick={handleSaveEdit}>
-                      <i className="fas fa-save"></i>
-                      Save Changes
+                    <button 
+                      className="communication-hub-template-edit-btn" 
+                      onClick={handleSaveEdit}
+                      disabled={isSaving}
+                    >
+                      {isSaving ? (
+                        <i className="fas fa-spinner fa-spin"></i>
+                      ) : (
+                        <i className="fas fa-save"></i>
+                      )}
+                      {isSaving ? 'Saving...' : 'Save Changes'}
                     </button>
                   </>
                 ) : (
@@ -591,6 +729,13 @@ const EmailTemplates = ({ onBack, onUseTemplate, activeSection, onSectionChange 
             </div>
             
             <div className="communication-hub-template-preview-content">
+              {createError && (
+                <div className="communication-hub-error-message">
+                  <i className="fas fa-exclamation-circle"></i>
+                  {createError}
+                </div>
+              )}
+
               <div className="communication-hub-template-form">
                 <div className="communication-hub-form-group">
                   <label>Template Title *</label>
@@ -669,13 +814,25 @@ const EmailTemplates = ({ onBack, onUseTemplate, activeSection, onSectionChange 
               </div>
 
               <div className="communication-hub-template-preview-actions">
-                <button className="communication-hub-template-preview-btn" onClick={handleCloseCreateModal}>
+                <button 
+                  className="communication-hub-template-preview-btn" 
+                  onClick={handleCloseCreateModal}
+                  disabled={isSaving}
+                >
                   <i className="fas fa-times"></i>
                   Cancel
                 </button>
-                <button className="communication-hub-template-edit-btn" onClick={handleSaveNewTemplate}>
-                  <i className="fas fa-save"></i>
-                  Create Template
+                <button 
+                  className="communication-hub-template-edit-btn" 
+                  onClick={handleSaveNewTemplate}
+                  disabled={isSaving}
+                >
+                  {isSaving ? (
+                    <i className="fas fa-spinner fa-spin"></i>
+                  ) : (
+                    <i className="fas fa-save"></i>
+                  )}
+                  {isSaving ? 'Creating...' : 'Create Template'}
                 </button>
               </div>
             </div>
@@ -703,13 +860,25 @@ const EmailTemplates = ({ onBack, onUseTemplate, activeSection, onSectionChange 
                 <p>This action cannot be undone. The template "<strong>{templateToDelete.title}</strong>" will be permanently removed.</p>
                 
                 <div className="communication-hub-template-preview-actions">
-                  <button className="communication-hub-template-preview-btn" onClick={handleCancelDelete}>
+                  <button 
+                    className="communication-hub-template-preview-btn" 
+                    onClick={handleCancelDelete}
+                    disabled={isDeleting}
+                  >
                     <i className="fas fa-times"></i>
                     Cancel
                   </button>
-                  <button className="communication-hub-template-delete-btn" onClick={handleConfirmDelete}>
-                    <i className="fas fa-trash"></i>
-                    Delete Template
+                  <button 
+                    className="communication-hub-template-delete-btn" 
+                    onClick={handleConfirmDelete}
+                    disabled={isDeleting}
+                  >
+                    {isDeleting ? (
+                      <i className="fas fa-spinner fa-spin"></i>
+                    ) : (
+                      <i className="fas fa-trash"></i>
+                    )}
+                    {isDeleting ? 'Deleting...' : 'Delete Template'}
                   </button>
                 </div>
               </div>

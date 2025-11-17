@@ -1,10 +1,10 @@
-// src/services/api.js - PRODUCTION VERSION
+// src/services/api.js - COMPLETE VERSION
 const API_BASE_URL = process.env.REACT_APP_API_URL || 'https://grant-ai.onrender.com';
 
 class ApiService {
   constructor() {
     this.baseURL = API_BASE_URL.replace(/\/$/, '');
-    console.log('🚀 Production API Service initialized with:', this.baseURL);
+    console.log('🚀 API Service initialized with:', this.baseURL);
   }
 
   getAuthHeaders() {
@@ -47,6 +47,46 @@ class ApiService {
       console.error('API request failed:', error);
       throw error;
     }
+  }
+
+  // Template methods
+  async getTemplates(category = '', search = '') {
+    const params = new URLSearchParams();
+    if (category) params.append('category', category);
+    if (search) params.append('search', search);
+    
+    const queryString = params.toString();
+    return this.request(`/api/templates${queryString ? `?${queryString}` : ''}`);
+  }
+
+  async getTemplate(id) {
+    return this.request(`/api/templates/${id}`);
+  }
+
+  async createTemplate(templateData) {
+    return this.request('/api/templates', {
+      method: 'POST',
+      body: JSON.stringify(templateData),
+    });
+  }
+
+  async updateTemplate(id, templateData) {
+    return this.request(`/api/templates/${id}`, {
+      method: 'PUT',
+      body: JSON.stringify(templateData),
+    });
+  }
+
+  async deleteTemplate(id) {
+    return this.request(`/api/templates/${id}`, {
+      method: 'DELETE',
+    });
+  }
+
+  async incrementTemplateUsage(id) {
+    return this.request(`/api/templates/${id}/usage`, {
+      method: 'PATCH',
+    });
   }
 
   // Client methods
@@ -117,10 +157,77 @@ class ApiService {
   async testProductionConnection() {
     try {
       const health = await this.checkHealth();
-      return { success: true, health, environment: 'production' };
+      return { 
+        success: true, 
+        health, 
+        environment: 'production',
+        message: 'Connected to production server successfully'
+      };
     } catch (error) {
-      throw new Error(`Production connection failed: ${error.message}`);
+      console.error('Production connection test failed:', error);
+      return {
+        success: false,
+        error: error.message,
+        environment: 'production',
+        message: `Production connection failed: ${error.message}`
+      };
     }
+  }
+
+  // Test local connection
+  async testLocalConnection() {
+    try {
+      // Temporarily switch to local URL for testing
+      const originalBaseURL = this.baseURL;
+      this.baseURL = 'http://localhost:5000';
+      
+      const health = await this.checkHealth();
+      
+      // Restore original base URL
+      this.baseURL = originalBaseURL;
+      
+      return { 
+        success: true, 
+        health, 
+        environment: 'local',
+        message: 'Connected to local server successfully'
+      };
+    } catch (error) {
+      // Restore original base URL even if there's an error
+      this.baseURL = 'https://grant-ai.onrender.com';
+      
+      return {
+        success: false,
+        error: error.message,
+        environment: 'local',
+        message: `Local connection failed: ${error.message}`
+      };
+    }
+  }
+
+  // Auto-detect environment
+  async detectEnvironment() {
+    console.log('🔍 Detecting environment...');
+    
+    // Test production first
+    const productionTest = await this.testProductionConnection();
+    if (productionTest.success) {
+      console.log('✅ Using production environment');
+      return productionTest;
+    }
+    
+    // If production fails, test local
+    console.log('🔄 Production failed, testing local environment...');
+    const localTest = await this.testLocalConnection();
+    if (localTest.success) {
+      console.log('✅ Using local environment');
+      // Switch to local URL
+      this.baseURL = 'http://localhost:5000';
+    } else {
+      console.log('❌ Both production and local connections failed');
+    }
+    
+    return localTest;
   }
 }
 
