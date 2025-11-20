@@ -1,0 +1,224 @@
+/* Calendar Main Styles - Forest Green & Gold Theme */
+:root {
+  --forest-dark: #1a472a;
+  --forest-medium: #2d5a3a;
+  --forest-light: #3d6b47;
+  --forest-lighter: #4a7c56;
+  --forest-lightest: #e8f5e8;
+  
+  --gold-dark: #b8860b;
+  --gold-medium: #daa520;
+  --gold-light: #ffd700;
+  --gold-lighter: #fff3cd;
+  
+  --text-dark: #1a472a;
+  --text-medium: #2d5a3a;
+  --text-light: #4a7c56;
+  --text-lighter: #6c9977;
+  
+  --bg-light: #f8fdf8;
+  --bg-white: #ffffff;
+  --bg-hover: #f0f9f0;
+  
+  --border-light: #d4e8d4;
+  --border-medium: #a8d5a8;
+  
+  --success: #28a745;
+  --warning: #ffc107;
+  --danger: #dc3545;
+  --info: #17a2b8;
+}
+
+/* Calendar Main Layout */
+.calendar-main {
+  padding: 0;
+  min-height: 100vh;
+  background: var(--bg-light);
+}
+
+.calendar-header {
+  background: linear-gradient(135deg, var(--forest-dark) 0%, var(--forest-medium) 100%);
+  color: white;
+  padding: 2rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  box-shadow: 0 4px 12px rgba(26, 71, 42, 0.1);
+}
+
+.calendar-header-content h1 {
+  margin: 0 0 0.5rem 0;
+  font-size: 2rem;
+  font-weight: 700;
+  color: var(--gold-light);
+}
+
+.calendar-header-content p {
+  margin: 0;
+  opacity: 0.9;
+  font-size: 1.1rem;
+  color: rgba(255, 255, 255, 0.9);
+}
+
+.calendar-layout {
+  display: grid;
+  grid-template-columns: 280px 1fr;
+  min-height: calc(100vh - 120px);
+}
+
+.calendar-content {
+  padding: 2rem;
+  background: var(--bg-white);
+  margin: -2rem 2rem 2rem 0;
+  border-radius: 12px;
+  box-shadow: 0 4px 6px rgba(26, 71, 42, 0.05);
+  border: 1px solid var(--border-light);
+}
+
+/* Loading and Error States */
+.calendar-loading,
+.calendar-error {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 4rem 2rem;
+  text-align: center;
+}
+
+.calendar-loading i {
+  font-size: 3rem;
+  color: var(--forest-medium);
+  margin-bottom: 1rem;
+}
+
+.calendar-error-banner {
+  background: #ffebee;
+  color: var(--danger);
+  padding: 1rem 2rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-bottom: 1px solid #ffcdd2;
+  margin: 0 2rem;
+  border-radius: 8px;
+}
+
+.calendar-error-banner button {
+  background: none;
+  border: none;
+  font-size: 1.25rem;
+  cursor: pointer;
+  color: var(--danger);
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .calendar-layout {
+    grid-template-columns: 1fr;
+  }
+  
+  .calendar-sidebar {
+    display: none;
+  }
+  
+  .calendar-content {
+    margin: -2rem 1rem 2rem 1rem;
+  }
+  
+  .calendar-header {
+    flex-direction: column;
+    gap: 1rem;
+    text-align: center;
+  }
+  
+  .calendar-header-actions {
+    display: flex;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+}
+
+/* Button Styles - Forest Green & Gold Theme */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.75rem 1.5rem;
+  border: none;
+  border-radius: 8px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  text-decoration: none;
+  font-family: inherit;
+  text-align: center;
+  justify-content: center;
+}
+
+.btn-primary {
+  background: linear-gradient(135deg, var(--forest-medium) 0%, var(--forest-dark) 100%);
+  color: white;
+  box-shadow: 0 4px 12px rgba(45, 90, 58, 0.3);
+}
+
+.btn-primary:hover {
+  background: linear-gradient(135deg, var(--forest-dark) 0%, var(--forest-medium) 100%);
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(45, 90, 58, 0.4);
+}
+
+.btn-outline {
+  background: transparent;
+  color: var(--forest-medium);
+  border: 2px solid var(--forest-medium);
+}
+
+.btn-outline:hover {
+  background: var(--forest-medium);
+  color: white;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(45, 90, 58, 0.3);
+}
+
+.btn-danger {
+  background: linear-gradient(135deg, #dc3545 0%, #c82333 100%);
+  color: white;
+  box-shadow: 0 4px 12px rgba(220, 53, 69, 0.3);
+}
+
+.btn-danger:hover {
+  background: linear-gradient(135deg, #c82333 0%, #dc3545 100%);
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(220, 53, 69, 0.4);
+}
+
+.btn-secondary {
+  background: var(--forest-lightest);
+  color: var(--forest-dark);
+  border: 2px solid var(--border-light);
+}
+
+.btn-secondary:hover {
+  background: var(--forest-lighter);
+  color: white;
+  transform: translateY(-2px);
+}
+
+.btn-sm {
+  padding: 0.5rem 1rem;
+  font-size: 0.8rem;
+}
+
+.btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: none !important;
+}
+
+.btn:disabled:hover {
+  transform: none !important;
+  box-shadow: none !important;
+}

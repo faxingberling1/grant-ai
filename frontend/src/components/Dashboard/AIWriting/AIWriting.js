@@ -10,6 +10,7 @@ const AIWriting = () => {
   const [activeTab, setActiveTab] = useState('assistant');
   const [clients, setClients] = useState([]);
   const [grants, setGrants] = useState([]);
+  const [grantSources, setGrantSources] = useState([]);
   const [selectedClient, setSelectedClient] = useState(null);
   const [selectedGrant, setSelectedGrant] = useState(null);
   const [loading, setLoading] = useState(false);
@@ -23,12 +24,21 @@ const AIWriting = () => {
 
   const checkAPIStatus = async () => {
     try {
-      const response = await fetch('http://localhost:8000/api/health', {
+      const token = localStorage.getItem('token');
+      const headers = {
+        'Content-Type': 'application/json',
+      };
+      
+      if (token) {
+        headers['Authorization'] = `Bearer ${token}`;
+      }
+
+      const response = await fetch('http://localhost:5000/api/health', {
         method: 'GET',
-        headers: {
-          'Content-Type': 'application/json',
-        },
+        headers: headers,
       });
+      
+      const data = await response.json();
       
       if (response.ok) {
         setApiStatus('connected');
@@ -41,8 +51,140 @@ const AIWriting = () => {
     }
   };
 
-  const loadInitialData = () => {
-    // Mock data - replace with actual API calls
+  const loadInitialData = async () => {
+    try {
+      const token = localStorage.getItem('token');
+      const headers = {
+        'Content-Type': 'application/json',
+      };
+      
+      if (token) {
+        headers['Authorization'] = `Bearer ${token}`;
+      }
+
+      // Fetch real clients from API
+      const clientsResponse = await fetch('http://localhost:5000/api/clients', {
+        method: 'GET',
+        headers: headers,
+      });
+
+      if (clientsResponse.ok) {
+        const clientsData = await clientsResponse.json();
+        setClients(clientsData.map(client => ({
+          id: client._id,
+          name: client.organizationName,
+          category: client.organizationType || 'General',
+          mission: client.missionStatement,
+          focusAreas: client.focusAreas || [],
+          ...client
+        })));
+      } else {
+        // Fallback to mock data if API fails
+        loadMockData();
+      }
+
+      // Fetch grant sources
+      await loadGrantSources();
+
+    } catch (error) {
+      console.error('Error loading initial data:', error);
+      loadMockData();
+    }
+  };
+
+  const loadGrantSources = async () => {
+    try {
+      const token = localStorage.getItem('token');
+      const headers = {
+        'Content-Type': 'application/json',
+      };
+      
+      if (token) {
+        headers['Authorization'] = `Bearer ${token}`;
+      }
+
+      // Fetch grant sources from API
+      const grantSourcesResponse = await fetch('http://localhost:5000/api/grants/sources', {
+        method: 'GET',
+        headers: headers,
+      });
+
+      if (grantSourcesResponse.ok) {
+        const grantSourcesData = await grantSourcesResponse.json();
+        setGrantSources(grantSourcesData);
+      } else {
+        // Fallback to mock grant sources if API fails
+        loadMockGrantSources();
+      }
+    } catch (error) {
+      console.error('Error loading grant sources:', error);
+      loadMockGrantSources();
+    }
+  };
+
+  const loadMockGrantSources = () => {
+    const mockGrantSources = [
+      {
+        id: '1',
+        title: 'NSF STEM Education Grant',
+        funder: 'National Science Foundation',
+        category: 'Education',
+        deadline: '2024-03-15',
+        maxAward: 500000,
+        focusAreas: ['STEM Education', 'K-12', 'Underserved Communities'],
+        eligibility: 'Non-profit organizations, educational institutions',
+        url: 'https://www.nsf.gov/funding/'
+      },
+      {
+        id: '2',
+        title: 'Environmental Conservation Program',
+        funder: 'Environmental Protection Agency',
+        category: 'Environment',
+        deadline: '2024-04-20',
+        maxAward: 750000,
+        focusAreas: ['Conservation', 'Climate Change', 'Sustainability'],
+        eligibility: 'Non-profit organizations, government agencies',
+        url: 'https://www.epa.gov/grants'
+      },
+      {
+        id: '3',
+        title: 'Community Health Initiative',
+        funder: 'Department of Health and Human Services',
+        category: 'Healthcare',
+        deadline: '2024-05-30',
+        maxAward: 1000000,
+        focusAreas: ['Public Health', 'Community Wellness', 'Healthcare Access'],
+        eligibility: 'Non-profit organizations, healthcare providers',
+        url: 'https://www.hhs.gov/grants/'
+      },
+      {
+        id: '4',
+        title: 'Youth Development Fund',
+        funder: 'Department of Education',
+        category: 'Youth Development',
+        deadline: '2024-06-15',
+        maxAward: 300000,
+        focusAreas: ['After-school Programs', 'Mentorship', 'Career Readiness'],
+        eligibility: 'Non-profit organizations, schools, community centers',
+        url: 'https://www.ed.gov/funding'
+      },
+      {
+        id: '5',
+        title: 'Arts and Culture Grant',
+        funder: 'National Endowment for the Arts',
+        category: 'Arts & Culture',
+        deadline: '2024-07-01',
+        maxAward: 250000,
+        focusAreas: ['Arts Education', 'Cultural Programs', 'Community Arts'],
+        eligibility: 'Non-profit organizations, arts institutions',
+        url: 'https://www.arts.gov/grants'
+      }
+    ];
+
+    setGrantSources(mockGrantSources);
+  };
+
+  const loadMockData = () => {
     const mockClients = [
       {
         id: '1',
@@ -95,132 +237,198 @@ const AIWriting = () => {
     setGrants(mockGrants);
   };
 
+  const createNewGrant = async (grantData) => {
+    try {
+      const token = localStorage.getItem('token');
+      const headers = {
+        'Content-Type': 'application/json',
+      };
+      
+      if (token) {
+        headers['Authorization'] = `Bearer ${token}`;
+      }
+
+      const response = await fetch('http://localhost:5000/api/grants', {
+        method: 'POST',
+        headers: headers,
+        body: JSON.stringify(grantData),
+      });
+
+      const data = await response.json();
+      
+      if (response.ok && data.success) {
+        // Add the new grant to the grants list
+        setGrants(prevGrants => [...prevGrants, data.data]);
+        return data.data;
+      } else {
+        throw new Error(data.message || 'Failed to create grant');
+      }
+    } catch (error) {
+      console.error('Error creating grant:', error);
+      throw new Error('Failed to create grant. Please try again.');
+    }
+  };
+
   const generateContent = async (prompt, context, section) => {
     setLoading(true);
     
     try {
+      const token = localStorage.getItem('token');
+      const headers = {
+        'Content-Type': 'application/json',
+      };
+      
+      if (token) {
+        headers['Authorization'] = `Bearer ${token}`;
+      }
+
       const requestBody = {
         prompt: prompt,
         context: {
-          client: selectedClient,
-          grant: selectedGrant,
+          clientId: selectedClient?.id,
+          grantId: selectedGrant?.id,
           section: section,
           ...context
         },
-        tone: 'professional',
-        length: 'medium',
-        format: 'paragraph'
+        tone: context?.tone || 'professional',
+        length: context?.length || 'medium',
+        format: context?.format || 'paragraph'
       };
 
-      const response = await fetch('http://localhost:8000/api/generate', {
+      const response = await fetch('http://localhost:5000/api/generate', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
+        headers: headers,
         body: JSON.stringify(requestBody),
       });
 
-      if (!response.ok) {
-        throw new Error('API request failed');
+      const data = await response.json();
+      
+      if (!response.ok || !data.success) {
+        throw new Error(data.message || 'API request failed');
       }
 
-      const data = await response.json();
       setLoading(false);
       return data.content;
 
     } catch (error) {
       console.error('Error generating content:', error);
       setLoading(false);
-      throw new Error('Failed to generate content. Please try again.');
+      throw new Error(error.message || 'Failed to generate content. Please try again.');
     }
   };
 
-  const improveContent = async (content, improvementType) => {
+  const improveContent = async (content, improvementType, context = {}) => {
     setLoading(true);
     
     try {
+      const token = localStorage.getItem('token');
+      const headers = {
+        'Content-Type': 'application/json',
+      };
+      
+      if (token) {
+        headers['Authorization'] = `Bearer ${token}`;
+      }
+
       const requestBody = {
         content: content,
         improvement_type: improvementType,
         context: {
-          client: selectedClient,
-          grant: selectedGrant
+          clientId: selectedClient?.id,
+          grantId: selectedGrant?.id,
+          ...context
         }
       };
 
-      const response = await fetch('http://localhost:8000/api/improve', {
+      const response = await fetch('http://localhost:5000/api/improve', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
+        headers: headers,
         body: JSON.stringify(requestBody),
       });
 
-      if (!response.ok) {
-        throw new Error('API request failed');
+      const data = await response.json();
+      
+      if (!response.ok || !data.success) {
+        throw new Error(data.message || 'API request failed');
       }
 
-      const data = await response.json();
       setLoading(false);
       return data.improved_content;
 
     } catch (error) {
       console.error('Error improving content:', error);
       setLoading(false);
-      throw new Error('Failed to improve content. Please try again.');
+      throw new Error(error.message || 'Failed to improve content. Please try again.');
     }
   };
 
-  const analyzeContent = async (content, analysisType) => {
+  const analyzeContent = async (content, analysisType, context = {}) => {
     setLoading(true);
     
     try {
+      const token = localStorage.getItem('token');
+      const headers = {
+        'Content-Type': 'application/json',
+      };
+      
+      if (token) {
+        headers['Authorization'] = `Bearer ${token}`;
+      }
+
       const requestBody = {
         content: content,
         analysis_type: analysisType,
         context: {
-          client: selectedClient,
-          grant: selectedGrant
+          clientId: selectedClient?.id,
+          grantId: selectedGrant?.id,
+          ...context
         }
       };
 
-      const response = await fetch('http://localhost:8000/api/analyze', {
+      const response = await fetch('http://localhost:5000/api/analyze', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
+        headers: headers,
         body: JSON.stringify(requestBody),
       });
 
-      if (!response.ok) {
-        throw new Error('API request failed');
+      const data = await response.json();
+      
+      if (!response.ok || !data.success) {
+        throw new Error(data.message || 'API request failed');
       }
 
-      const data = await response.json();
       setLoading(false);
       return data.analysis;
 
     } catch (error) {
       console.error('Error analyzing content:', error);
       setLoading(false);
-      throw new Error('Failed to analyze content. Please try again.');
+      throw new Error(error.message || 'Failed to analyze content. Please try again.');
     }
   };
 
   const getTemplates = async (templateType) => {
     try {
-      const response = await fetch(`http://localhost:8000/api/templates/${templateType}`, {
-        method: 'GET',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-      });
-
-      if (!response.ok) {
-        throw new Error('API request failed');
+      const token = localStorage.getItem('token');
+      const headers = {
+        'Content-Type': 'application/json',
+      };
+      
+      if (token) {
+        headers['Authorization'] = `Bearer ${token}`;
       }
 
+      const response = await fetch(`http://localhost:5000/api/templates/${templateType}`, {
+        method: 'GET',
+        headers: headers,
+      });
+
       const data = await response.json();
+      
+      if (!response.ok || !data.success) {
+        throw new Error(data.message || 'API request failed');
+      }
+
       return data.templates;
 
     } catch (error) {
@@ -237,13 +445,15 @@ const AIWriting = () => {
           id: '1',
           name: 'Community Needs Assessment',
           description: 'Template for describing community problems and needs',
-          structure: ['Problem Statement', 'Data & Statistics', 'Impact Description', 'Urgency']
+          structure: ['Problem Statement', 'Data & Statistics', 'Impact Description', 'Urgency'],
+          prompt: 'Write a compelling needs statement for a grant proposal focusing on community needs and gaps in services.'
         },
         {
           id: '2',
           name: 'Program Gap Analysis',
           description: 'Identify gaps in existing services and programs',
-          structure: ['Current Services', 'Identified Gaps', 'Target Population', 'Proposed Solution']
+          structure: ['Current Services', 'Identified Gaps', 'Target Population', 'Proposed Solution'],
+          prompt: 'Create a gap analysis showing the need for a new program or service.'
         }
       ],
       objectives: [
@@ -251,7 +461,15 @@ const AIWriting = () => {
           id: '1',
           name: 'SMART Objectives',
           description: 'Specific, Measurable, Achievable, Relevant, Time-bound objectives',
-          structure: ['Specific', 'Measurable', 'Achievable', 'Relevant', 'Time-bound']
+          structure: ['Specific', 'Measurable', 'Achievable', 'Relevant', 'Time-bound'],
+          prompt: 'Develop SMART objectives for a grant proposal that are clear and achievable.'
+        },
+        {
+          id: '2',
+          name: 'Program Outcomes',
+          description: 'Define expected program outcomes and impact',
+          structure: ['Short-term Outcomes', 'Long-term Impact', 'Measurement Methods', 'Timeline'],
+          prompt: 'Outline the expected outcomes and impact of the proposed program.'
         }
       ],
       methodology: [
@@ -259,7 +477,33 @@ const AIWriting = () => {
           id: '1',
           name: 'Program Implementation Plan',
           description: 'Detailed program activities and implementation steps',
-          structure: ['Activities', 'Timeline', 'Staffing', 'Resources', 'Monitoring']
+          structure: ['Activities', 'Timeline', 'Staffing', 'Resources', 'Monitoring'],
+          prompt: 'Describe the methodology and implementation plan for the proposed program.'
+        },
+        {
+          id: '2',
+          name: 'Project Timeline',
+          description: 'Clear timeline for project activities and milestones',
+          structure: ['Phase 1', 'Phase 2', 'Phase 3', 'Milestones', 'Deliverables'],
+          prompt: 'Create a detailed project timeline with clear milestones and deliverables.'
+        }
+      ],
+      evaluation: [
+        {
+          id: '1',
+          name: 'Program Evaluation Plan',
+          description: 'Comprehensive evaluation framework and methods',
+          structure: ['Evaluation Questions', 'Data Collection', 'Analysis Methods', 'Reporting'],
+          prompt: 'Develop an evaluation plan to measure program success and impact.'
+        }
+      ],
+      budget: [
+        {
+          id: '1',
+          name: 'Budget Narrative Template',
+          description: 'Justify and explain budget items clearly',
+          structure: ['Personnel Costs', 'Operating Expenses', 'Equipment', 'Indirect Costs'],
+          prompt: 'Write a budget narrative that clearly justifies each expense in the proposal.'
         }
       ]
     };
@@ -335,10 +579,12 @@ const AIWriting = () => {
           <WritingAssistant
             clients={clients}
             grants={grants}
+            grantSources={grantSources}
             selectedClient={selectedClient}
             selectedGrant={selectedGrant}
             onSelectClient={setSelectedClient}
             onSelectGrant={setSelectedGrant}
+            onCreateGrant={createNewGrant}
             onGenerateContent={generateContent}
             onImproveContent={improveContent}
             onAnalyzeContent={analyzeContent}
@@ -361,10 +607,15 @@ const AIWriting = () => {
           <ContentEditor
             clients={clients}
             grants={grants}
+            grantSources={grantSources}
             selectedClient={selectedClient}
             selectedGrant={selectedGrant}
             onSelectClient={setSelectedClient}
             onSelectGrant={setSelectedGrant}
+            onCreateGrant={createNewGrant}
+            onImproveContent={improveContent}
+            onAnalyzeContent={analyzeContent}
+            loading={loading}
           />
         )}
 
@@ -372,11 +623,22 @@ const AIWriting = () => {
           <CollaborationTools
             clients={clients}
             grants={grants}
+            grantSources={grantSources}
             selectedClient={selectedClient}
             selectedGrant={selectedGrant}
           />
         )}
       </div>
+
+      {/* Loading Overlay */}
+      {loading && (
+        <div className="loading-overlay">
+          <div className="loading-spinner">
+            <i className="fas fa-robot fa-spin"></i>
+            <p>AI is generating content...</p>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

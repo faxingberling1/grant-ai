@@ -1,12 +1,32 @@
 backend
 ├── .env
+├── .env.production
+├── config
+│   └── database.js
+├── middleware
+│   └── auth.js
+├── models
+│   ├── Client.js
+│   ├── GrantSource.js
+│   ├── Meeting.js
+│   ├── Template.js
+│   └── User.js
 ├── node_modules
 ├── package-lock.json
 ├── package.json
+├── routes
+│   ├── aiRoutes.js
+│   ├── auth.js
+│   ├── clients.js
+│   ├── grantSources.js
+│   ├── health.js
+│   ├── meetings.js
+│   └── templates.js
 └── server.js
 
 frontend
-├── .env
+├── .env.local
+├── .env.production
 ├── .gitignore
 ├── build
 ├── node_modules
@@ -27,14 +47,36 @@ frontend
 │   │   │   │   ├── ContentEditor.js
 │   │   │   │   ├── TemplateLibrary.js
 │   │   │   │   └── WritingAssistant.js
+│   │   │   ├── CalendarModal
+│   │   │   │   ├── Calendar.css
+│   │   │   │   ├── CalendarMain.js
+│   │   │   │   ├── CalendarSidebar.css
+│   │   │   │   ├── CalendarSidebar.js
+│   │   │   │   ├── CalendarView.css
+│   │   │   │   ├── CalendarView.js
+│   │   │   │   ├── MeetingCard.css
+│   │   │   │   ├── MeetingCard.js
+│   │   │   │   ├── MeetingDetails.css
+│   │   │   │   ├── MeetingDetails.js
+│   │   │   │   ├── MeetingList.css
+│   │   │   │   ├── MeetingList.js
+│   │   │   │   ├── MeetingRoom.css
+│   │   │   │   ├── MeetingRoom.js
+│   │   │   │   ├── ScheduleMeeting.css
+│   │   │   │   ├── ScheduleMeeting.js
+│   │   │   │   ├── UpcomingMeetings.css
+│   │   │   │   └── UpcomingMeetings.js
 │   │   │   ├── Clients
 │   │   │   │   ├── BulkEmail.js
-│   │   │   │   ├── CalendarModal.css
-│   │   │   │   ├── CalendarModal.js
+│   │   │   │   ├── ClientCommunication.css
 │   │   │   │   ├── ClientCommunication.js
+│   │   │   │   ├── ClientDetails.css
 │   │   │   │   ├── ClientDetails.js
+│   │   │   │   ├── ClientEmails.css
 │   │   │   │   ├── ClientEmails.js
+│   │   │   │   ├── ClientForm.css
 │   │   │   │   ├── ClientForm.js
+│   │   │   │   ├── ClientList.css
 │   │   │   │   ├── ClientList.js
 │   │   │   │   ├── Clients.css
 │   │   │   │   ├── Clients.js
@@ -43,10 +85,22 @@ frontend
 │   │   │   │   ├── CommunicationHub.js
 │   │   │   │   └── CommunicationThread.js
 │   │   │   ├── CommunicationHub
+│   │   │   │   ├── Drafts.css
+│   │   │   │   ├── Drafts.js
 │   │   │   │   ├── EmailComposer.css
 │   │   │   │   ├── EmailComposer.js
 │   │   │   │   ├── EmailTemplates.css
-│   │   │   │   └── EmailTemplates.js
+│   │   │   │   ├── EmailTemplates.js
+│   │   │   │   ├── Inbox.css
+│   │   │   │   ├── Inbox.js
+│   │   │   │   ├── Sent.css
+│   │   │   │   ├── Sent.js
+│   │   │   │   ├── Spam.css
+│   │   │   │   ├── Spam.js
+│   │   │   │   ├── Starred.css
+│   │   │   │   ├── Starred.js
+│   │   │   │   ├── Trash.css
+│   │   │   │   └── Trash.js
 │   │   │   ├── Dashboard.css
 │   │   │   ├── Dashboard.js
 │   │   │   ├── DashboardHeader.js
@@ -67,8 +121,10 @@ frontend
 │   │   │   │   ├── GrantsHeader.js
 │   │   │   │   └── GrantsManager.js
 │   │   │   ├── Matching
+│   │   │   │   ├── ClientProfile.css
 │   │   │   │   ├── ClientProfile.js
 │   │   │   │   ├── GrantRecommendations.js
+│   │   │   │   ├── MatchResults.css
 │   │   │   │   ├── MatchResults.js
 │   │   │   │   ├── Matching.css
 │   │   │   │   └── Matching.js
@@ -92,6 +148,8 @@ frontend
 │   │   │   │   ├── DisableConfirmationModal.js
 │   │   │   │   ├── IntegrationSettings.js
 │   │   │   │   ├── PreferencesSettings.js
+│   │   │   │   ├── SMTPSettings.css
+│   │   │   │   ├── SMTPSettings.js
 │   │   │   │   ├── SecuritySettings.js
 │   │   │   │   ├── Settings.css
 │   │   │   │   └── Settings.js
@@ -121,10 +179,17 @@ frontend
 │   │   └── api.config.js
 │   ├── context
 │   │   ├── AuthContext.js
+│   │   ├── ClientsContext.js
 │   │   └── TemplatesContext.js
 │   ├── index.css
 │   ├── index.js
 │   └── services
+│       ├── api.js
+│       ├── clientService.js
+│       ├── emailService.js
+│       ├── grantSourceService.js
 │       ├── grantWatchApi.js
-│       └── grantsGovApi.js
+│       ├── grantsGovApi.js
+│       ├── meetingService.js
+│       └── templateService.js
 └── vercel.json

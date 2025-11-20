@@ -1,0 +1,908 @@
+/* ClientCommunication.css - Dedicated Styles for ClientCommunication Component Only */
+
+/* Main Container */
+.client-communication-container {
+  min-height: 100vh;
+  background: linear-gradient(135deg, #0a2f1d 0%, #1a4d34 50%, #0a2f1d 100%);
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Header Section */
+.client-communication-header {
+  background: linear-gradient(135deg, #1a4d34 0%, #2d6a4f 100%);
+  color: white;
+  padding: 30px 0;
+  border-bottom: 4px solid #d4af37;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+  flex-shrink: 0;
+}
+
+.client-communication-header-content {
+  max-width: 100%;
+  margin: 0 auto;
+  padding: 0 40px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 30px;
+}
+
+.client-communication-info {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  flex: 1;
+}
+
+.client-communication-avatar {
+  width: 80px;
+  height: 80px;
+  border-radius: 16px;
+  border: 3px solid #d4af37;
+  object-fit: cover;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+}
+
+.client-communication-details h2 {
+  margin: 0 0 8px 0;
+  font-size: 2.2rem;
+  font-weight: 700;
+  color: #ffffff;
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+}
+
+.client-communication-details p {
+  margin: 0;
+  font-size: 1.2rem;
+  opacity: 0.95;
+  font-weight: 400;
+}
+
+.client-communication-header-actions {
+  display: flex;
+  gap: 15px;
+}
+
+/* Buttons */
+.client-communication-btn {
+  padding: 12px 24px;
+  border: none;
+  border-radius: 10px;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  text-decoration: none;
+  letter-spacing: 0.5px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+}
+
+.client-communication-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: none !important;
+}
+
+.client-communication-btn-primary {
+  background: linear-gradient(135deg, #d4af37 0%, #f4d03f 100%);
+  color: #1a4d34;
+  border: 2px solid #d4af37;
+}
+
+.client-communication-btn-primary:hover:not(:disabled) {
+  background: linear-gradient(135deg, #f4d03f 0%, #d4af37 100%);
+  transform: translateY(-2px) scale(1.02);
+  box-shadow: 0 6px 20px rgba(212, 175, 55, 0.4);
+}
+
+.client-communication-btn-secondary {
+  background: linear-gradient(135deg, #2d6a4f 0%, #40916c 100%);
+  color: white;
+  border: 2px solid #2d6a4f;
+}
+
+.client-communication-btn-secondary:hover {
+  background: linear-gradient(135deg, #40916c 0%, #2d6a4f 100%);
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(45, 106, 79, 0.4);
+}
+
+.client-communication-btn-outline {
+  background: transparent;
+  border: 2px solid rgba(212, 175, 55, 0.3);
+  color: #d4af37;
+  backdrop-filter: blur(10px);
+}
+
+.client-communication-btn-outline:hover {
+  background: rgba(212, 175, 55, 0.1);
+  border-color: #d4af37;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 15px rgba(212, 175, 55, 0.3);
+}
+
+.client-communication-btn-icon {
+  width: 40px;
+  height: 40px;
+  border: none;
+  border-radius: 8px;
+  background: rgba(212, 175, 55, 0.1);
+  color: #1a4d34;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.3s ease;
+  font-size: 14px;
+}
+
+.client-communication-btn-icon:hover {
+  background: #d4af37;
+  color: white;
+  transform: translateY(-2px) scale(1.1);
+  box-shadow: 0 4px 12px rgba(212, 175, 55, 0.3);
+}
+
+/* Tabs Navigation */
+.client-communication-tabs {
+  display: flex;
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(20px);
+  border-bottom: 2px solid rgba(212, 175, 55, 0.3);
+  padding: 0 40px;
+  flex-shrink: 0;
+}
+
+.client-communication-tab {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 20px 25px;
+  background: transparent;
+  border: none;
+  border-bottom: 3px solid transparent;
+  color: #6c757d;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  font-size: 15px;
+  font-weight: 600;
+  position: relative;
+}
+
+.client-communication-tab:hover {
+  color: #1a4d34;
+  background: rgba(212, 175, 55, 0.05);
+}
+
+.client-communication-tab.active {
+  color: #1a4d34;
+  border-bottom-color: #d4af37;
+  background: rgba(212, 175, 55, 0.1);
+}
+
+.client-communication-tab i {
+  font-size: 16px;
+  width: 20px;
+}
+
+.client-communication-tab-badge {
+  background: rgba(212, 175, 55, 0.2);
+  color: #1a4d34;
+  padding: 4px 8px;
+  border-radius: 12px;
+  font-size: 12px;
+  font-weight: 700;
+  min-width: 24px;
+  text-align: center;
+}
+
+.client-communication-tab.active .client-communication-tab-badge {
+  background: rgba(212, 175, 55, 0.3);
+}
+
+/* Main Content */
+.client-communication-content {
+  flex: 1;
+  padding: 30px 40px;
+  overflow-y: auto;
+}
+
+/* Communication Panel */
+.client-communication-panel {
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(20px);
+  border-radius: 16px;
+  border: 1px solid rgba(212, 175, 55, 0.2);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+  overflow: hidden;
+}
+
+/* Quick Actions */
+.client-communication-quick-actions {
+  display: flex;
+  gap: 15px;
+  padding: 25px;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+  background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+}
+
+.client-communication-quick-action-btn {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 20px;
+  background: rgba(255, 255, 255, 0.9);
+  border: 2px solid rgba(212, 175, 55, 0.3);
+  border-radius: 10px;
+  color: #2d6a4f;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  font-size: 14px;
+}
+
+.client-communication-quick-action-btn:hover {
+  background: rgba(212, 175, 55, 0.1);
+  border-color: #d4af37;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(212, 175, 55, 0.2);
+}
+
+/* Email List */
+.client-communication-email-list {
+  padding: 0;
+}
+
+.client-communication-email-item {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+  padding: 20px 25px;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+  cursor: pointer;
+  transition: all 0.3s ease;
+  background: white;
+}
+
+.client-communication-email-item:hover {
+  background: linear-gradient(135deg, #f8fafc 0%, #f1f8ff 100%);
+  transform: translateX(4px);
+}
+
+.client-communication-email-item.unread {
+  background: rgba(212, 175, 55, 0.05);
+  border-left: 4px solid #d4af37;
+}
+
+.client-communication-email-item.important {
+  background: rgba(220, 53, 69, 0.05);
+  border-left: 4px solid #dc3545;
+}
+
+.client-communication-email-checkbox {
+  display: flex;
+  align-items: center;
+}
+
+.client-communication-email-checkbox input[type="checkbox"] {
+  width: 18px;
+  height: 18px;
+  border: 2px solid rgba(212, 175, 55, 0.5);
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.client-communication-email-checkbox input[type="checkbox"]:checked {
+  background: #d4af37;
+  border-color: #d4af37;
+}
+
+.client-communication-email-sender {
+  min-width: 120px;
+  font-weight: 600;
+  color: #1a4d34;
+  font-size: 14px;
+}
+
+.client-communication-email-content {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.client-communication-email-subject {
+  font-weight: 700;
+  color: #1a4d34;
+  font-size: 14px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.client-communication-email-preview {
+  color: #6c757d;
+  font-size: 13px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.client-communication-email-date {
+  font-size: 12px;
+  color: #6c757d;
+  font-weight: 500;
+  min-width: 80px;
+  text-align: right;
+}
+
+.client-communication-email-actions {
+  display: flex;
+  gap: 8px;
+}
+
+/* Call Log */
+.client-communication-call-log {
+  padding: 25px;
+}
+
+.client-communication-call-item {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+  padding: 20px;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+  transition: all 0.3s ease;
+}
+
+.client-communication-call-item:hover {
+  background: rgba(212, 175, 55, 0.05);
+  border-radius: 12px;
+}
+
+.client-communication-call-icon {
+  width: 50px;
+  height: 50px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 18px;
+  color: white;
+}
+
+.client-communication-call-icon.incoming {
+  background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+}
+
+.client-communication-call-icon.outgoing {
+  background: linear-gradient(135deg, #007bff 0%, #17a2b8 100%);
+}
+
+.client-communication-call-details {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.client-communication-call-type {
+  font-weight: 600;
+  color: #1a4d34;
+  font-size: 14px;
+}
+
+.client-communication-call-info {
+  color: #6c757d;
+  font-size: 13px;
+}
+
+.client-communication-call-duration {
+  font-weight: 700;
+  color: #1a4d34;
+  font-size: 14px;
+  min-width: 60px;
+  text-align: center;
+}
+
+.client-communication-call-time {
+  font-size: 12px;
+  color: #6c757d;
+  min-width: 80px;
+  text-align: right;
+}
+
+/* Meetings List */
+.client-communication-meetings-list {
+  padding: 25px;
+}
+
+.client-communication-meeting-item {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  padding: 20px;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+  transition: all 0.3s ease;
+}
+
+.client-communication-meeting-item:hover {
+  background: rgba(212, 175, 55, 0.05);
+  border-radius: 12px;
+}
+
+.client-communication-meeting-time {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  min-width: 60px;
+  background: linear-gradient(135deg, #d4af37 0%, #f4d03f 100%);
+  color: #1a4d34;
+  padding: 12px;
+  border-radius: 10px;
+  text-align: center;
+}
+
+.client-communication-meeting-date {
+  font-size: 1.5rem;
+  font-weight: 800;
+  line-height: 1;
+}
+
+.client-communication-meeting-month {
+  font-size: 12px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.client-communication-meeting-details {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.client-communication-meeting-title {
+  font-weight: 700;
+  color: #1a4d34;
+  font-size: 16px;
+}
+
+.client-communication-meeting-description {
+  color: #6c757d;
+  font-size: 14px;
+  line-height: 1.4;
+}
+
+.client-communication-meeting-location {
+  font-size: 12px;
+  color: #2d6a4f;
+  font-weight: 600;
+}
+
+.client-communication-meeting-actions {
+  display: flex;
+  gap: 8px;
+}
+
+/* Notes Container */
+.client-communication-notes-container {
+  display: flex;
+  gap: 25px;
+  padding: 25px;
+  min-height: 500px;
+}
+
+.client-communication-note-editor {
+  flex: 1;
+  background: rgba(255, 255, 255, 0.9);
+  border: 1px solid rgba(212, 175, 55, 0.3);
+  border-radius: 12px;
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+}
+
+.client-communication-note-toolbar {
+  display: flex;
+  gap: 8px;
+  padding-bottom: 15px;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+}
+
+.client-communication-note-textarea {
+  flex: 1;
+  border: none;
+  outline: none;
+  resize: none;
+  font-size: 14px;
+  line-height: 1.5;
+  background: transparent;
+  font-family: inherit;
+}
+
+.client-communication-note-textarea::placeholder {
+  color: #6c757d;
+}
+
+.client-communication-note-actions {
+  display: flex;
+  gap: 12px;
+  justify-content: flex-end;
+  padding-top: 15px;
+  border-top: 1px solid rgba(0, 0, 0, 0.1);
+}
+
+.client-communication-notes-list {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+  max-height: 500px;
+  overflow-y: auto;
+}
+
+.client-communication-note-item {
+  background: rgba(255, 255, 255, 0.9);
+  border: 1px solid rgba(212, 175, 55, 0.2);
+  border-radius: 12px;
+  padding: 20px;
+  transition: all 0.3s ease;
+}
+
+.client-communication-note-item:hover {
+  border-color: rgba(212, 175, 55, 0.4);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.client-communication-note-content {
+  color: #1a4d34;
+  line-height: 1.5;
+  margin-bottom: 12px;
+  font-size: 14px;
+}
+
+.client-communication-note-meta {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 12px;
+  color: #6c757d;
+}
+
+.client-communication-note-actions-small {
+  display: flex;
+  gap: 6px;
+}
+
+/* No Communications State */
+.client-communication-no-communications {
+  text-align: center;
+  padding: 60px 25px;
+  color: #6c757d;
+}
+
+.client-communication-no-communications i {
+  font-size: 64px;
+  margin-bottom: 20px;
+  opacity: 0.5;
+  color: #d4af37;
+}
+
+.client-communication-no-communications h3 {
+  margin: 0 0 12px 0;
+  font-size: 1.5rem;
+  color: #1a4d34;
+}
+
+.client-communication-no-communications p {
+  margin: 0 0 25px 0;
+  font-size: 1rem;
+  line-height: 1.5;
+}
+
+/* Modals */
+.client-communication-modal {
+  border: none;
+  border-radius: 16px;
+  padding: 0;
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(20px);
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+  max-width: 500px;
+  width: 90vw;
+}
+
+.client-communication-modal::backdrop {
+  background: rgba(0, 0, 0, 0.5);
+  backdrop-filter: blur(4px);
+}
+
+.client-communication-modal-content {
+  display: flex;
+  flex-direction: column;
+  max-height: 80vh;
+}
+
+.client-communication-modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 25px;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+  background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+}
+
+.client-communication-modal-header h3 {
+  margin: 0;
+  font-size: 1.3rem;
+  font-weight: 700;
+  color: #1a4d34;
+}
+
+.client-communication-modal-body {
+  flex: 1;
+  padding: 25px;
+  overflow-y: auto;
+}
+
+.client-communication-modal-actions {
+  display: flex;
+  gap: 12px;
+  justify-content: flex-end;
+  padding: 20px 25px;
+  border-top: 1px solid rgba(0, 0, 0, 0.1);
+  background: rgba(255, 255, 255, 0.9);
+}
+
+/* Form Controls */
+.client-communication-form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-bottom: 20px;
+}
+
+.client-communication-form-group label {
+  font-weight: 600;
+  color: #1a4d34;
+  font-size: 14px;
+}
+
+.client-communication-form-control {
+  padding: 12px 16px;
+  border: 2px solid rgba(212, 175, 55, 0.3);
+  border-radius: 8px;
+  font-size: 14px;
+  background: rgba(255, 255, 255, 0.9);
+  transition: all 0.3s ease;
+  font-family: inherit;
+}
+
+.client-communication-form-control:focus {
+  outline: none;
+  border-color: #d4af37;
+  box-shadow: 0 2px 8px rgba(212, 175, 55, 0.2);
+  background: white;
+}
+
+.client-communication-form-control::placeholder {
+  color: #6c757d;
+}
+
+/* Scrollbar Styling */
+.client-communication-content::-webkit-scrollbar,
+.client-communication-notes-list::-webkit-scrollbar,
+.client-communication-modal-body::-webkit-scrollbar {
+  width: 6px;
+}
+
+.client-communication-content::-webkit-scrollbar-track,
+.client-communication-notes-list::-webkit-scrollbar-track,
+.client-communication-modal-body::-webkit-scrollbar-track {
+  background: rgba(26, 77, 52, 0.1);
+  border-radius: 3px;
+}
+
+.client-communication-content::-webkit-scrollbar-thumb,
+.client-communication-notes-list::-webkit-scrollbar-thumb,
+.client-communication-modal-body::-webkit-scrollbar-thumb {
+  background: linear-gradient(135deg, #d4af37 0%, #f4d03f 100%);
+  border-radius: 3px;
+}
+
+.client-communication-content::-webkit-scrollbar-thumb:hover,
+.client-communication-notes-list::-webkit-scrollbar-thumb:hover,
+.client-communication-modal-body::-webkit-scrollbar-thumb:hover {
+  background: linear-gradient(135deg, #f4d03f 0%, #d4af37 100%);
+}
+
+/* Responsive Design */
+@media (max-width: 1024px) {
+  .client-communication-header-content {
+    padding: 0 30px;
+    flex-direction: column;
+    gap: 20px;
+    text-align: center;
+  }
+  
+  .client-communication-info {
+    flex-direction: column;
+    text-align: center;
+  }
+  
+  .client-communication-tabs {
+    padding: 0 30px;
+    overflow-x: auto;
+  }
+  
+  .client-communication-content {
+    padding: 20px 30px;
+  }
+  
+  .client-communication-notes-container {
+    flex-direction: column;
+  }
+}
+
+@media (max-width: 768px) {
+  .client-communication-header {
+    padding: 20px 0;
+  }
+  
+  .client-communication-header-content {
+    padding: 0 20px;
+  }
+  
+  .client-communication-avatar {
+    width: 60px;
+    height: 60px;
+  }
+  
+  .client-communication-details h2 {
+    font-size: 1.8rem;
+  }
+  
+  .client-communication-tabs {
+    padding: 0 20px;
+  }
+  
+  .client-communication-tab {
+    padding: 15px 20px;
+    font-size: 14px;
+  }
+  
+  .client-communication-content {
+    padding: 15px 20px;
+  }
+  
+  .client-communication-quick-actions {
+    flex-wrap: wrap;
+    gap: 10px;
+    padding: 20px;
+  }
+  
+  .client-communication-email-item {
+    flex-wrap: wrap;
+    gap: 10px;
+    padding: 15px 20px;
+  }
+  
+  .client-communication-email-sender {
+    min-width: 100px;
+  }
+  
+  .client-communication-email-content {
+    order: 3;
+    width: 100%;
+  }
+  
+  .client-communication-modal {
+    width: 95vw;
+    margin: 20px;
+  }
+}
+
+@media (max-width: 480px) {
+  .client-communication-header-content {
+    padding: 0 15px;
+  }
+  
+  .client-communication-details h2 {
+    font-size: 1.5rem;
+  }
+  
+  .client-communication-tabs {
+    padding: 0 15px;
+  }
+  
+  .client-communication-tab {
+    padding: 12px 15px;
+    font-size: 13px;
+  }
+  
+  .client-communication-content {
+    padding: 10px 15px;
+  }
+  
+  .client-communication-modal-body {
+    padding: 20px;
+  }
+  
+  .client-communication-modal-actions {
+    flex-direction: column;
+  }
+  
+  .client-communication-modal-actions .client-communication-btn {
+    width: 100%;
+    justify-content: center;
+  }
+}
+
+/* Focus States for Accessibility */
+.client-communication-btn:focus-visible,
+.client-communication-btn-icon:focus-visible,
+.client-communication-tab:focus-visible,
+.client-communication-quick-action-btn:focus-visible,
+.client-communication-form-control:focus-visible,
+.client-communication-email-checkbox input[type="checkbox"]:focus-visible {
+  outline: 2px solid #d4af37;
+  outline-offset: 2px;
+}
+
+/* Animation for communication items */
+@keyframes client-communication-fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.client-communication-email-item,
+.client-communication-call-item,
+.client-communication-meeting-item,
+.client-communication-note-item {
+  animation: client-communication-fadeIn 0.3s ease-out;
+}
+
+/* Print Styles */
+@media print {
+  .client-communication-header-actions,
+  .client-communication-quick-actions,
+  .client-communication-email-actions,
+  .client-communication-meeting-actions,
+  .client-communication-note-actions,
+  .client-communication-note-actions-small,
+  .client-communication-note-editor {
+    display: none;
+  }
+  
+  .client-communication-container {
+    background: white;
+  }
+  
+  .client-communication-header {
+    background: white;
+    color: #1a4d34;
+    border-bottom: 2px solid #1a4d34;
+  }
+  
+  .client-communication-panel {
+    background: white;
+    box-shadow: none;
+    border: 1px solid #ddd;
+  }
+}

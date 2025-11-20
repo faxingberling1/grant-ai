@@ -952,3 +952,137 @@
   outline: 2px solid #1a472a; /* Dark Green */
   outline-offset: 2px;
 }
+
+/* Load More Section */
+.load-more-section {
+  margin: 20px 0;
+}
+
+.load-more-card {
+  background: white;
+  border-radius: 12px;
+  padding: 24px;
+  margin-bottom: 16px;
+  border: 2px solid #e1e8ed;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.load-more-card.grants-gov-load {
+  border-left: 4px solid #3498db;
+}
+
+.load-more-card.grantwatch-load {
+  border-left: 4px solid #9b59b6;
+}
+
+.load-more-content {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+}
+
+.load-more-icon {
+  font-size: 2rem;
+  color: #7f8c8d;
+}
+
+.load-more-text {
+  flex: 1;
+}
+
+.load-more-text h4 {
+  margin: 0 0 8px 0;
+  color: #2c3e50;
+}
+
+.load-more-text p {
+  margin: 0;
+  color: #7f8c8d;
+  line-height: 1.5;
+}
+
+.load-more-actions {
+  display: flex;
+  gap: 12px;
+}
+
+.load-more-btn {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+/* Loading More Indicator */
+.loading-more-indicator {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  padding: 20px;
+  background: #f8f9fa;
+  border-radius: 8px;
+  margin: 16px 0;
+  color: #7f8c8d;
+}
+
+.loading-more-indicator .spinner {
+  width: 20px;
+  height: 20px;
+  border: 2px solid #e1e8ed;
+  border-top: 2px solid #3498db;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+/* No More Data */
+.no-more-data {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  padding: 30px;
+  background: #f8f9fa;
+  border-radius: 12px;
+  margin: 20px 0;
+  text-align: center;
+}
+
+.no-more-icon {
+  font-size: 2.5rem;
+  color: #27ae60;
+}
+
+.no-more-text h4 {
+  margin: 0 0 8px 0;
+  color: #2c3e50;
+}
+
+.no-more-text p {
+  margin: 0;
+  color: #7f8c8d;
+}
+
+/* Small Spinner */
+.spinner-small {
+  width: 16px;
+  height: 16px;
+  border: 2px solid transparent;
+  border-top: 2px solid currentColor;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+/* Integration Disabled State */
+.integration-disabled {
+  opacity: 0.7;
+  background: #f8f9fa;
+}
+
+.integration-disabled .banner-icon {
+  color: #bdc3c7;
+}

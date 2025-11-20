@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import './ClientEmails.css';
 
 const ClientEmails = ({ client, onBack, onSendEmail, onUseTemplate }) => {
   const [activeTab, setActiveTab] = useState('inbox');
@@ -98,61 +99,61 @@ const ClientEmails = ({ client, onBack, onSendEmail, onUseTemplate }) => {
     const currentEmails = emails[activeTab] || [];
     
     return (
-      <div className="email-list-container">
-        <div className="email-toolbar">
-          <div className="email-checkbox">
+      <div className="client-emails-list-container">
+        <div className="client-emails-toolbar">
+          <div className="client-emails-checkbox">
             <input
               type="checkbox"
               checked={selectedEmails.length > 0 && selectedEmails.length === currentEmails.length}
               onChange={handleSelectAll}
             />
           </div>
-          <div className="email-actions">
-            <button className="btn-icon" title="Archive">
+          <div className="client-emails-actions">
+            <button className="client-emails-btn-icon" title="Archive">
               <i className="fas fa-archive"></i>
             </button>
-            <button className="btn-icon" title="Delete">
+            <button className="client-emails-btn-icon" title="Delete">
               <i className="fas fa-trash"></i>
             </button>
-            <button className="btn-icon" title="Mark as Read">
+            <button className="client-emails-btn-icon" title="Mark as Read">
               <i className="fas fa-envelope-open"></i>
             </button>
-            <button className="btn-icon" title="Mark as Important">
+            <button className="client-emails-btn-icon" title="Mark as Important">
               <i className="fas fa-exclamation"></i>
             </button>
           </div>
-          <div className="email-search">
+          <div className="client-emails-search">
             <i className="fas fa-search"></i>
             <input type="text" placeholder="Search emails..." />
           </div>
         </div>
 
-        <div className="email-items">
+        <div className="client-emails-items">
           {currentEmails.map(email => (
-            <div key={email.id} className={`email-item ${email.unread ? 'unread' : ''} ${selectedEmails.includes(email.id) ? 'selected' : ''}`}>
-              <div className="email-checkbox">
+            <div key={email.id} className={`client-emails-item ${email.unread ? 'unread' : ''} ${selectedEmails.includes(email.id) ? 'selected' : ''}`}>
+              <div className="client-emails-checkbox">
                 <input
                   type="checkbox"
                   checked={selectedEmails.includes(email.id)}
                   onChange={() => handleEmailSelect(email.id)}
                 />
               </div>
-              <div className="email-sender">
+              <div className="client-emails-sender">
                 {activeTab === 'inbox' ? email.from : email.to}
               </div>
-              <div className="email-content">
-                <div className="email-subject">
+              <div className="client-emails-content-area">
+                <div className="client-emails-subject">
                   {email.subject}
-                  {email.important && <i className="fas fa-exclamation-circle important-icon"></i>}
-                  {email.attachments > 0 && <i className="fas fa-paperclip attachment-icon"></i>}
+                  {email.important && <i className="fas fa-exclamation-circle client-emails-important-icon"></i>}
+                  {email.attachments > 0 && <i className="fas fa-paperclip client-emails-attachment-icon"></i>}
                 </div>
-                <div className="email-preview">{email.preview}</div>
+                <div className="client-emails-preview">{email.preview}</div>
               </div>
-              <div className="email-meta">
-                <div className="email-date">
+              <div className="client-emails-meta">
+                <div className="client-emails-date">
                   {new Date(email.date).toLocaleDateString()}
                 </div>
-                {email.unread && <div className="unread-indicator"></div>}
+                {email.unread && <div className="client-emails-unread-indicator"></div>}
               </div>
             </div>
           ))}
@@ -162,31 +163,31 @@ const ClientEmails = ({ client, onBack, onSendEmail, onUseTemplate }) => {
   };
 
   const renderTemplates = () => (
-    <div className="templates-grid">
+    <div className="client-emails-templates-grid">
       {templates.map(template => (
-        <div key={template.id} className="template-card" onClick={() => onUseTemplate(template)}>
-          <div className="template-header">
-            <div className="template-icon">
+        <div key={template.id} className="client-emails-template-card" onClick={() => onUseTemplate(template)}>
+          <div className="client-emails-template-header">
+            <div className="client-emails-template-icon">
               <i className="fas fa-layer-group"></i>
             </div>
-            <div className="template-meta">
-              <span className="template-category">{template.category}</span>
-              <span className="template-last-used">
+            <div className="client-emails-template-meta">
+              <span className="client-emails-template-category">{template.category}</span>
+              <span className="client-emails-template-last-used">
                 Used {new Date(template.lastUsed).toLocaleDateString()}
               </span>
             </div>
           </div>
-          <div className="template-content">
-            <h4 className="template-name">{template.name}</h4>
-            <div className="template-subject">{template.subject}</div>
-            <div className="template-preview">{template.preview}</div>
+          <div className="client-emails-template-content">
+            <h4 className="client-emails-template-name">{template.name}</h4>
+            <div className="client-emails-template-subject">{template.subject}</div>
+            <div className="client-emails-template-preview">{template.preview}</div>
           </div>
-          <div className="template-actions">
-            <button className="btn btn-outline">
+          <div className="client-emails-template-actions">
+            <button className="client-emails-btn client-emails-btn-outline">
               <i className="fas fa-eye"></i>
               Preview
             </button>
-            <button className="btn btn-primary">
+            <button className="client-emails-btn client-emails-btn-primary">
               <i className="fas fa-envelope"></i>
               Use Template
             </button>
@@ -197,19 +198,19 @@ const ClientEmails = ({ client, onBack, onSendEmail, onUseTemplate }) => {
   );
 
   return (
-    <div className="clients-email-view">
-      <div className="email-header">
-        <div className="header-content">
-          <button className="btn btn-outline" onClick={onBack}>
+    <div className="client-emails-container">
+      <div className="client-emails-header">
+        <div className="client-emails-header-content">
+          <button className="client-emails-btn client-emails-btn-outline" onClick={onBack}>
             <i className="fas fa-arrow-left"></i>
             Back to Clients
           </button>
-          <div className="header-title">
+          <div className="client-emails-header-title">
             <h1>Email Management</h1>
             <p>Manage client communications and email templates</p>
           </div>
-          <div className="header-actions">
-            <button className="btn btn-primary" onClick={onSendEmail}>
+          <div className="client-emails-header-actions">
+            <button className="client-emails-btn client-emails-btn-primary" onClick={onSendEmail}>
               <i className="fas fa-pencil-alt"></i>
               Compose Email
             </button>
@@ -217,46 +218,46 @@ const ClientEmails = ({ client, onBack, onSendEmail, onUseTemplate }) => {
         </div>
       </div>
 
-      <div className="email-content">
-        <div className="email-sidebar">
-          <div className="sidebar-section">
-            <button className="btn btn-primary compose-btn">
+      <div className="client-emails-content">
+        <div className="client-emails-sidebar">
+          <div className="client-emails-sidebar-section">
+            <button className="client-emails-compose-btn" onClick={onSendEmail}>
               <i className="fas fa-pencil-alt"></i>
               Compose
             </button>
           </div>
           
-          <div className="sidebar-section">
+          <div className="client-emails-sidebar-section">
             <h3>Folders</h3>
             {emailTabs.map(tab => (
               <button
                 key={tab.id}
-                className={`sidebar-tab ${activeTab === tab.id ? 'active' : ''}`}
+                className={`client-emails-sidebar-tab ${activeTab === tab.id ? 'active' : ''}`}
                 onClick={() => setActiveTab(tab.id)}
               >
                 <i className={tab.icon}></i>
-                <span className="tab-label">{tab.label}</span>
-                <span className="tab-count">{tab.count}</span>
+                <span className="client-emails-tab-label">{tab.label}</span>
+                <span className="client-emails-tab-count">{tab.count}</span>
               </button>
             ))}
           </div>
 
-          <div className="sidebar-section">
+          <div className="client-emails-sidebar-section">
             <h3>Labels</h3>
-            <button className="sidebar-tab">
+            <button className="client-emails-sidebar-tab">
               <i className="fas fa-star" style={{color: '#f59e0b'}}></i>
-              <span className="tab-label">Important</span>
-              <span className="tab-count">3</span>
+              <span className="client-emails-tab-label">Important</span>
+              <span className="client-emails-tab-count">3</span>
             </button>
-            <button className="sidebar-tab">
+            <button className="client-emails-sidebar-tab">
               <i className="fas fa-paperclip"></i>
-              <span className="tab-label">Attachments</span>
-              <span className="tab-count">7</span>
+              <span className="client-emails-tab-label">Attachments</span>
+              <span className="client-emails-tab-count">7</span>
             </button>
           </div>
         </div>
 
-        <div className="email-main">
+        <div className="client-emails-main">
           {activeTab === 'templates' ? renderTemplates() : renderEmailList()}
         </div>
       </div>

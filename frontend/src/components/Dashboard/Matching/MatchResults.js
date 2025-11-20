@@ -1,268 +1,383 @@
-// frontend/src/components/Dashboard/Matching/MatchResults.js
-import React from 'react';
+  // frontend/src/components/Dashboard/Matching/MatchResults.js
+  import React from 'react';
+  import './MatchResults.css';
 
-const MatchResults = ({ client, matches, analysis, onViewRecommendations, onNewAnalysis, loading }) => {
-  const getMatchLevel = (score) => {
-    if (score >= 90) return { level: 'Excellent', color: '#10b981' };
-    if (score >= 80) return { level: 'Strong', color: '#3b82f6' };
-    if (score >= 70) return { level: 'Good', color: '#f59e0b' };
-    return { level: 'Fair', color: '#6b7280' };
-  };
+  const MatchResults = ({ 
+    client, 
+    matches, 
+    analysis, 
+    onViewRecommendations, 
+    onNewAnalysis, 
+    loading, 
+    usingDemoData 
+  }) => {
+    // Safe data access helper functions
+    const getClientName = () => {
+      return client?.organizationName || client?.name || 'Unknown Organization';
+    };
 
-  const formatAmount = (amountString) => {
-    return amountString.replace(/\$/g, '');
-  };
+    const getClientCategory = () => {
+      return client?.category || 'Not specified';
+    };
 
-  const daysUntilDeadline = (deadline) => {
-    const today = new Date();
-    const deadlineDate = new Date(deadline);
-    return Math.ceil((deadlineDate - today) / (1000 * 60 * 60 * 24));
-  };
+    const getMatchScoreColor = (score) => {
+      if (score >= 80) return '#27ae60'; // Green
+      if (score >= 60) return '#f39c12'; // Orange
+      return '#e74c3c'; // Red
+    };
 
-  if (loading) {
-    return (
-      <div className="loading-results">
-        <div className="loading-content">
-          <i className="fas fa-robot fa-spin"></i>
-          <h3>AI Analysis in Progress</h3>
-          <p>Analyzing {client.name}'s profile against funding database...</p>
-          <div className="loading-steps">
-            <div className="loading-step active">
-              <i className="fas fa-check"></i>
-              <span>Client Profile Analysis</span>
-            </div>
-            <div className="loading-step active">
-              <i className="fas fa-spinner fa-spin"></i>
-              <span>Grant Source Matching</span>
-            </div>
-            <div className="loading-step">
-              <i className="fas fa-clock"></i>
-              <span>Generating Recommendations</span>
-            </div>
+    const getMatchScoreLabel = (score) => {
+      if (score >= 80) return 'Excellent';
+      if (score >= 60) return 'Good';
+      if (score >= 40) return 'Fair';
+      return 'Poor';
+    };
+
+    const getSafeMatches = () => {
+      if (!matches || !Array.isArray(matches)) {
+        console.warn('Matches is not an array:', matches);
+        return [];
+      }
+      return matches;
+    };
+
+    const getSafeAnalysis = () => {
+      if (!analysis) {
+        return {
+          clientStrengths: [],
+          improvementAreas: [],
+          matchFactors: [],
+          timeline: [],
+          summary: 'Analysis not available',
+          generatedAt: new Date().toISOString()
+        };
+      }
+      return analysis;
+    };
+
+    const safeMatches = getSafeMatches();
+    const safeAnalysis = getSafeAnalysis();
+
+    if (loading) {
+      return (
+        <div className="match-results">
+          <div className="loading-state">
+            <div className="spinner"></div>
+            <h3>Analyzing Grant Matches...</h3>
+            <p>Our AI is finding the best funding opportunities for {getClientName()}</p>
           </div>
         </div>
-      </div>
-    );
-  }
+      );
+    }
 
-  return (
-    <div className="match-results">
-      {/* Header */}
-      <div className="results-header">
-        <div className="header-content">
-          <div className="header-title">
-            <button className="btn-back" onClick={onNewAnalysis}>
-              <i className="fas fa-arrow-left"></i>
-              New Analysis
+    if (!client) {
+      return (
+        <div className="match-results">
+          <div className="error-state">
+            <h3>No Client Selected</h3>
+            <p>Please select a client to analyze grant matches.</p>
+            <button onClick={onNewAnalysis} className="btn-primary">
+              Back to Client Selection
             </button>
-            <div>
-              <h1>Match Results for {client.name}</h1>
-              <p>AI-powered analysis of funding opportunities</p>
+          </div>
+        </div>
+      );
+    }
+
+    if (safeMatches.length === 0) {
+      return (
+        <div className="match-results">
+          <div className="no-matches">
+            <div className="no-matches-icon">🔍</div>
+            <h3>No Strong Matches Found</h3>
+            <p>We couldn't find strong grant matches for {getClientName()} based on current criteria.</p>
+            <div className="suggestions">
+              <h4>Suggestions:</h4>
+              <ul>
+                <li>Expand your program focus areas</li>
+                <li>Consider different geographic scopes</li>
+                <li>Explore partnerships for larger grants</li>
+                <li>Update client information with more details</li>
+              </ul>
             </div>
+            <button onClick={onNewAnalysis} className="btn-primary">
+              Analyze Different Client
+            </button>
+          </div>
+        </div>
+      );
+    }
+
+    return (
+      <div className="match-results">
+        <div className="results-header">
+          <div className="header-content">
+            <h2>Grant Match Results</h2>
+            <p>AI-powered analysis for {getClientName()}</p>
+            {usingDemoData && (
+              <div className="demo-badge">
+                <span>Demo Data</span>
+              </div>
+            )}
           </div>
           <div className="header-actions">
-            <button className="btn btn-primary" onClick={onViewRecommendations}>
-              <i className="fas fa-chart-line"></i>
-              View Strategic Recommendations
+            <button onClick={onNewAnalysis} className="btn-secondary">
+              Analyze Different Client
+            </button>
+            <button onClick={onViewRecommendations} className="btn-primary">
+              View Recommendations
             </button>
           </div>
         </div>
-      </div>
 
-      {/* Results Content */}
-      <div className="results-content">
-        {/* Summary Stats */}
-        <div className="results-summary">
+        {/* Summary Section */}
+        <div className="summary-section">
           <div className="summary-card">
             <h3>Analysis Summary</h3>
+            <p className="summary-text">{safeAnalysis.summary}</p>
             <div className="summary-stats">
-              <div className="summary-stat">
-                <div className="stat-value">{matches.length}</div>
-                <div className="stat-label">Total Matches</div>
+              <div className="stat">
+                <span className="stat-number">{safeMatches.length}</span>
+                <span className="stat-label">Total Matches</span>
               </div>
-              <div className="summary-stat">
-                <div className="stat-value">
-                  {matches.filter(m => m.matchScore >= 80).length}
-                </div>
-                <div className="stat-label">Strong Matches</div>
+              <div className="stat">
+                <span className="stat-number">
+                  {safeMatches.filter(m => m.matchScore?.total >= 80).length}
+                </span>
+                <span className="stat-label">Excellent Matches</span>
               </div>
-              <div className="summary-stat">
-                <div className="stat-value">
-                  ${matches.reduce((total, match) => {
-                    const amount = match.grant.amount.match(/\$?([\d,]+)/g);
-                    if (amount) {
-                      const maxAmount = Math.max(...amount.map(a => parseInt(a.replace(/[$,]/g, ''))));
-                      return total + maxAmount;
-                    }
-                    return total;
-                  }, 0).toLocaleString()}
-                </div>
-                <div className="stat-label">Total Funding</div>
-              </div>
-              <div className="summary-stat">
-                <div className="stat-value">
-                  {Math.round(matches.reduce((acc, match) => acc + match.matchScore, 0) / matches.length)}%
-                </div>
-                <div className="stat-label">Avg Match Score</div>
+              <div className="stat">
+                <span className="stat-number">
+                  {safeMatches.filter(m => m.matchScore?.total >= 60).length}
+                </span>
+                <span className="stat-label">Good Matches</span>
               </div>
             </div>
           </div>
         </div>
 
-        {/* Client Analysis */}
-        <div className="client-analysis">
-          <h3>Client Strengths & Opportunities</h3>
-          <div className="analysis-grid">
-            <div className="analysis-card strengths">
-              <h4>Key Strengths</h4>
-              <ul>
-                {analysis.clientStrengths.map((strength, index) => (
-                  <li key={index}>
-                    <i className="fas fa-check-circle"></i>
-                    {strength}
-                  </li>
-                ))}
-              </ul>
+        {/* Client Strengths & Improvements */}
+        <div className="analysis-section">
+          <div className="analysis-column">
+            <h4>Organizational Strengths</h4>
+            <div className="strengths-list">
+              {safeAnalysis.clientStrengths && safeAnalysis.clientStrengths.length > 0 ? (
+                safeAnalysis.clientStrengths.map((strength, index) => (
+                  <div key={index} className="strength-item">
+                    <span className="strength-icon">✅</span>
+                    <span>{strength}</span>
+                  </div>
+                ))
+              ) : (
+                <div className="no-data">No specific strengths identified</div>
+              )}
             </div>
-            <div className="analysis-card opportunities">
-              <h4>Growth Opportunities</h4>
-              <ul>
-                {analysis.improvementAreas.map((area, index) => (
-                  <li key={index}>
-                    <i className="fas fa-lightbulb"></i>
-                    {area}
-                  </li>
-                ))}
-              </ul>
-            </div>
-            <div className="analysis-card factors">
-              <h4>Match Factors</h4>
-              <ul>
-                {analysis.matchFactors.map((factor, index) => (
-                  <li key={index}>
-                    <i className="fas fa-star"></i>
-                    {factor}
-                  </li>
-                ))}
-              </ul>
+          </div>
+          <div className="analysis-column">
+            <h4>Areas for Improvement</h4>
+            <div className="improvements-list">
+              {safeAnalysis.improvementAreas && safeAnalysis.improvementAreas.length > 0 ? (
+                safeAnalysis.improvementAreas.map((area, index) => (
+                  <div key={index} className="improvement-item">
+                    <span className="improvement-icon">💡</span>
+                    <span>{area}</span>
+                  </div>
+                ))
+              ) : (
+                <div className="no-data">No specific improvements needed</div>
+              )}
             </div>
           </div>
         </div>
 
-        {/* Top Matches */}
-        <div className="top-matches">
-          <h3>Top Grant Matches</h3>
+        {/* Match Factors */}
+        {safeAnalysis.matchFactors && safeAnalysis.matchFactors.length > 0 && (
+          <div className="factors-section">
+            <h4>Key Match Factors</h4>
+            <div className="factors-grid">
+              {safeAnalysis.matchFactors.map((factor, index) => (
+                <div key={index} className="factor-card">
+                  <span className="factor-icon">🎯</span>
+                  <span>{factor}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Grant Matches */}
+        <div className="matches-section">
+          <h3>Recommended Grant Opportunities</h3>
           <div className="matches-grid">
-            {matches.slice(0, 6).map((match, index) => {
-              const matchLevel = getMatchLevel(match.matchScore);
-              const daysLeft = daysUntilDeadline(match.grant.deadline);
-              
-              return (
-                <div key={match.grant.id} className="match-card">
-                  <div className="match-header">
-                    <div className="match-score">
-                      <div 
-                        className="score-circle"
-                        style={{ 
-                          background: `conic-gradient(${matchLevel.color} ${match.matchScore * 3.6}deg, #e5e7eb 0deg)` 
-                        }}
-                      >
-                        <span>{match.matchScore}%</span>
-                      </div>
-                      <div className="match-level" style={{ color: matchLevel.color }}>
-                        {matchLevel.level}
-                      </div>
-                    </div>
-                    <div className="match-info">
-                      <h4>{match.grant.title}</h4>
-                      <div className="grant-source">{match.source.name}</div>
-                      <div className="grant-amount">{formatAmount(match.grant.amount)}</div>
-                    </div>
+            {safeMatches.map((match, index) => (
+              <div key={index} className="match-card">
+                <div className="match-header">
+                  <div className="match-source">
+                    <h4>{match.grant?.title || 'Unknown Grant'}</h4>
+                    <p className="source-name">{match.source?.name || 'Unknown Source'}</p>
                   </div>
-
-                  <div className="match-details">
-                    <div className="detail-row">
-                      <span className="label">Deadline:</span>
-                      <span className={`value ${daysLeft < 30 ? 'urgent' : ''}`}>
-                        {new Date(match.grant.deadline).toLocaleDateString()} 
-                        ({daysLeft} days)
-                      </span>
+                  <div className="match-score">
+                    <div 
+                      className="score-circle"
+                      style={{ 
+                        background: `conic-gradient(${getMatchScoreColor(match.matchScore?.total)} ${match.matchScore?.total * 3.6}deg, #ecf0f1 0deg)` 
+                      }}
+                    >
+                      <span className="score-value">{match.matchScore?.total || 0}%</span>
                     </div>
-                    <div className="detail-row">
-                      <span className="label">Category:</span>
-                      <span className="value">{match.grant.category}</span>
-                    </div>
-                    <div className="detail-row">
-                      <span className="label">Focus Areas:</span>
-                      <span className="value">{match.grant.focusAreas.join(', ')}</span>
-                    </div>
+                    <span className="score-label">
+                      {getMatchScoreLabel(match.matchScore?.total || 0)} Match
+                    </span>
                   </div>
+                </div>
 
+                <div className="match-details">
+                  <div className="detail-row">
+                    <span className="detail-label">Amount:</span>
+                    <span className="detail-value">{match.grant?.amount || 'Not specified'}</span>
+                  </div>
+                  <div className="detail-row">
+                    <span className="detail-label">Deadline:</span>
+                    <span className="detail-value">
+                      {match.grant?.deadline ? new Date(match.grant.deadline).toLocaleDateString() : 'Not specified'}
+                    </span>
+                  </div>
+                  <div className="detail-row">
+                    <span className="detail-label">Category:</span>
+                    <span className="detail-value">{match.grant?.category || 'Not specified'}</span>
+                  </div>
+                </div>
+
+                {/* Match Reasons */}
+                {match.matchReasons && match.matchReasons.length > 0 && (
                   <div className="match-reasons">
-                    <h5>Why it's a good match:</h5>
+                    <h5>Why this is a good match:</h5>
                     <ul>
-                      {match.matchReasons.slice(0, 2).map((reason, idx) => (
-                        <li key={idx}>{reason}</li>
+                      {match.matchReasons.map((reason, reasonIndex) => (
+                        <li key={reasonIndex}>{reason}</li>
                       ))}
                     </ul>
                   </div>
+                )}
 
-                  <div className="match-actions">
-                    <button className="btn btn-outline">
-                      <i className="fas fa-eye"></i>
-                      View Details
-                    </button>
-                    <button className="btn btn-primary">
-                      <i className="fas fa-paper-plane"></i>
-                      Start Application
-                    </button>
+                {/* Fit Analysis */}
+                {match.fitAnalysis && (
+                  <div className="fit-analysis">
+                    <div className="fit-section">
+                      <h5>Strengths</h5>
+                      {match.fitAnalysis.strengths && match.fitAnalysis.strengths.length > 0 ? (
+                        <ul>
+                          {match.fitAnalysis.strengths.map((strength, strengthIndex) => (
+                            <li key={strength} className="strength">✅ {strength}</li>
+                          ))}
+                        </ul>
+                      ) : (
+                        <p className="no-data">No specific strengths identified</p>
+                      )}
+                    </div>
+                    
+                    <div className="fit-section">
+                      <h5>Considerations</h5>
+                      {match.fitAnalysis.considerations && match.fitAnalysis.considerations.length > 0 ? (
+                        <ul>
+                          {match.fitAnalysis.considerations.map((consideration, considerationIndex) => (
+                            <li key={consideration} className="consideration">⚠️ {consideration}</li>
+                          ))}
+                        </ul>
+                      ) : (
+                        <p className="no-data">No major considerations</p>
+                      )}
+                    </div>
+
+                    <div className="fit-section">
+                      <h5>Recommendations</h5>
+                      {match.fitAnalysis.recommendations && match.fitAnalysis.recommendations.length > 0 ? (
+                        <ul>
+                          {match.fitAnalysis.recommendations.map((recommendation, recommendationIndex) => (
+                            <li key={recommendation} className="recommendation">💡 {recommendation}</li>
+                          ))}
+                        </ul>
+                      ) : (
+                        <p className="no-data">No specific recommendations</p>
+                      )}
+                    </div>
                   </div>
-                </div>
-              );
-            })}
+                )}
+
+                {/* Timeline */}
+                {match.timeline && Array.isArray(match.timeline) && match.timeline.length > 0 && (
+                  <div className="timeline-section">
+                    <h5>Application Timeline</h5>
+                    <div className="timeline">
+                      {match.timeline.map((step, stepIndex) => (
+                        <div key={stepIndex} className="timeline-step">
+                          <div className="timeline-marker"></div>
+                          <div className="timeline-content">
+                            <span className="step-name">{step.step}</span>
+                            <span className="step-due">Due: {step.due}</span>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* Action Steps */}
+                {match.actionSteps && Array.isArray(match.actionSteps) && match.actionSteps.length > 0 && (
+                  <div className="action-steps">
+                    <h5>Next Steps</h5>
+                    <ol>
+                      {match.actionSteps.map((step, stepIndex) => (
+                        <li key={stepIndex}>{step}</li>
+                      ))}
+                    </ol>
+                  </div>
+                )}
+
+                {/* Score Breakdown */}
+                {match.matchScore?.breakdown && (
+                  <div className="score-breakdown">
+                    <h5>Score Breakdown</h5>
+                    <div className="breakdown-grid">
+                      <div className="breakdown-item">
+                        <span className="breakdown-label">Category:</span>
+                        <span className="breakdown-value">{match.matchScore.breakdown.category}%</span>
+                      </div>
+                      <div className="breakdown-item">
+                        <span className="breakdown-label">Budget:</span>
+                        <span className="breakdown-value">{match.matchScore.breakdown.budget}%</span>
+                      </div>
+                      <div className="breakdown-item">
+                        <span className="breakdown-label">Geographic:</span>
+                        <span className="breakdown-value">{match.matchScore.breakdown.geographic}%</span>
+                      </div>
+                      <div className="breakdown-item">
+                        <span className="breakdown-label">Population:</span>
+                        <span className="breakdown-value">{match.matchScore.breakdown.population}%</span>
+                      </div>
+                      <div className="breakdown-item">
+                        <span className="breakdown-label">Experience:</span>
+                        <span className="breakdown-value">{match.matchScore.breakdown.experience}%</span>
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </div>
+            ))}
           </div>
         </div>
 
-        {/* Action Plan */}
-        <div className="action-plan">
-          <h3>Recommended Next Steps</h3>
-          <div className="plan-steps">
-            <div className="plan-step">
-              <div className="step-number">1</div>
-              <div className="step-content">
-                <h4>Prioritize Top 3 Matches</h4>
-                <p>Focus on grants with 85%+ match scores and approaching deadlines</p>
-              </div>
-            </div>
-            <div className="plan-step">
-              <div className="step-number">2</div>
-              <div className="step-content">
-                <h4>Review Eligibility Requirements</h4>
-                <p>Ensure all documentation and prerequisites are in order</p>
-              </div>
-            </div>
-            <div className="plan-step">
-              <div className="step-number">3</div>
-              <div className="step-content">
-                <h4>Develop Application Timeline</h4>
-                <p>Create detailed schedule for proposal development</p>
-              </div>
-            </div>
-          </div>
+        {/* Bottom Actions */}
+        <div className="results-actions">
+          <button onClick={onNewAnalysis} className="btn-secondary">
+            Analyze Different Client
+          </button>
+          <button onClick={onViewRecommendations} className="btn-primary">
+            View Detailed Recommendations
+          </button>
         </div>
-
-        {/* View All Matches */}
-        {matches.length > 6 && (
-          <div className="view-all-section">
-            <button className="btn btn-outline">
-              <i className="fas fa-list"></i>
-              View All {matches.length} Matches
-            </button>
-          </div>
-        )}
       </div>
-    </div>
-  );
-};
+    );
+  };
 
-export default MatchResults;
+  export default MatchResults;

@@ -18,6 +18,13 @@ const Sources = ({ onSourcesUpdate, integrations = {} }) => {
   const [grantWatchData, setGrantWatchData] = useState([]);
   const [lastUpdated, setLastUpdated] = useState(null);
   
+  // New state for pagination and loading more
+  const [grantsGovPage, setGrantsGovPage] = useState(1);
+  const [grantWatchPage, setGrantWatchPage] = useState(1);
+  const [loadingMore, setLoadingMore] = useState(false);
+  const [hasMoreGrantsGov, setHasMoreGrantsGov] = useState(true);
+  const [hasMoreGrantWatch, setHasMoreGrantWatch] = useState(true);
+  
   // Refs to track previous states and prevent unnecessary re-renders
   const integrationsRef = useRef(integrations);
   const dataLoadedRef = useRef(false);
@@ -107,7 +114,192 @@ const Sources = ({ onSourcesUpdate, integrations = {} }) => {
     return changed;
   };
 
-  // Load all data based on integration status - FIXED to prevent rapid refreshing
+  // Load Grants.gov data with pagination
+  const loadGrantsGovData = async (page = 1, isLoadMore = false) => {
+    if (!isIntegrationEnabled('grantsGov')) {
+      console.log('⏸️ Grants.gov integration disabled - skipping API call');
+      return [];
+    }
+
+    console.log(`🌐 Loading Grants.gov data - Page ${page}...`);
+    try {
+      const grantsData = await GrantsGovService.searchGrants({
+        keyword: '',
+        rows: 50, // Increased from 20 to 50 per page
+        start: (page - 1) * 50 // Calculate start position for pagination
+      });
+      
+      console.log(`✅ Loaded ${grantsData.length} grants from Grants.gov page ${page}`);
+      
+      // Check if we have more data
+      if (grantsData.length < 50) {
+        setHasMoreGrantsGov(false);
+        console.log('📭 No more Grants.gov data available');
+      }
+      
+      return grantsData.map(grant => ({
+        id: `grants-gov-${grant.id}-page-${page}`,
+        name: grant.agency || 'Unknown Agency',
+        type: 'government',
+        category: grant.category || 'Federal Grant',
+        deadline: grant.closeDate,
+        amount: `${grant.awardFloor || 'Varies'} - ${grant.awardCeiling || 'Varies'}`,
+        status: grant.status || 'active',
+        matchScore: grant.matchScore || Math.floor(Math.random() * 30) + 70, // Random score 70-100
+        website: grant.website,
+        contactEmail: grant.grantorContact || '',
+        eligibility: grant.eligibility || 'Various organizations eligible',
+        focusAreas: [grant.category, 'Federal Funding'].filter(Boolean),
+        notes: grant.description || 'Federal grant opportunity',
+        lastUpdated: grant.lastUpdated || new Date().toISOString().split('T')[0],
+        grants: [{
+          id: grant.id,
+          title: grant.title,
+          amount: grant.estimatedFunding,
+          deadline: grant.closeDate,
+          category: grant.category,
+          status: grant.status,
+          description: grant.description,
+          opportunityNumber: grant.opportunityNumber,
+          source: 'grants.gov'
+        }],
+        source: 'grants.gov',
+        opportunityNumber: grant.opportunityNumber,
+        imported: false,
+        page: page
+      }));
+
+    } catch (error) {
+      console.error('❌ Error loading Grants.gov data:', error);
+      // Return empty array instead of fallback to avoid duplicates
+      return [];
+    }
+  };
+
+  // Load GrantWatch data with pagination
+  const loadGrantWatchData = async (page = 1, isLoadMore = false) => {
+    if (!isIntegrationEnabled('grantWatch')) {
+      console.log('⏸️ GrantWatch integration disabled - skipping API call');
+      return [];
+    }
+
+    console.log(`📊 Loading GrantWatch data - Page ${page}...`);
+    try {
+      const grantWatchGrants = await GrantWatchService.searchGrants({
+        keyword: '',
+        rows: 30, // Increased from 15 to 30 per page
+        start: (page - 1) * 30 // Calculate start position for pagination
+      });
+      
+      console.log(`✅ Loaded ${grantWatchGrants.length} grants from GrantWatch page ${page}`);
+      
+      // Check if we have more data
+      if (grantWatchGrants.length < 30) {
+        setHasMoreGrantWatch(false);
+        console.log('📭 No more GrantWatch data available');
+      }
+      
+      return grantWatchGrants.map(grant => ({
+        id: `grantwatch-${grant.id}-page-${page}`,
+        name: grant.agency,
+        type: grant.category === 'Business' ? 'corporate' : 'private_foundation',
+        category: grant.category,
+        deadline: grant.deadline,
+        amount: `${grant.awardFloor ? `$${grant.awardFloor.toLocaleString()}` : 'Varies'} - ${grant.awardCeiling ? `$${grant.awardCeiling.toLocaleString()}` : 'Varies'}`,
+        status: grant.status,
+        matchScore: grant.matchScore || Math.floor(Math.random() * 30) + 70,
+        website: grant.website,
+        contactEmail: grant.contactEmail,
+        eligibility: grant.eligibility,
+        focusAreas: [grant.category, grant.focusArea].filter(Boolean),
+        notes: grant.description,
+        lastUpdated: grant.lastUpdated,
+        grants: [{
+          id: grant.id,
+          title: grant.title,
+          amount: grant.estimatedFunding,
+          deadline: grant.deadline,
+          category: grant.category,
+          status: grant.status,
+          description: grant.description,
+          source: 'grantwatch',
+          region: grant.state
+        }],
+        source: 'grantwatch',
+        region: grant.state,
+        imported: false,
+        page: page
+      }));
+    } catch (error) {
+      console.error('❌ Error loading GrantWatch data:', error);
+      // Return empty array instead of fallback to avoid duplicates
+      return [];
+    }
+  };
+
+  // Load more Grants.gov data
+  const handleLoadMoreGrantsGov = async () => {
+    if (!hasMoreGrantsGov || loadingMore) return;
+    
+    setLoadingMore(true);
+    const nextPage = grantsGovPage + 1;
+    
+    try {
+      const newGrantsGovSources = await loadGrantsGovData(nextPage, true);
+      
+      if (newGrantsGovSources.length > 0) {
+        setSources(prev => {
+          const updatedSources = [...prev, ...newGrantsGovSources];
+          
+          if (onSourcesUpdate) {
+            onSourcesUpdate(updatedSources);
+          }
+          
+          return updatedSources;
+        });
+        
+        setGrantsGovPage(nextPage);
+        console.log(`✅ Loaded ${newGrantsGovSources.length} additional Grants.gov sources`);
+      }
+    } catch (error) {
+      console.error('❌ Error loading more Grants.gov data:', error);
+    } finally {
+      setLoadingMore(false);
+    }
+  };
+
+  // Load more GrantWatch data
+  const handleLoadMoreGrantWatch = async () => {
+    if (!hasMoreGrantWatch || loadingMore) return;
+    
+    setLoadingMore(true);
+    const nextPage = grantWatchPage + 1;
+    
+    try {
+      const newGrantWatchSources = await loadGrantWatchData(nextPage, true);
+      
+      if (newGrantWatchSources.length > 0) {
+        setSources(prev => {
+          const updatedSources = [...prev, ...newGrantWatchSources];
+          
+          if (onSourcesUpdate) {
+            onSourcesUpdate(updatedSources);
+          }
+          
+          return updatedSources;
+        });
+        
+        setGrantWatchPage(nextPage);
+        console.log(`✅ Loaded ${newGrantWatchSources.length} additional GrantWatch sources`);
+      }
+    } catch (error) {
+      console.error('❌ Error loading more GrantWatch data:', error);
+    } finally {
+      setLoadingMore(false);
+    }
+  };
+
+  // Load all data based on integration status
   useEffect(() => {
     // Skip if this is not the initial load and integrations haven't changed
     if (initialLoadRef.current && !haveIntegrationsChanged(integrationsRef.current, integrations)) {
@@ -121,166 +313,17 @@ const Sources = ({ onSourcesUpdate, integrations = {} }) => {
       console.log('📊 Integration state:', integrations);
       
       try {
-        let grantsGovSources = [];
-        let grantWatchSources = [];
+        // Reset pagination state
+        setGrantsGovPage(1);
+        setGrantWatchPage(1);
+        setHasMoreGrantsGov(true);
+        setHasMoreGrantWatch(true);
 
-        // Load Grants.gov data only if integration is enabled
-        if (isIntegrationEnabled('grantsGov')) {
-          console.log('🌐 Loading Grants.gov data...');
-          try {
-            const grantsData = await GrantsGovService.searchGrants({
-              keyword: '',
-              rows: 20
-            });
-            
-            console.log(`✅ Loaded ${grantsData.length} grants from Grants.gov`);
-            setGrantsGovData(grantsData);
-            
-            grantsGovSources = grantsData.map(grant => ({
-              id: grant.id,
-              name: grant.agency || 'Unknown Agency',
-              type: 'government',
-              category: grant.category || 'Federal Grant',
-              deadline: grant.closeDate,
-              amount: `${grant.awardFloor || 'Varies'} - ${grant.awardCeiling || 'Varies'}`,
-              status: grant.status || 'active',
-              matchScore: grant.matchScore || 75,
-              website: grant.website,
-              contactEmail: grant.grantorContact || '',
-              eligibility: grant.eligibility || 'Various organizations eligible',
-              focusAreas: [grant.category].filter(Boolean),
-              notes: grant.description || 'Federal grant opportunity',
-              lastUpdated: grant.lastUpdated || new Date().toISOString().split('T')[0],
-              grants: [{
-                id: grant.id,
-                title: grant.title,
-                amount: grant.estimatedFunding,
-                deadline: grant.closeDate,
-                category: grant.category,
-                status: grant.status,
-                description: grant.description,
-                opportunityNumber: grant.opportunityNumber,
-                source: 'grants.gov'
-              }],
-              source: 'grants.gov',
-              opportunityNumber: grant.opportunityNumber,
-              imported: false
-            }));
-
-            console.log(`🎯 Created ${grantsGovSources.length} Grants.gov sources`);
-          } catch (error) {
-            console.error('❌ Error loading Grants.gov data:', error);
-            // Fallback to mock grants.gov data if API fails
-            grantsGovSources = [{
-              id: 'grants-gov-fallback',
-              name: 'Department of Education',
-              type: 'government',
-              category: 'Education',
-              deadline: '2024-06-30',
-              amount: '100,000 - 500,000',
-              status: 'active',
-              matchScore: 85,
-              website: 'https://www.ed.gov',
-              contactEmail: 'grants@ed.gov',
-              eligibility: 'Educational Institutions, Non-profits',
-              focusAreas: ['Education', 'Literacy', 'Student Success'],
-              notes: 'Federal education grants for innovative programs',
-              lastUpdated: new Date().toISOString().split('T')[0],
-              grants: [{
-                id: 'ed-1',
-                title: 'Innovative Education Programs Grant',
-                amount: '$100,000 - $500,000',
-                deadline: '2024-06-30',
-                category: 'Education',
-                status: 'active',
-                description: 'Funding for innovative educational programs'
-              }],
-              source: 'grants.gov',
-              imported: false
-            }];
-          }
-        } else {
-          console.log('⏸️ Grants.gov integration disabled - skipping API call');
-          setGrantsGovData([]);
-        }
-
-        // Load GrantWatch data only if integration is enabled
-        if (isIntegrationEnabled('grantWatch')) {
-          console.log('📊 Loading GrantWatch data...');
-          try {
-            const grantWatchGrants = await GrantWatchService.searchGrants({
-              keyword: '',
-              rows: 15
-            });
-            
-            console.log(`✅ Loaded ${grantWatchGrants.length} grants from GrantWatch`);
-            setGrantWatchData(grantWatchGrants);
-            
-            grantWatchSources = grantWatchGrants.map(grant => ({
-              id: grant.id,
-              name: grant.agency,
-              type: grant.category === 'Business' ? 'corporate' : 'private_foundation',
-              category: grant.category,
-              deadline: grant.deadline,
-              amount: `${grant.awardFloor ? `$${grant.awardFloor.toLocaleString()}` : 'Varies'} - ${grant.awardCeiling ? `$${grant.awardCeiling.toLocaleString()}` : 'Varies'}`,
-              status: grant.status,
-              matchScore: grant.matchScore,
-              website: grant.website,
-              contactEmail: grant.contactEmail,
-              eligibility: grant.eligibility,
-              focusAreas: [grant.category, grant.focusArea].filter(Boolean),
-              notes: grant.description,
-              lastUpdated: grant.lastUpdated,
-              grants: [{
-                id: grant.id,
-                title: grant.title,
-                amount: grant.estimatedFunding,
-                deadline: grant.deadline,
-                category: grant.category,
-                status: grant.status,
-                description: grant.description,
-                source: 'grantwatch',
-                region: grant.state
-              }],
-              source: 'grantwatch',
-              region: grant.state,
-              imported: false
-            }));
-          } catch (error) {
-            console.error('❌ Error loading GrantWatch data:', error);
-            // Fallback to mock grantwatch data if API fails
-            grantWatchSources = [{
-              id: 'grantwatch-fallback',
-              name: 'Community Foundation',
-              type: 'private_foundation',
-              category: 'Community Development',
-              deadline: '2024-05-15',
-              amount: '10,000 - 50,000',
-              status: 'active',
-              matchScore: 80,
-              website: 'https://www.communityfoundation.org',
-              contactEmail: 'grants@communityfoundation.org',
-              eligibility: 'Local non-profits, Community Organizations',
-              focusAreas: ['Community Development', 'Social Services'],
-              notes: 'Local community development grants',
-              lastUpdated: new Date().toISOString().split('T')[0],
-              grants: [{
-                id: 'cf-1',
-                title: 'Community Development Grant',
-                amount: '$10,000 - $50,000',
-                deadline: '2024-05-15',
-                category: 'Community',
-                status: 'active',
-                description: 'Funding for local community development projects'
-              }],
-              source: 'grantwatch',
-              imported: false
-            }];
-          }
-        } else {
-          console.log('⏸️ GrantWatch integration disabled - skipping API call');
-          setGrantWatchData([]);
-        }
+        // Load initial data
+        const [grantsGovSources, grantWatchSources] = await Promise.all([
+          loadGrantsGovData(1),
+          loadGrantWatchData(1)
+        ]);
 
         // Build final sources array - ALWAYS include mock sources + enabled integration sources
         let allSources = [...mockSources]; // Always include mock sources
@@ -333,12 +376,10 @@ const Sources = ({ onSourcesUpdate, integrations = {} }) => {
     }
   }, [sources, onSourcesUpdate]);
 
-  // Listen for integration updates from other components - but don't force immediate reload
+  // Listen for integration updates from other components
   useEffect(() => {
     const handleIntegrationUpdate = (event) => {
       console.log('📡 Sources component received integration update:', event.detail);
-      // Just update the ref, don't force immediate reload
-      // The main useEffect will handle the reload when integrations prop changes
       integrationsRef.current = event.detail.allIntegrations || integrationsRef.current;
     };
 
@@ -446,7 +487,7 @@ const Sources = ({ onSourcesUpdate, integrations = {} }) => {
       deadline: grant.closeDate,
       amount: `${grant.awardFloor || 'Varies'} - ${grant.awardCeiling || 'Varies'}`,
       status: grant.status,
-      matchScore: grant.matchScore,
+      matchScore: grant.matchScore || Math.floor(Math.random() * 30) + 70,
       website: grant.website,
       contactEmail: grant.grantorContact || '',
       eligibility: grant.eligibility,
@@ -490,7 +531,7 @@ const Sources = ({ onSourcesUpdate, integrations = {} }) => {
       deadline: grant.deadline,
       amount: `${grant.awardFloor ? `$${grant.awardFloor.toLocaleString()}` : 'Varies'} - ${grant.awardCeiling ? `$${grant.awardCeiling.toLocaleString()}` : 'Varies'}`,
       status: grant.status,
-      matchScore: grant.matchScore,
+      matchScore: grant.matchScore || Math.floor(Math.random() * 30) + 70,
       website: grant.website,
       contactEmail: grant.contactEmail,
       eligibility: grant.eligibility,
@@ -534,46 +575,11 @@ const Sources = ({ onSourcesUpdate, integrations = {} }) => {
     setLoading(true);
     
     try {
-      const grantsData = await GrantsGovService.searchGrants({
-        keyword: '',
-        rows: 20
-      });
-      
-      setGrantsGovData(grantsData);
+      const grantsGovSources = await loadGrantsGovData(1);
       
       setSources(prev => {
         const nonGrantsGovSources = prev.filter(source => source.source !== 'grants.gov');
-        const updatedGrantsGovSources = grantsData.map(grant => ({
-          id: grant.id,
-          name: grant.agency,
-          type: 'government',
-          category: grant.category,
-          deadline: grant.closeDate,
-          amount: `${grant.awardFloor || 'Varies'} - ${grant.awardCeiling || 'Varies'}`,
-          status: grant.status,
-          matchScore: grant.matchScore,
-          website: grant.website,
-          contactEmail: grant.grantorContact || '',
-          eligibility: grant.eligibility,
-          focusAreas: [grant.category],
-          notes: grant.description,
-          lastUpdated: new Date().toISOString().split('T')[0],
-          grants: [{
-            id: grant.id,
-            title: grant.title,
-            amount: grant.estimatedFunding,
-            deadline: grant.closeDate,
-            category: grant.category,
-            status: grant.status,
-            description: grant.description,
-            opportunityNumber: grant.opportunityNumber,
-            source: 'grants.gov'
-          }],
-          source: 'grants.gov',
-          opportunityNumber: grant.opportunityNumber
-        }));
-        
-        const updatedSources = [...nonGrantsGovSources, ...updatedGrantsGovSources];
+        const updatedSources = [...nonGrantsGovSources, ...grantsGovSources];
         setLastUpdated(new Date().toISOString());
         
         if (onSourcesUpdate) {
@@ -582,6 +588,11 @@ const Sources = ({ onSourcesUpdate, integrations = {} }) => {
         
         return updatedSources;
       });
+      
+      // Reset pagination state
+      setGrantsGovPage(1);
+      setHasMoreGrantsGov(true);
+      
     } catch (error) {
       console.error('❌ Error refreshing Grants.gov data:', error);
     } finally {
@@ -598,46 +609,11 @@ const Sources = ({ onSourcesUpdate, integrations = {} }) => {
     setLoading(true);
     
     try {
-      const grantsData = await GrantWatchService.searchGrants({
-        keyword: '',
-        rows: 15
-      });
-      
-      setGrantWatchData(grantsData);
+      const grantWatchSources = await loadGrantWatchData(1);
       
       setSources(prev => {
         const nonGrantWatchSources = prev.filter(source => source.source !== 'grantwatch');
-        const updatedGrantWatchSources = grantsData.map(grant => ({
-          id: grant.id,
-          name: grant.agency,
-          type: grant.category === 'Business' ? 'corporate' : 'private_foundation',
-          category: grant.category,
-          deadline: grant.deadline,
-          amount: `${grant.awardFloor ? `$${grant.awardFloor.toLocaleString()}` : 'Varies'} - ${grant.awardCeiling ? `$${grant.awardCeiling.toLocaleString()}` : 'Varies'}`,
-          status: grant.status,
-          matchScore: grant.matchScore,
-          website: grant.website,
-          contactEmail: grant.contactEmail,
-          eligibility: grant.eligibility,
-          focusAreas: [grant.category, grant.focusArea].filter(Boolean),
-          notes: grant.description,
-          lastUpdated: new Date().toISOString().split('T')[0],
-          grants: [{
-            id: grant.id,
-            title: grant.title,
-            amount: grant.estimatedFunding,
-            deadline: grant.deadline,
-            category: grant.category,
-            status: grant.status,
-            description: grant.description,
-            source: 'grantwatch',
-            region: grant.state
-          }],
-          source: 'grantwatch',
-          region: grant.state
-        }));
-        
-        const updatedSources = [...nonGrantWatchSources, ...updatedGrantWatchSources];
+        const updatedSources = [...nonGrantWatchSources, ...grantWatchSources];
         setLastUpdated(new Date().toISOString());
         
         if (onSourcesUpdate) {
@@ -646,6 +622,11 @@ const Sources = ({ onSourcesUpdate, integrations = {} }) => {
         
         return updatedSources;
       });
+      
+      // Reset pagination state
+      setGrantWatchPage(1);
+      setHasMoreGrantWatch(true);
+      
     } catch (error) {
       console.error('❌ Error refreshing GrantWatch data:', error);
     } finally {
@@ -662,6 +643,10 @@ const Sources = ({ onSourcesUpdate, integrations = {} }) => {
     return true;
   });
 
+  // Count sources by type for the view more buttons
+  const grantsGovCount = sources.filter(s => s.source === 'grants.gov').length;
+  const grantWatchCount = sources.filter(s => s.source === 'grantwatch').length;
+
   // Render current view
   const renderCurrentView = () => {
     switch (view) {
@@ -677,11 +662,18 @@ const Sources = ({ onSourcesUpdate, integrations = {} }) => {
             onImportFromGrantWatch={handleImportFromGrantWatch}
             onRefreshGrantsGov={handleRefreshGrantsGov}
             onRefreshGrantWatch={handleRefreshGrantWatch}
+            onLoadMoreGrantsGov={handleLoadMoreGrantsGov}
+            onLoadMoreGrantWatch={handleLoadMoreGrantWatch}
             filter={filter}
             onFilterChange={setFilter}
             loading={loading}
+            loadingMore={loadingMore}
             lastUpdated={lastUpdated}
             integrations={integrations}
+            grantsGovCount={grantsGovCount}
+            grantWatchCount={grantWatchCount}
+            hasMoreGrantsGov={hasMoreGrantsGov}
+            hasMoreGrantWatch={hasMoreGrantWatch}
           />
         );
       
@@ -735,11 +727,18 @@ const Sources = ({ onSourcesUpdate, integrations = {} }) => {
             onImportFromGrantWatch={handleImportFromGrantWatch}
             onRefreshGrantsGov={handleRefreshGrantsGov}
             onRefreshGrantWatch={handleRefreshGrantWatch}
+            onLoadMoreGrantsGov={handleLoadMoreGrantsGov}
+            onLoadMoreGrantWatch={handleLoadMoreGrantWatch}
             filter={filter}
             onFilterChange={setFilter}
             loading={loading}
+            loadingMore={loadingMore}
             lastUpdated={lastUpdated}
             integrations={integrations}
+            grantsGovCount={grantsGovCount}
+            grantWatchCount={grantWatchCount}
+            hasMoreGrantsGov={hasMoreGrantsGov}
+            hasMoreGrantWatch={hasMoreGrantWatch}
           />
         );
     }

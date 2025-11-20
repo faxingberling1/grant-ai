@@ -1,0 +1,106 @@
+/* Upcoming Meetings Styles - Forest Green & Gold Theme */
+.upcoming-meetings {
+  height: 100%;
+}
+
+.upcoming-meetings-header {
+  margin-bottom: 2rem;
+  padding-bottom: 1rem;
+  border-bottom: 2px solid var(--gold-light);
+}
+
+.upcoming-meetings-header h2 {
+  margin: 0 0 0.5rem 0;
+  color: var(--forest-dark);
+  font-size: 1.75rem;
+  font-weight: 700;
+}
+
+.upcoming-meetings-header p {
+  margin: 0;
+  color: var(--text-light);
+  font-size: 1.1rem;
+}
+
+.upcoming-meetings-content {
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+}
+
+/* Meeting Period Sections */
+.meeting-period-section {
+  background: var(--bg-white);
+  border: 1px solid var(--border-light);
+  border-radius: 12px;
+  padding: 1.5rem;
+  box-shadow: 0 2px 8px rgba(26, 71, 42, 0.05);
+}
+
+.meeting-period-title {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin-bottom: 1rem;
+  color: var(--forest-dark);
+  font-size: 1.25rem;
+  font-weight: 700;
+  padding-bottom: 0.5rem;
+  border-bottom: 1px solid var(--border-light);
+}
+
+.meeting-count {
+  background: var(--gold-medium);
+  color: var(--forest-dark);
+  padding: 0.25rem 0.75rem;
+  border-radius: 12px;
+  font-size: 0.8rem;
+  font-weight: 700;
+  box-shadow: 0 2px 4px rgba(184, 134, 11, 0.3);
+}
+
+.meeting-period-list {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.no-meetings-period {
+  text-align: center;
+  padding: 2rem 1rem;
+  color: var(--text-lighter);
+  font-style: italic;
+  background: var(--forest-lightest);
+  border-radius: 8px;
+  margin: 0;
+}
+
+/* No Upcoming Meetings */
+.no-upcoming-meetings {
+  text-align: center;
+  padding: 4rem 2rem;
+  color: var(--text-lighter);
+  background: var(--bg-white);
+  border: 2px dashed var(--border-light);
+  border-radius: 12px;
+}
+
+.no-upcoming-meetings i {
+  font-size: 4rem;
+  margin-bottom: 1rem;
+  color: var(--border-medium);
+  opacity: 0.5;
+}
+
+.no-upcoming-meetings h3 {
+  margin: 0 0 0.5rem 0;
+  color: var(--text-light);
+  font-size: 1.5rem;
+  font-weight: 600;
+}
+
+.no-upcoming-meetings p {
+  margin: 0;
+  font-size: 1rem;
+  opacity: 0.8;
+}

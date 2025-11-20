@@ -217,7 +217,7 @@
 }
 
 .detail-item span {
-  color: #ffffff; /* Dark text */
+  color: #000000; /* Dark text */
   font-weight: 500;
   text-align: right;
 }

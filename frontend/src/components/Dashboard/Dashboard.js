@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../../context/AuthContext';
+import { useClients } from '../../context/ClientsContext';
 import DashboardHeader from './DashboardHeader';
 import DashboardSidebar from './DashboardSidebar';
 import Clients from './Clients/Clients';
@@ -25,10 +26,14 @@ import Spam from './CommunicationHub/Spam';
 import Trash from './CommunicationHub/Trash';
 import Drafts from './CommunicationHub/Drafts';
 
+// Calendar Components
+import CalendarMain from './CalendarModal/CalendarMain';
+
 import './Dashboard.css';
 
 const Dashboard = () => {
   const { currentUser } = useAuth();
+  const { clients, loading: clientsLoading } = useClients();
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [activePage, setActivePage] = useState('dashboard');
   const [sourcesData, setSourcesData] = useState([]);
@@ -71,6 +76,8 @@ const Dashboard = () => {
       case 'dashboard':
         return (
           <DashboardContent 
+            clients={clients}
+            clientsLoading={clientsLoading}
             onNavigateToClients={() => setActivePage('clients')} 
             onNavigateToFindGrants={() => setActivePage('find-grants')}
             onNavigateToSources={() => setActivePage('sources')}
@@ -78,6 +85,7 @@ const Dashboard = () => {
             onNavigateToReports={() => setActivePage('reports')}
             onNavigateToEmailTemplates={() => setActivePage('email-templates')}
             onNavigateToEmailComposer={handleComposeEmail}
+            onNavigateToCalendar={() => setActivePage('calendar')}
           />
         );
       case 'clients':
@@ -137,6 +145,45 @@ const Dashboard = () => {
       case 'settings':
         return <Settings />;
       
+      // Calendar Pages
+      case 'calendar':
+        return (
+          <CalendarMain 
+            clients={clients}
+            onNavigateToClients={() => setActivePage('clients')}
+            onNavigateToGrants={() => setActivePage('grants')}
+            initialView="calendar"
+          />
+        );
+      case 'upcoming':
+        return (
+          <CalendarMain 
+            clients={clients}
+            onNavigateToClients={() => setActivePage('clients')}
+            onNavigateToGrants={() => setActivePage('grants')}
+            initialView="upcoming"
+          />
+        );
+      case 'list':
+        return (
+          <CalendarMain 
+            clients={clients}
+            onNavigateToClients={() => setActivePage('clients')}
+            onNavigateToGrants={() => setActivePage('grants')}
+            initialView="list"
+          />
+        );
+      case 'schedule-meeting':
+        return (
+          <CalendarMain 
+            clients={clients}
+            onNavigateToClients={() => setActivePage('clients')}
+            onNavigateToGrants={() => setActivePage('grants')}
+            initialView="calendar"
+            showScheduleForm={true}
+          />
+        );
+      
       // Communication Hub Pages
       case 'communication-hub':
         return <CommunicationHub onBack={() => setActivePage('clients')} />;
@@ -176,6 +223,8 @@ const Dashboard = () => {
         return <Spam />;
       case 'trash':
         return <Trash />;
+      
+      // Help Page
       case 'help':
         return (
           <div className="page-content">
@@ -233,11 +282,14 @@ const Dashboard = () => {
       default:
         return (
           <DashboardContent 
+            clients={clients}
+            clientsLoading={clientsLoading}
             onNavigateToClients={() => setActivePage('clients')} 
             onNavigateToFindGrants={() => setActivePage('find-grants')}
             onNavigateToSources={() => setActivePage('sources')}
             onNavigateToEmailTemplates={() => setActivePage('email-templates')}
             onNavigateToEmailComposer={handleComposeEmail}
+            onNavigateToCalendar={() => setActivePage('calendar')}
           />
         );
     }
@@ -268,134 +320,131 @@ const Dashboard = () => {
   );
 };
 
-// Main Dashboard Content Component (keep your existing DashboardContent exactly as is)
+// DashboardContent Component - FIXED VERSION
 const DashboardContent = ({ 
+  clients,
+  clientsLoading,
   onNavigateToClients, 
   onNavigateToFindGrants, 
   onNavigateToSources,
   onNavigateToAIWriting,
   onNavigateToReports,
   onNavigateToEmailTemplates,
-  onNavigateToEmailComposer 
+  onNavigateToEmailComposer,
+  onNavigateToCalendar
 }) => {
   const { currentUser } = useAuth();
   const [activeClientTab, setActiveClientTab] = useState('all');
 
-  // Sample client data
-  const clientsData = {
-    all: [
-      {
-        id: 1,
-        name: 'GreenTech Initiative',
-        company: 'Environmental Technology',
-        email: 'contact@greentech.org',
-        phone: '(555) 123-4567',
-        projects: 12,
-        status: 'active',
-        isVerified: true,
-        isOnline: true,
-        avatar: 'https://i.pravatar.cc/150?img=1'
-      },
-      {
-        id: 2,
-        name: 'Sarah Chen',
-        company: 'Community Health Alliance',
-        email: 'sarah@healthalliance.org',
-        phone: '(555) 987-6543',
-        projects: 8,
-        status: 'active',
-        isVerified: false,
-        isOnline: false,
-        avatar: 'https://i.pravatar.cc/150?img=32'
-      },
-      {
-        id: 3,
-        name: 'Michael Rodriguez',
-        company: 'Youth Future Foundation',
-        email: 'mike@youthfuture.org',
-        phone: '(555) 456-7890',
-        projects: 15,
-        status: 'vip',
-        isVerified: false,
-        isOnline: false,
-        avatar: 'https://i.pravatar.cc/150?img=8'
-      },
-      {
-        id: 4,
-        name: 'TechStart Inc',
-        company: 'Startup Accelerator',
-        email: 'info@techstart.com',
-        phone: '(555) 234-5678',
-        projects: 6,
-        status: 'pending',
-        isVerified: true,
-        isOnline: true,
-        avatar: 'https://i.pravatar.cc/150?img=11'
+  // FIXED: Transform API clients data to match the expected format
+  const transformClientsData = (apiClients) => {
+    console.log('🔄 transformClientsData called with:', apiClients);
+    
+    // Handle cases where apiClients might not be an array
+    if (!apiClients) {
+      console.warn('⚠️ apiClients is null or undefined');
+      return [];
+    }
+    
+    if (!Array.isArray(apiClients)) {
+      console.warn('⚠️ apiClients is not an array:', typeof apiClients, apiClients);
+      
+      // Try to extract clients from different possible response formats
+      if (apiClients && apiClients.clients && Array.isArray(apiClients.clients)) {
+        console.log('✅ Found clients array in apiClients.clients');
+        apiClients = apiClients.clients;
+      } else if (apiClients && apiClients.data && Array.isArray(apiClients.data)) {
+        console.log('✅ Found clients array in apiClients.data');
+        apiClients = apiClients.data;
+      } else if (apiClients && apiClients.success && Array.isArray(apiClients.clients)) {
+        console.log('✅ Found clients array in apiClients.clients (success response)');
+        apiClients = apiClients.clients;
+      } else {
+        console.error('❌ Cannot extract clients array from:', apiClients);
+        return [];
       }
-    ],
-    active: [
-      {
-        id: 1,
-        name: 'GreenTech Initiative',
-        company: 'Environmental Technology',
-        email: 'contact@greentech.org',
-        phone: '(555) 123-4567',
-        projects: 12,
-        status: 'active',
-        isVerified: true,
-        isOnline: true,
-        avatar: 'https://i.pravatar.cc/150?img=1'
-      },
-      {
-        id: 2,
-        name: 'Sarah Chen',
-        company: 'Community Health Alliance',
-        email: 'sarah@healthalliance.org',
-        phone: '(555) 987-6543',
-        projects: 8,
-        status: 'active',
-        isVerified: false,
-        isOnline: false,
-        avatar: 'https://i.pravatar.cc/150?img=32'
-      }
-    ],
-    vip: [
-      {
-        id: 3,
-        name: 'Michael Rodriguez',
-        company: 'Youth Future Foundation',
-        email: 'mike@youthfuture.org',
-        phone: '(555) 456-7890',
-        projects: 15,
-        status: 'vip',
-        isVerified: false,
-        isOnline: false,
-        avatar: 'https://i.pravatar.cc/150?img=8'
-      }
-    ],
-    inactive: [
-      {
-        id: 5,
-        name: 'Global Education Fund',
-        company: 'Non-Profit Organization',
-        email: 'info@globaledu.org',
-        phone: '(555) 345-6789',
-        projects: 3,
-        status: 'inactive',
-        isVerified: false,
-        isOnline: false,
-        avatar: 'https://i.pravatar.cc/150?img=15'
-      }
-    ]
+    }
+    
+    console.log(`🔄 Transforming ${apiClients.length} clients`);
+    
+    return apiClients.map(client => ({
+      id: client._id || client.id,
+      name: client.primaryContactName || client.name,
+      company: client.organizationName || client.organization,
+      email: client.emailAddress || client.email,
+      phone: client.phoneNumbers || client.phone,
+      projects: client.grantsSubmitted || Math.floor(Math.random() * 20) + 1,
+      status: client.status || 'active',
+      isVerified: client.isVerified || false,
+      isOnline: client.isOnline || false,
+      avatar: client.avatar || `https://i.pravatar.cc/150?img=${Math.floor(Math.random() * 70) + 1}`
+    }));
   };
 
-  // Tab configuration with counts
-  const clientTabs = [
-    { id: 'all', label: 'All Clients', count: 8, badge: '8' },
-    { id: 'active', label: 'Active', count: 6, badge: '6' },
-    { id: 'vip', label: 'VIP', count: 2, badge: '2' },
-    { id: 'inactive', label: 'Inactive', count: 2, badge: '2' }
-  ];
+  // Use real clients data instead of sample data - FIXED
+  const getClientsData = () => {
+    if (!clients || !Array.isArray(clients)) {
+      console.warn('⚠️ clients is not an array:', clients);
+      return {
+        all: [],
+        active: [],
+        vip: [],
+        inactive: []
+      };
+    }
+
+    const transformedClients = transformClientsData(clients);
+    
+    return {
+      all: transformedClients,
+      active: transformedClients.filter(client => client.status === 'active'),
+      vip: transformedClients.filter(client => client.status === 'vip'),
+      inactive: transformedClients.filter(client => client.status === 'inactive' || !client.status)
+    };
+  };
+
+  const clientsData = getClientsData();
+
+  // Tab configuration with real counts - FIXED
+  const getClientTabs = () => {
+    if (!clients || !Array.isArray(clients)) {
+      return [
+        { id: 'all', label: 'All Clients', count: 0, badge: '0' },
+        { id: 'active', label: 'Active', count: 0, badge: '0' },
+        { id: 'vip', label: 'VIP', count: 0, badge: '0' },
+        { id: 'inactive', label: 'Inactive', count: 0, badge: '0' }
+      ];
+    }
+
+    return [
+      { 
+        id: 'all', 
+        label: 'All Clients', 
+        count: clients.length, 
+        badge: clients.length.toString() 
+      },
+      { 
+        id: 'active', 
+        label: 'Active', 
+        count: clients.filter(c => c.status === 'active').length, 
+        badge: clients.filter(c => c.status === 'active').length.toString() 
+      },
+      { 
+        id: 'vip', 
+        label: 'VIP', 
+        count: clients.filter(c => c.status === 'vip').length, 
+        badge: clients.filter(c => c.status === 'vip').length.toString() 
+      },
+      { 
+        id: 'inactive', 
+        label: 'Inactive', 
+        count: clients.filter(c => c.status === 'inactive' || !c.status).length, 
+        badge: clients.filter(c => c.status === 'inactive' || !c.status).length.toString() 
+      }
+    ];
+  };
+
+  const clientTabs = getClientTabs();
 
   const getStatusDisplay = (status) => {
     switch (status) {
@@ -425,6 +474,24 @@ const DashboardContent = ({
   };
 
   const currentClients = clientsData[activeClientTab] || [];
+
+  // Show loading state for clients
+  if (clientsLoading) {
+    return (
+      <div className="dashboard-home">
+        <div className="welcome-banner">
+          <div className="welcome-content">
+            <h1>Welcome back, {currentUser?.name || 'User'}! 🎉</h1>
+            <p>Your AI-powered grant management platform is ready to help you secure more funding.</p>
+          </div>
+        </div>
+        <div className="loading-section">
+          <i className="fas fa-spinner fa-spin"></i>
+          <p>Loading clients data...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="dashboard-home">
@@ -589,6 +656,20 @@ const DashboardContent = ({
               <i className="fas fa-arrow-right"></i>
             </div>
           </div>
+
+          {/* Calendar Quick Action */}
+          <div className="action-card calendar" onClick={onNavigateToCalendar}>
+            <div className="action-icon">
+              <i className="fas fa-calendar-alt"></i>
+            </div>
+            <div className="action-content">
+              <h3>Calendar</h3>
+              <p>View and manage grant deadlines and appointments</p>
+            </div>
+            <div className="action-arrow">
+              <i className="fas fa-arrow-right"></i>
+            </div>
+          </div>
         </div>
       </div>
 
@@ -644,7 +725,7 @@ const DashboardContent = ({
         <div className="content-card">
           <div className="card-header">
             <h3>Upcoming Deadlines</h3>
-            <button className="btn-link">View Calendar</button>
+            <button className="btn-link" onClick={onNavigateToCalendar}>View Calendar</button>
           </div>
           <div className="deadlines-list">
             <div className="deadline-item urgent">
@@ -742,7 +823,7 @@ const DashboardContent = ({
                 </tr>
               </thead>
               <tbody>
-                {currentClients.map(client => {
+                {currentClients.slice(0, 5).map(client => {
                   const statusInfo = getStatusDisplay(client.status);
                   const onlineStatus = getOnlineStatus(client.isOnline);
                   
@@ -826,9 +907,9 @@ const DashboardContent = ({
             <div className="clients-empty-state">
               <i className="fas fa-users"></i>
               <h4>No clients found</h4>
-              <p>There are no clients matching your current filter.</p>
-              <button className="btn" onClick={() => setActiveClientTab('all')}>
-                Show All Clients
+              <p>There are no clients in your portfolio yet.</p>
+              <button className="btn" onClick={onNavigateToClients}>
+                Add Your First Client
               </button>
             </div>
           )}

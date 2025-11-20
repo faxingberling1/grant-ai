@@ -1,391 +1,358 @@
 /* GrantsGovIntegration.css */
 .grants-gov-integration {
-  background: white;
-  border: 2px solid #e2e8f0;
-  border-radius: 12px;
-  padding: 24px;
-  transition: all 0.3s ease;
-  position: relative;
+  padding: 0;
+  background: #f8fafc;
+  min-height: 100vh;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
 }
 
-.grants-gov-integration.enabled {
-  border-color: #2d5a27;
-  background: linear-gradient(135deg, #f8fff8 0%, #f0f9f0 100%);
-}
-
-.grants-gov-integration.disabled {
-  border-color: #e2e8f0;
-  background: white;
-}
-
-.grants-gov-integration.enabled:hover {
-  box-shadow: 0 4px 20px rgba(45, 90, 39, 0.15);
-}
-
-.grants-gov-integration.disabled:hover {
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
-}
-
-/* Integration Header */
-.integration-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: flex-start;
-  margin-bottom: 20px;
-}
-
-.integration-info {
-  display: flex;
-  align-items: flex-start;
-  gap: 16px;
-  flex: 1;
-}
-
-.integration-icon {
-  width: 60px;
-  height: 60px;
-  background: linear-gradient(135deg, #2d5a27, #4a7c59);
-  border-radius: 12px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
+/* Header */
+.grants-gov-header {
+  background: linear-gradient(135deg, #1a472a 0%, #2d5a27 100%);
+  padding: 24px 32px;
   color: white;
-  font-size: 1.5rem;
+  box-shadow: 0 2px 12px rgba(26, 71, 42, 0.3);
 }
 
-.integration-details h3 {
-  margin: 0 0 8px 0;
-  color: #2d5a27;
-  font-size: 1.3rem;
-  font-weight: 600;
+.grants-gov-header h1 {
+  font-size: 32px;
+  font-weight: 800;
+  margin-bottom: 8px;
+  color: white;
 }
 
-.integration-details p {
-  margin: 0 0 12px 0;
-  color: #64748b;
-  font-size: 0.95rem;
-  line-height: 1.5;
+.grants-gov-subtitle {
+  color: #e8f5e8;
+  font-size: 16px;
+  margin: 0;
+  font-weight: 500;
+  opacity: 0.9;
 }
 
-.integration-stats {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 16px;
-  align-items: center;
+/* Content */
+.grants-gov-content {
+  padding: 32px;
+  max-width: 1400px;
+  margin: 0 auto;
 }
 
-.stat {
+/* Back Button */
+.back-button {
   display: inline-flex;
   align-items: center;
-  gap: 6px;
-  padding: 6px 12px;
-  background: rgba(45, 90, 39, 0.1);
+  gap: 8px;
+  padding: 12px 20px;
+  background: white;
+  color: #1a472a;
+  border: 2px solid #1a472a;
   border-radius: 8px;
-  font-size: 0.85rem;
-  font-weight: 500;
-  color: #2d5a27;
+  font-weight: 600;
+  text-decoration: none;
+  transition: all 0.3s ease;
+  margin-bottom: 24px;
+  cursor: pointer;
 }
 
-.stat i {
-  font-size: 0.8rem;
+.back-button:hover {
+  background: #1a472a;
+  color: white;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(26, 71, 42, 0.2);
 }
 
-.status {
-  padding: 4px 8px;
+/* Stats */
+.grants-gov-stats {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 20px;
+  margin-bottom: 32px;
+}
+
+.grants-gov-stat-card {
+  background: white;
+  padding: 24px;
   border-radius: 12px;
-  font-size: 0.75rem;
+  border: 1px solid #e2e8f0;
+  text-align: center;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+}
+
+.grants-gov-stat-number {
+  font-size: 36px;
+  font-weight: 800;
+  color: #1a472a;
+  margin-bottom: 8px;
+}
+
+.grants-gov-stat-label {
+  color: #64748b;
+  font-size: 14px;
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.5px;
 }
 
-.status.success {
-  background: #f0f9f0;
-  color: #2d5a27;
-  border: 1px solid #2d5a27;
+/* Search and Filters */
+.grants-gov-toolbar {
+  background: white;
+  padding: 24px;
+  border-radius: 12px;
+  margin-bottom: 24px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  border: 1px solid #e2e8f0;
 }
 
-.status.syncing {
-  background: #fffbeb;
-  color: #d97706;
-  border: 1px solid #d97706;
-}
-
-.status.error {
-  background: #fef2f2;
-  color: #dc2626;
-  border: 1px solid #dc2626;
-}
-
-.status.disconnected {
-  background: #f3f4f6;
-  color: #6b7280;
-  border: 1px solid #6b7280;
-}
-
-.integration-controls {
+.grants-gov-search {
   display: flex;
-  gap: 12px;
+  gap: 16px;
+  align-items: center;
+  margin-bottom: 20px;
 }
 
-.controls-group {
-  display: flex;
-  gap: 8px;
-}
-
-/* Setup Form */
-.integration-setup {
-  border-top: 1px solid #e2e8f0;
-  padding-top: 20px;
-}
-
-.setup-form {
-  max-width: 400px;
-}
-
-.setup-form label {
-  display: block;
-  margin-bottom: 8px;
-  font-weight: 600;
-  color: #374151;
-  font-size: 0.95rem;
-}
-
-.setup-form .form-input {
-  width: 100%;
-  padding: 12px;
-  border: 2px solid #e5e7eb;
+.grants-gov-search-input {
+  flex: 1;
+  padding: 14px 16px;
+  border: 2px solid #e2e8f0;
   border-radius: 8px;
-  font-size: 0.95rem;
-  margin-bottom: 8px;
-}
-
-.setup-form .form-input:focus {
-  outline: none;
-  border-color: #2d5a27;
-  box-shadow: 0 0 0 3px rgba(45, 90, 39, 0.1);
-}
-
-.help-text {
-  margin: 8px 0 0 0;
-  color: #64748b;
-  font-size: 0.85rem;
-}
-
-.help-text a {
-  color: #2d5a27;
-  text-decoration: none;
+  font-size: 15px;
   font-weight: 500;
 }
 
-.help-text a:hover {
-  text-decoration: underline;
+.grants-gov-search-input:focus {
+  outline: none;
+  border-color: #1a472a;
 }
 
-/* Integration Actions */
-.integration-actions {
-  border-top: 1px solid #e2e8f0;
-  padding-top: 20px;
-}
-
-.actions-group {
+.grants-gov-filters {
   display: flex;
-  align-items: center;
-  gap: 16px;
-}
-
-.action-info {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  color: #64748b;
-  font-size: 0.85rem;
-}
-
-.action-info i {
-  color: #2d5a27;
-}
-
-/* Recent Grants */
-.recent-grants {
-  border-top: 1px solid #e2e8f0;
-  padding-top: 20px;
-  margin-top: 20px;
-}
-
-.recent-grants h4 {
-  margin: 0 0 16px 0;
-  color: #2d5a27;
-  font-size: 1.1rem;
-  font-weight: 600;
-}
-
-.grants-preview {
-  display: flex;
-  flex-direction: column;
   gap: 12px;
-  margin-bottom: 16px;
+  flex-wrap: wrap;
 }
 
-.grant-preview-item {
-  background: white;
+.grants-gov-filter-select {
+  padding: 12px 16px;
   border: 1px solid #e2e8f0;
   border-radius: 8px;
-  padding: 16px;
+  background: white;
+  font-size: 14px;
+  min-width: 150px;
+}
+
+/* Grants Grid */
+.grants-gov-grid {
+  display: grid;
+  gap: 20px;
+  margin-bottom: 32px;
+}
+
+.grants-gov-card {
+  background: white;
+  border-radius: 12px;
+  padding: 24px;
+  border: 1px solid #e2e8f0;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
   transition: all 0.3s ease;
 }
 
-.grant-preview-item:hover {
-  border-color: #2d5a27;
-  box-shadow: 0 2px 8px rgba(45, 90, 39, 0.1);
+.grants-gov-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 25px rgba(26, 71, 42, 0.15);
+  border-color: #1a472a;
 }
 
-.grant-title {
-  font-weight: 600;
-  color: #2d5a27;
-  margin-bottom: 4px;
-  font-size: 0.95rem;
+.grants-gov-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 16px;
+}
+
+.grants-gov-card-title {
+  font-size: 18px;
+  font-weight: 700;
+  color: #1e293b;
+  margin-bottom: 8px;
   line-height: 1.4;
 }
 
-.grant-agency {
+.grants-gov-agency {
   color: #64748b;
-  font-size: 0.85rem;
-  margin-bottom: 8px;
+  font-size: 14px;
+  font-weight: 600;
 }
 
-.grant-details {
+.grants-gov-opportunity-number {
+  background: #f8fafc;
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-size: 12px;
+  color: #64748b;
+  font-family: 'Courier New', monospace;
+}
+
+.grants-gov-card-details {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 16px;
+  margin-bottom: 16px;
+}
+
+.grants-gov-detail-item {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.grants-gov-detail-label {
+  font-size: 12px;
+  color: #64748b;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.grants-gov-detail-value {
+  font-size: 14px;
+  color: #1e293b;
+  font-weight: 600;
+}
+
+.grants-gov-amount {
+  color: #1a472a;
+  font-weight: 700;
+}
+
+.grants-gov-card-actions {
+  display: flex;
+  gap: 12px;
+  justify-content: flex-end;
+}
+
+/* Import Section */
+.grants-gov-import-section {
+  background: white;
+  padding: 24px;
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  border: 1px solid #e2e8f0;
+}
+
+.grants-gov-import-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
+  margin-bottom: 20px;
 }
 
-.amount {
-  font-weight: 600;
-  color: #2d5a27;
-  font-size: 0.9rem;
+.grants-gov-import-title {
+  font-size: 20px;
+  font-weight: 700;
+  color: #1e293b;
 }
 
-.deadline {
-  color: #64748b;
-  font-size: 0.8rem;
-}
-
-.view-all-grants {
-  text-align: center;
-}
-
-.btn-link {
-  background: none;
-  border: none;
-  color: #2d5a27;
-  cursor: pointer;
-  font-size: 0.9rem;
-  font-weight: 500;
-  text-decoration: none;
-}
-
-.btn-link:hover {
-  text-decoration: underline;
-}
-
-/* Responsive Design */
-@media (max-width: 768px) {
-  .integration-header {
-    flex-direction: column;
-    gap: 16px;
-  }
-  
-  .integration-info {
-    flex-direction: column;
-    text-align: center;
-  }
-  
-  .integration-stats {
-    justify-content: center;
-  }
-  
-  .integration-controls {
-    width: 100%;
-    justify-content: center;
-  }
-  
-  .controls-group {
-    width: 100%;
-    justify-content: center;
-  }
-  
-  .actions-group {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 12px;
-  }
-  
-  .grant-details {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 4px;
-  }
-}
-
-/* Status Badge */
-.integration-status {
-  margin-top: 8px;
-}
-
-.status-badge {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  padding: 4px 8px;
-  border-radius: 12px;
-  font-size: 12px;
-  font-weight: 500;
-}
-
-.status-badge.active {
-  background: #d4edda;
-  color: #155724;
-  border: 1px solid #c3e6cb;
-}
-
-.status-badge i {
-  font-size: 10px;
-}
-
-/* Help Section */
-.integration-help {
-  padding: 16px 24px;
-  background: #e7f3ff;
-  border-top: 1px solid #b3d9ff;
-}
-
-.help-content {
+.grants-gov-import-actions {
   display: flex;
-  align-items: flex-start;
   gap: 12px;
 }
 
-.help-content i {
-  color: #0066cc;
-  margin-top: 2px;
-}
-
-.help-content p {
-  margin: 0;
+/* Selected Grants */
+.grants-gov-selected-count {
+  background: #1a472a;
+  color: white;
+  padding: 8px 16px;
+  border-radius: 20px;
   font-size: 14px;
-  color: #004085;
-  line-height: 1.4;
+  font-weight: 700;
 }
 
-/* Clickable grant items */
-.grant-item {
-  cursor: pointer;
-  transition: all 0.2s ease;
+/* Loading State */
+.grants-gov-loading {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 80px 20px;
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
 }
 
-.grant-item:hover {
-  background: #f8f9fa;
-  transform: translateY(-1px);
-  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+.grants-gov-loading-spinner {
+  width: 40px;
+  height: 40px;
+  border: 4px solid #e2e8f0;
+  border-top: 4px solid #1a472a;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+  margin-bottom: 16px;
+}
+
+/* Empty State */
+.grants-gov-empty {
+  text-align: center;
+  padding: 80px 20px;
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+}
+
+.grants-gov-empty-icon {
+  font-size: 64px;
+  color: #cbd5e1;
+  margin-bottom: 24px;
+}
+
+.grants-gov-empty-title {
+  font-size: 20px;
+  font-weight: 700;
+  color: #1e293b;
+  margin-bottom: 12px;
+}
+
+.grants-gov-empty-description {
+  color: #64748b;
+  margin-bottom: 24px;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .grants-gov-content {
+    padding: 20px;
+  }
+  
+  .grants-gov-header {
+    padding: 20px 24px;
+  }
+  
+  .grants-gov-header h1 {
+    font-size: 28px;
+  }
+  
+  .grants-gov-search {
+    flex-direction: column;
+  }
+  
+  .grants-gov-filters {
+    justify-content: space-between;
+  }
+  
+  .grants-gov-filter-select {
+    flex: 1;
+    min-width: 120px;
+  }
+  
+  .grants-gov-card-header {
+    flex-direction: column;
+    gap: 12px;
+  }
+  
+  .grants-gov-import-header {
+    flex-direction: column;
+    gap: 16px;
+    text-align: center;
+  }
+  
+  .grants-gov-import-actions {
+    justify-content: center;
+  }
 }

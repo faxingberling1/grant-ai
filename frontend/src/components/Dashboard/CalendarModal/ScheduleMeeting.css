@@ -1,0 +1,249 @@
+/* Schedule Meeting Styles - Forest Green & Gold Theme */
+.schedule-meeting-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(26, 71, 42, 0.8);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  padding: 2rem;
+  backdrop-filter: blur(4px);
+}
+
+.schedule-meeting-modal {
+  background: var(--bg-white);
+  border-radius: 16px;
+  width: 90%;
+  max-width: 800px;
+  max-height: 90vh;
+  overflow-y: auto;
+  box-shadow: 0 20px 60px rgba(26, 71, 42, 0.3);
+  border: 2px solid var(--gold-light);
+}
+
+.schedule-meeting-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1.5rem 2rem;
+  border-bottom: 2px solid var(--gold-light);
+  background: linear-gradient(135deg, var(--forest-lightest) 0%, #e8f5e8 100%);
+  border-radius: 16px 16px 0 0;
+}
+
+.schedule-meeting-header h2 {
+  margin: 0;
+  color: var(--forest-dark);
+  font-size: 1.5rem;
+  font-weight: 700;
+}
+
+/* Form Styles */
+.schedule-meeting-form {
+  padding: 2rem;
+}
+
+.form-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 1.5rem;
+  margin-bottom: 1.5rem;
+}
+
+.form-group {
+  margin-bottom: 1.5rem;
+}
+
+.form-group label {
+  display: block;
+  margin-bottom: 0.5rem;
+  font-weight: 600;
+  color: var(--forest-dark);
+  font-size: 0.95rem;
+}
+
+.form-group input,
+.form-group select,
+.form-group textarea {
+  width: 100%;
+  padding: 0.875rem 1rem;
+  border: 1px solid var(--border-light);
+  border-radius: 8px;
+  font-size: 1rem;
+  transition: all 0.3s ease;
+  background: var(--bg-white);
+  color: var(--text-medium);
+  font-family: inherit;
+}
+
+.form-group input:focus,
+.form-group select:focus,
+.form-group textarea:focus {
+  outline: none;
+  border-color: var(--forest-medium);
+  box-shadow: 0 0 0 3px rgba(45, 90, 58, 0.1);
+  background: var(--forest-lightest);
+}
+
+.form-group input::placeholder,
+.form-group textarea::placeholder {
+  color: var(--text-lighter);
+}
+
+/* Participants Input */
+.participants-input,
+.agenda-input {
+  display: flex;
+  gap: 0.5rem;
+  margin-bottom: 0.5rem;
+}
+
+.participants-input input,
+.agenda-input input {
+  flex: 1;
+  margin-bottom: 0;
+}
+
+.participants-input button,
+.agenda-input button {
+  background: var(--forest-medium);
+  color: white;
+  border: none;
+  border-radius: 8px;
+  padding: 0.875rem 1rem;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  font-size: 0.9rem;
+  min-width: 50px;
+}
+
+.participants-input button:hover,
+.agenda-input button:hover {
+  background: var(--forest-dark);
+  transform: scale(1.05);
+}
+
+.participants-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-top: 0.5rem;
+}
+
+.participant-tag {
+  background: var(--forest-lightest);
+  color: var(--forest-dark);
+  padding: 0.5rem 1rem;
+  border-radius: 16px;
+  font-size: 0.85rem;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  border: 1px solid var(--border-light);
+  transition: all 0.3s ease;
+}
+
+.participant-tag:hover {
+  background: var(--forest-lighter);
+  color: white;
+}
+
+.remove-participant,
+.remove-agenda-item {
+  background: none;
+  border: none;
+  color: inherit;
+  cursor: pointer;
+  padding: 0;
+  font-size: 0.8rem;
+  margin-left: 0.25rem;
+  transition: all 0.3s ease;
+}
+
+.remove-participant:hover,
+.remove-agenda-item:hover {
+  color: var(--danger);
+  transform: scale(1.2);
+}
+
+/* Agenda */
+.agenda-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.agenda-list li {
+  background: var(--forest-lightest);
+  padding: 1rem;
+  border-radius: 8px;
+  margin-bottom: 0.5rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-left: 3px solid var(--gold-medium);
+  transition: all 0.3s ease;
+}
+
+.agenda-list li:hover {
+  background: var(--bg-hover);
+  transform: translateX(4px);
+}
+
+/* Form Actions */
+.form-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 1rem;
+  margin-top: 2rem;
+  padding-top: 1.5rem;
+  border-top: 1px solid var(--border-light);
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .schedule-meeting-overlay {
+    padding: 1rem;
+  }
+  
+  .schedule-meeting-modal {
+    width: 95%;
+    margin: 1rem;
+  }
+  
+  .schedule-meeting-header {
+    padding: 1.25rem 1.5rem;
+  }
+  
+  .schedule-meeting-form {
+    padding: 1.5rem;
+  }
+  
+  .form-grid {
+    grid-template-columns: 1fr;
+    gap: 1rem;
+  }
+  
+  .form-actions {
+    flex-direction: column;
+  }
+  
+  .form-actions .btn {
+    width: 100%;
+    justify-content: center;
+  }
+  
+  .participants-input,
+  .agenda-input {
+    flex-direction: column;
+  }
+  
+  .participants-input button,
+  .agenda-input button {
+    width: 100%;
+  }
+}

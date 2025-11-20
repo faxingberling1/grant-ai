@@ -112,10 +112,19 @@ const GrantWatchIntegration = ({ onImport, onCancel }) => {
   return (
     <div className="grantwatch-integration">
       <div className="integration-header">
-        <h2>
-          <i className="fas fa-database"></i>
-          GrantWatch Integration
-        </h2>
+        <div className="header-top">
+          <button 
+            className="btn btn-secondary btn-back"
+            onClick={onCancel}
+          >
+            <i className="fas fa-arrow-left"></i>
+            Back To Sources
+          </button>
+          <h2>
+            <i className="fas fa-database"></i>
+            GrantWatch Integration
+          </h2>
+        </div>
         <p>Search and import grants from GrantWatch database</p>
       </div>
 
@@ -280,7 +289,7 @@ const GrantWatchIntegration = ({ onImport, onCancel }) => {
       <div className="integration-footer">
         <button className="btn btn-secondary" onClick={onCancel}>
           <i className="fas fa-arrow-left"></i>
-          Back to Sources
+          Back To Sources
         </button>
         <div className="footer-actions">
           <button 

@@ -15,6 +15,19 @@ const DashboardSidebar = ({ isOpen, activePage, onPageChange, onToggle }) => {
     { id: 'matching', icon: 'fas fa-robot', label: 'AI Matching', badge: 'New' },
     { id: 'ai-writing', icon: 'fas fa-pen-fancy', label: 'AI Writing', badge: null },
     { 
+      id: 'calendar', 
+      icon: 'fas fa-calendar-alt', 
+      label: 'Calendar', 
+      badge: '5',
+      hasDropdown: true,
+      children: [
+        { id: 'calendar', icon: 'fas fa-calendar-alt', label: 'Calendar View' },
+        { id: 'upcoming', icon: 'fas fa-list', label: 'Upcoming Meetings', badge: '5' },
+        { id: 'list', icon: 'fas fa-th-list', label: 'All Meetings', badge: '12' },
+        { id: 'schedule-meeting', icon: 'fas fa-plus', label: 'Schedule Meeting' }
+      ]
+    },
+    { 
       id: 'communication', 
       icon: 'fas fa-envelope', 
       label: 'Communication Hub', 
@@ -56,6 +69,10 @@ const DashboardSidebar = ({ isOpen, activePage, onPageChange, onToggle }) => {
     .find(item => item.id === 'communication')
     ?.children?.some(child => child.id === activePage);
 
+  const isCalendarActive = activePage && menuItems
+    .find(item => item.id === 'calendar')
+    ?.children?.some(child => child.id === activePage);
+
   return (
     <aside className={`dashboard-sidebar ${isOpen ? 'open' : 'closed'}`}>
       {/* Sidebar Header */}
@@ -87,7 +104,9 @@ const DashboardSidebar = ({ isOpen, activePage, onPageChange, onToggle }) => {
             {menuItems.map((item) => (
               <li key={item.id} className={`nav-item ${item.hasDropdown ? 'has-dropdown' : ''}`}>
                 <button
-                  className={`nav-link ${activePage === item.id || (item.id === 'communication' && isCommunicationActive) ? 'active' : ''}`}
+                  className={`nav-link ${activePage === item.id || 
+                    (item.id === 'communication' && isCommunicationActive) || 
+                    (item.id === 'calendar' && isCalendarActive) ? 'active' : ''}`}
                   onClick={() => item.hasDropdown ? handleDropdownToggle(item.id) : onPageChange(item.id)}
                 >
                   <i className={item.icon}></i>
@@ -102,8 +121,32 @@ const DashboardSidebar = ({ isOpen, activePage, onPageChange, onToggle }) => {
                   )}
                 </button>
                 
+                {/* Dropdown Menu for Calendar */}
+                {item.hasDropdown && item.id === 'calendar' && openDropdown === item.id && (
+                  <div className="dropdown-container">
+                    <ul className="dropdown-menu">
+                      {item.children.map((child) => (
+                        <li key={child.id} className="dropdown-item">
+                          <button
+                            className={`dropdown-link ${activePage === child.id ? 'active' : ''}`}
+                            onClick={() => handleSubItemClick(child.id)}
+                          >
+                            <i className={child.icon}></i>
+                            <span className="dropdown-text">{child.label}</span>
+                            {child.badge && (
+                              <span className="dropdown-badge">
+                                {child.badge}
+                              </span>
+                            )}
+                          </button>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+                
                 {/* Dropdown Menu for Communication Hub */}
-                {item.hasDropdown && openDropdown === item.id && (
+                {item.hasDropdown && item.id === 'communication' && openDropdown === item.id && (
                   <div className="dropdown-container">
                     <ul className="dropdown-menu">
                       {item.children.map((child) => (

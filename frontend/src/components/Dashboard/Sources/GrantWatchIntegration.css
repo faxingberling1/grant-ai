@@ -1,0 +1,372 @@
+/* GrantWatchIntegration.css */
+.grantwatch-integration {
+  padding: 0;
+  background: #f8fafc;
+  min-height: 100vh;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+}
+
+/* Header */
+.grantwatch-header {
+  background: linear-gradient(135deg, #d4af37 0%, #fbbf24 100%);
+  padding: 24px 32px;
+  color: #1e293b;
+  box-shadow: 0 2px 12px rgba(212, 175, 55, 0.3);
+}
+
+.grantwatch-header h1 {
+  font-size: 32px;
+  font-weight: 800;
+  margin-bottom: 8px;
+  color: #1e293b;
+}
+
+.grantwatch-subtitle {
+  color: #1e293b;
+  font-size: 16px;
+  margin: 0;
+  font-weight: 500;
+  opacity: 0.9;
+}
+
+/* Content */
+.grantwatch-content {
+  padding: 32px;
+  max-width: 1400px;
+  margin: 0 auto;
+}
+
+/* Back Button */
+.grantwatch-back-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 20px;
+  background: white;
+  color: #d4af37;
+  border: 2px solid #d4af37;
+  border-radius: 8px;
+  font-weight: 600;
+  text-decoration: none;
+  transition: all 0.3s ease;
+  margin-bottom: 24px;
+  cursor: pointer;
+}
+
+.grantwatch-back-button:hover {
+  background: #d4af37;
+  color: #1e293b;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(212, 175, 55, 0.2);
+}
+
+/* Stats */
+.grantwatch-stats {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 20px;
+  margin-bottom: 32px;
+}
+
+.grantwatch-stat-card {
+  background: white;
+  padding: 24px;
+  border-radius: 12px;
+  border: 1px solid #e2e8f0;
+  text-align: center;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+}
+
+.grantwatch-stat-number {
+  font-size: 36px;
+  font-weight: 800;
+  color: #d4af37;
+  margin-bottom: 8px;
+}
+
+.grantwatch-stat-label {
+  color: #64748b;
+  font-size: 14px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+/* Search and Filters */
+.grantwatch-toolbar {
+  background: white;
+  padding: 24px;
+  border-radius: 12px;
+  margin-bottom: 24px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  border: 1px solid #e2e8f0;
+}
+
+.grantwatch-search {
+  display: flex;
+  gap: 16px;
+  align-items: center;
+  margin-bottom: 20px;
+}
+
+.grantwatch-search-input {
+  flex: 1;
+  padding: 14px 16px;
+  border: 2px solid #e2e8f0;
+  border-radius: 8px;
+  font-size: 15px;
+  font-weight: 500;
+}
+
+.grantwatch-search-input:focus {
+  outline: none;
+  border-color: #d4af37;
+}
+
+.grantwatch-filters {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.grantwatch-filter-select {
+  padding: 12px 16px;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  background: white;
+  font-size: 14px;
+  min-width: 150px;
+}
+
+/* Grants Grid */
+.grantwatch-grid {
+  display: grid;
+  gap: 20px;
+  margin-bottom: 32px;
+}
+
+.grantwatch-card {
+  background: white;
+  border-radius: 12px;
+  padding: 24px;
+  border: 1px solid #e2e8f0;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  transition: all 0.3s ease;
+}
+
+.grantwatch-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 25px rgba(212, 175, 55, 0.15);
+  border-color: #d4af37;
+}
+
+.grantwatch-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 16px;
+}
+
+.grantwatch-card-title {
+  font-size: 18px;
+  font-weight: 700;
+  color: #1e293b;
+  margin-bottom: 8px;
+  line-height: 1.4;
+}
+
+.grantwatch-agency {
+  color: #64748b;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.grantwatch-id {
+  background: #fefce8;
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-size: 12px;
+  color: #d4af37;
+  font-family: 'Courier New', monospace;
+  font-weight: 600;
+}
+
+.grantwatch-card-details {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 16px;
+  margin-bottom: 16px;
+}
+
+.grantwatch-detail-item {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.grantwatch-detail-label {
+  font-size: 12px;
+  color: #64748b;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.grantwatch-detail-value {
+  font-size: 14px;
+  color: #1e293b;
+  font-weight: 600;
+}
+
+.grantwatch-amount {
+  color: #d4af37;
+  font-weight: 700;
+}
+
+.grantwatch-region {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  color: #64748b;
+  font-size: 13px;
+}
+
+.grantwatch-card-actions {
+  display: flex;
+  gap: 12px;
+  justify-content: flex-end;
+}
+
+/* Import Section */
+.grantwatch-import-section {
+  background: white;
+  padding: 24px;
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  border: 1px solid #e2e8f0;
+}
+
+.grantwatch-import-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+}
+
+.grantwatch-import-title {
+  font-size: 20px;
+  font-weight: 700;
+  color: #1e293b;
+}
+
+.grantwatch-import-actions {
+  display: flex;
+  gap: 12px;
+}
+
+/* Selected Grants */
+.grantwatch-selected-count {
+  background: #d4af37;
+  color: #1e293b;
+  padding: 8px 16px;
+  border-radius: 20px;
+  font-size: 14px;
+  font-weight: 700;
+}
+
+/* Loading State */
+.grantwatch-loading {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 80px 20px;
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+}
+
+.grantwatch-loading-spinner {
+  width: 40px;
+  height: 40px;
+  border: 4px solid #e2e8f0;
+  border-top: 4px solid #d4af37;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+  margin-bottom: 16px;
+}
+
+/* Empty State */
+.grantwatch-empty {
+  text-align: center;
+  padding: 80px 20px;
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+}
+
+.grantwatch-empty-icon {
+  font-size: 64px;
+  color: #cbd5e1;
+  margin-bottom: 24px;
+}
+
+.grantwatch-empty-title {
+  font-size: 20px;
+  font-weight: 700;
+  color: #1e293b;
+  margin-bottom: 12px;
+}
+
+.grantwatch-empty-description {
+  color: #64748b;
+  margin-bottom: 24px;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .grantwatch-content {
+    padding: 20px;
+  }
+  
+  .grantwatch-header {
+    padding: 20px 24px;
+  }
+  
+  .grantwatch-header h1 {
+    font-size: 28px;
+  }
+  
+  .grantwatch-search {
+    flex-direction: column;
+  }
+  
+  .grantwatch-filters {
+    justify-content: space-between;
+  }
+  
+  .grantwatch-filter-select {
+    flex: 1;
+    min-width: 120px;
+  }
+  
+  .grantwatch-card-header {
+    flex-direction: column;
+    gap: 12px;
+  }
+  
+  .grantwatch-import-header {
+    flex-direction: column;
+    gap: 16px;
+    text-align: center;
+  }
+  
+  .grantwatch-import-actions {
+    justify-content: center;
+  }
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}

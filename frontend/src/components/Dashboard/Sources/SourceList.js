@@ -11,11 +11,19 @@ const SourceList = ({
   onImportFromGrantWatch,
   onRefreshGrantsGov,
   onRefreshGrantWatch,
+  onLoadMoreGrantsGov,
+  onLoadMoreGrantWatch,
   onSyncAllSources,
   filter,
   onFilterChange,
   lastUpdated,
-  stats
+  loading,
+  loadingMore,
+  grantsGovCount,
+  grantWatchCount,
+  hasMoreGrantsGov,
+  hasMoreGrantWatch,
+  integrations = {}
 }) => {
   const getTypeBadgeClass = (type) => {
     switch (type) {
@@ -70,6 +78,11 @@ const SourceList = ({
     return null;
   };
 
+  // Check if integrations are enabled
+  const isIntegrationEnabled = (integrationId) => {
+    return integrations[integrationId] !== false;
+  };
+
   // Calculate stats for display
   const totalSources = sources.length;
   const activeSources = sources.filter(s => s.status === 'active').length;
@@ -99,6 +112,7 @@ const SourceList = ({
                 className="btn btn-secondary integration-btn grants-gov"
                 onClick={onImportFromGrantsGov}
                 title="Import from Grants.gov"
+                disabled={!isIntegrationEnabled('grantsGov')}
               >
                 <i className="fas fa-government-flag"></i>
                 Grants.gov
@@ -107,6 +121,7 @@ const SourceList = ({
                 className="btn btn-secondary integration-btn grantwatch"
                 onClick={onImportFromGrantWatch}
                 title="Import from GrantWatch"
+                disabled={!isIntegrationEnabled('grantWatch')}
               >
                 <i className="fas fa-database"></i>
                 GrantWatch
@@ -180,6 +195,14 @@ const SourceList = ({
             </div>
           </div>
         </div>
+
+        {/* Load More Progress */}
+        {loadingMore && (
+          <div className="loading-more-indicator">
+            <div className="spinner"></div>
+            <span>Loading more grants...</span>
+          </div>
+        )}
 
         {/* Toolbar */}
         <div className="sources-toolbar">
@@ -274,6 +297,7 @@ const SourceList = ({
                         <button 
                           className="btn btn-secondary"
                           onClick={onImportFromGrantsGov}
+                          disabled={!isIntegrationEnabled('grantsGov')}
                         >
                           <i className="fas fa-government-flag"></i>
                           Import from Grants.gov
@@ -281,6 +305,7 @@ const SourceList = ({
                         <button 
                           className="btn btn-secondary"
                           onClick={onImportFromGrantWatch}
+                          disabled={!isIntegrationEnabled('grantWatch')}
                         >
                           <i className="fas fa-database"></i>
                           Import from GrantWatch
@@ -415,6 +440,97 @@ const SourceList = ({
           </table>
         </div>
 
+        {/* Load More Buttons */}
+        <div className="load-more-section">
+          {isIntegrationEnabled('grantsGov') && hasMoreGrantsGov && (
+            <div className="load-more-card grants-gov-load">
+              <div className="load-more-content">
+                <div className="load-more-icon">
+                  <i className="fas fa-government-flag"></i>
+                </div>
+                <div className="load-more-text">
+                  <h4>Load More Grants.gov Opportunities</h4>
+                  <p>
+                    Currently showing {grantsGovCount} federal grant opportunities. 
+                    Load more to discover additional funding opportunities from Grants.gov.
+                  </p>
+                </div>
+                <div className="load-more-actions">
+                  <button 
+                    className="btn btn-primary load-more-btn"
+                    onClick={onLoadMoreGrantsGov}
+                    disabled={loadingMore}
+                  >
+                    {loadingMore ? (
+                      <>
+                        <div className="spinner-small"></div>
+                        Loading...
+                      </>
+                    ) : (
+                      <>
+                        <i className="fas fa-plus"></i>
+                        Load More Grants.gov
+                      </>
+                    )}
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {isIntegrationEnabled('grantWatch') && hasMoreGrantWatch && (
+            <div className="load-more-card grantwatch-load">
+              <div className="load-more-content">
+                <div className="load-more-icon">
+                  <i className="fas fa-database"></i>
+                </div>
+                <div className="load-more-text">
+                  <h4>Load More GrantWatch Opportunities</h4>
+                  <p>
+                    Currently showing {grantWatchCount} grant opportunities. 
+                    Load more to discover additional foundation and corporate funding.
+                  </p>
+                </div>
+                <div className="load-more-actions">
+                  <button 
+                    className="btn btn-primary load-more-btn"
+                    onClick={onLoadMoreGrantWatch}
+                    disabled={loadingMore}
+                  >
+                    {loadingMore ? (
+                      <>
+                        <div className="spinner-small"></div>
+                        Loading...
+                      </>
+                    ) : (
+                      <>
+                        <i className="fas fa-plus"></i>
+                        Load More GrantWatch
+                      </>
+                    )}
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Show message when no more data available */}
+          {(!hasMoreGrantsGov || !hasMoreGrantWatch) && (
+            <div className="no-more-data">
+              <div className="no-more-icon">
+                <i className="fas fa-check-circle"></i>
+              </div>
+              <div className="no-more-text">
+                <h4>All Available Grants Loaded</h4>
+                <p>
+                  You've loaded all currently available grant opportunities. 
+                  Check back later for new opportunities or refresh to see updates.
+                </p>
+              </div>
+            </div>
+          )}
+        </div>
+
         {/* Quick Actions */}
         <div className="quick-actions">
           <h3>Quick Actions</h3>
@@ -422,6 +538,7 @@ const SourceList = ({
             <button 
               className="btn btn-outline"
               onClick={onImportFromGrantsGov}
+              disabled={!isIntegrationEnabled('grantsGov')}
             >
               <i className="fas fa-government-flag"></i>
               Import from Grants.gov
@@ -429,6 +546,7 @@ const SourceList = ({
             <button 
               className="btn btn-outline"
               onClick={onImportFromGrantWatch}
+              disabled={!isIntegrationEnabled('grantWatch')}
             >
               <i className="fas fa-database"></i>
               Import from GrantWatch
@@ -436,6 +554,7 @@ const SourceList = ({
             <button 
               className="btn btn-outline"
               onClick={onRefreshGrantsGov}
+              disabled={!isIntegrationEnabled('grantsGov')}
             >
               <i className="fas fa-sync"></i>
               Refresh Grants.gov
@@ -443,6 +562,7 @@ const SourceList = ({
             <button 
               className="btn btn-outline"
               onClick={onRefreshGrantWatch}
+              disabled={!isIntegrationEnabled('grantWatch')}
             >
               <i className="fas fa-sync"></i>
               Refresh GrantWatch
@@ -477,13 +597,14 @@ const SourceList = ({
                   <h4>Grants.gov Integration Active</h4>
                   <p>
                     You have {grantsGovSources} federal grant opportunities from Grants.gov. 
-                    These are automatically updated and provide real-time federal funding information.
+                    {hasMoreGrantsGov ? ' Load more to discover additional opportunities.' : ' All available opportunities have been loaded.'}
                   </p>
                 </div>
                 <div className="banner-actions">
                   <button 
                     className="btn btn-outline"
                     onClick={onImportFromGrantsGov}
+                    disabled={!isIntegrationEnabled('grantsGov')}
                   >
                     <i className="fas fa-plus"></i>
                     Import More
@@ -491,10 +612,30 @@ const SourceList = ({
                   <button 
                     className="btn btn-outline"
                     onClick={onRefreshGrantsGov}
+                    disabled={!isIntegrationEnabled('grantsGov')}
                   >
                     <i className="fas fa-sync"></i>
                     Refresh Data
                   </button>
+                  {hasMoreGrantsGov && (
+                    <button 
+                      className="btn btn-primary"
+                      onClick={onLoadMoreGrantsGov}
+                      disabled={loadingMore}
+                    >
+                      {loadingMore ? (
+                        <>
+                          <div className="spinner-small"></div>
+                          Loading...
+                        </>
+                      ) : (
+                        <>
+                          <i className="fas fa-plus"></i>
+                          Load More
+                        </>
+                      )}
+                    </button>
+                  )}
                 </div>
               </div>
             </div>
@@ -510,13 +651,14 @@ const SourceList = ({
                   <h4>GrantWatch Integration Active</h4>
                   <p>
                     You have {grantwatchSources} grant opportunities from GrantWatch. 
-                    These include foundation, corporate, and state-level funding opportunities.
+                    {hasMoreGrantWatch ? ' Load more to discover additional opportunities.' : ' All available opportunities have been loaded.'}
                   </p>
                 </div>
                 <div className="banner-actions">
                   <button 
                     className="btn btn-outline"
                     onClick={onImportFromGrantWatch}
+                    disabled={!isIntegrationEnabled('grantWatch')}
                   >
                     <i className="fas fa-plus"></i>
                     Import More
@@ -524,9 +666,74 @@ const SourceList = ({
                   <button 
                     className="btn btn-outline"
                     onClick={onRefreshGrantWatch}
+                    disabled={!isIntegrationEnabled('grantWatch')}
                   >
                     <i className="fas fa-sync"></i>
                     Refresh Data
+                  </button>
+                  {hasMoreGrantWatch && (
+                    <button 
+                      className="btn btn-primary"
+                      onClick={onLoadMoreGrantWatch}
+                      disabled={loadingMore}
+                    >
+                      {loadingMore ? (
+                        <>
+                          <div className="spinner-small"></div>
+                          Loading...
+                        </>
+                      ) : (
+                        <>
+                          <i className="fas fa-plus"></i>
+                          Load More
+                        </>
+                      )}
+                    </button>
+                  )}
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Integration Disabled Banners */}
+          {!isIntegrationEnabled('grantsGov') && (
+            <div className="integration-banner integration-disabled">
+              <div className="banner-content">
+                <div className="banner-icon">
+                  <i className="fas fa-government-flag"></i>
+                </div>
+                <div className="banner-text">
+                  <h4>Grants.gov Integration Disabled</h4>
+                  <p>
+                    Enable the Grants.gov integration to access federal grant opportunities and load more funding sources.
+                  </p>
+                </div>
+                <div className="banner-actions">
+                  <button className="btn btn-outline">
+                    <i className="fas fa-cog"></i>
+                    Enable Integration
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {!isIntegrationEnabled('grantWatch') && (
+            <div className="integration-banner integration-disabled">
+              <div className="banner-content">
+                <div className="banner-icon">
+                  <i className="fas fa-database"></i>
+                </div>
+                <div className="banner-text">
+                  <h4>GrantWatch Integration Disabled</h4>
+                  <p>
+                    Enable the GrantWatch integration to access foundation and corporate grant opportunities.
+                  </p>
+                </div>
+                <div className="banner-actions">
+                  <button className="btn btn-outline">
+                    <i className="fas fa-cog"></i>
+                    Enable Integration
                   </button>
                 </div>
               </div>
