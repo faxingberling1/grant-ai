@@ -34,6 +34,7 @@ const WritingAssistant = ({
   const [analysisType, setAnalysisType] = useState('strength');
   const [wordCount, setWordCount] = useState(0);
   const [error, setError] = useState('');
+  const [localLoading, setLocalLoading] = useState(false);
 
   const sections = {
     needsStatement: { label: 'Needs Statement', icon: '🔍' },
@@ -78,6 +79,15 @@ const WritingAssistant = ({
     setWordCount(totalWords);
   }, [generatedContent]);
 
+  // Debug: Log current state
+  useEffect(() => {
+    console.log('📊 WritingAssistant Debug:');
+    console.log('Clients:', clients?.length, 'clients');
+    console.log('Selected Client:', selectedClient);
+    console.log('Grants:', grants?.length, 'grants');
+    console.log('API Status:', apiStatus);
+  }, [clients, selectedClient, grants, apiStatus]);
+
   const handleGenerateContent = async () => {
     console.log('🔄 Starting content generation for section:', activeSection);
     console.log('📝 User input:', userInput);
@@ -85,18 +95,19 @@ const WritingAssistant = ({
     if (!selectedClient) {
       const errorMsg = 'Please select a client first';
       setError(errorMsg);
-      alert(errorMsg);
+      setTimeout(() => setError(''), 5000);
       return;
     }
 
     if (!userInput.trim()) {
       const errorMsg = 'Please provide some context or instructions for content generation';
       setError(errorMsg);
-      alert(errorMsg);
+      setTimeout(() => setError(''), 5000);
       return;
     }
 
     setError('');
+    setLocalLoading(true);
 
     try {
       const context = {
@@ -104,7 +115,8 @@ const WritingAssistant = ({
           name: selectedClient.name,
           mission: selectedClient.mission,
           focusAreas: selectedClient.focusAreas,
-          category: selectedClient.category
+          category: selectedClient.category,
+          fullData: selectedClient.fullData || selectedClient
         },
         grantInfo: selectedGrant ? {
           title: selectedGrant.title,
@@ -153,7 +165,9 @@ const WritingAssistant = ({
       console.error('❌ Error generating content:', error);
       const errorMsg = error.message || 'Failed to generate content. Please try again.';
       setError(errorMsg);
-      alert(errorMsg);
+      setTimeout(() => setError(''), 5000);
+    } finally {
+      setLocalLoading(false);
     }
   };
 
@@ -165,17 +179,19 @@ const WritingAssistant = ({
     if (!currentContent.trim()) {
       const errorMsg = 'Please generate some content first';
       setError(errorMsg);
-      alert(errorMsg);
+      setTimeout(() => setError(''), 5000);
       return;
     }
 
     setError('');
+    setLocalLoading(true);
 
     try {
       const context = {
         clientInfo: selectedClient ? {
           name: selectedClient.name,
-          mission: selectedClient.mission
+          mission: selectedClient.mission,
+          fullData: selectedClient.fullData || selectedClient
         } : null,
         section: activeSection
       };
@@ -201,7 +217,9 @@ const WritingAssistant = ({
       console.error('❌ Error improving content:', error);
       const errorMsg = error.message || 'Failed to improve content. Please try again.';
       setError(errorMsg);
-      alert(errorMsg);
+      setTimeout(() => setError(''), 5000);
+    } finally {
+      setLocalLoading(false);
     }
   };
 
@@ -210,9 +228,12 @@ const WritingAssistant = ({
     console.log('📊 Analyzing content for section:', activeSection);
 
     if (!currentContent.trim()) {
-      alert('Please generate some content first');
+      setError('Please generate some content first');
+      setTimeout(() => setError(''), 5000);
       return;
     }
+
+    setLocalLoading(true);
 
     try {
       if (typeof onAnalyzeContent !== 'function') {
@@ -226,7 +247,11 @@ const WritingAssistant = ({
       alert(`Content Analysis for ${sections[activeSection].label}:\n\n${analysis}`);
     } catch (error) {
       console.error('❌ Error analyzing content:', error);
-      alert(error.message || 'Failed to analyze content. Please try again.');
+      const errorMsg = error.message || 'Failed to analyze content. Please try again.';
+      setError(errorMsg);
+      setTimeout(() => setError(''), 5000);
+    } finally {
+      setLocalLoading(false);
     }
   };
 
@@ -241,7 +266,8 @@ const WritingAssistant = ({
       console.log('💾 Saving all content:', allContent);
       alert('All content saved successfully!');
     } else {
-      alert('Please select or create a grant first');
+      setError('Please select or create a grant first');
+      setTimeout(() => setError(''), 5000);
     }
   };
 
@@ -295,26 +321,32 @@ const WritingAssistant = ({
     }
   };
 
-  // Add demo content for testing
+  // Add demo content for testing when no AI available
   const handleAddDemoContent = (section) => {
     const demoContent = {
-      needsStatement: `The community of ${selectedClient?.name || 'our target population'} faces significant challenges in [specific area]. Recent data indicates that [statistic or fact]. This pressing issue requires immediate intervention to address [key problems] and improve outcomes for [target population].`,
+      needsStatement: `The community of ${selectedClient?.name || 'our target population'} faces significant challenges in ${selectedClient?.focusAreas?.[0] || 'key areas'}. Recent data indicates growing needs that require immediate intervention. This pressing issue demands strategic solutions to address core problems and improve outcomes for the communities we serve.`,
 
-      objectives: `Primary Objective: To reduce [specific problem] by [percentage] within [timeline].\nSecondary Objectives:\n• Increase participation in [program activities] by [number] participants\n• Improve [specific metric] by [percentage]\n• Establish [number] sustainable partnerships\n• Train [number] community members in [skills]`,
+      objectives: `Primary Objective: To achieve measurable impact in ${selectedClient?.focusAreas?.[0] || 'target areas'} through evidence-based interventions.\n\nKey Goals:\n• Increase program participation and engagement\n• Improve measurable outcomes for beneficiaries\n• Establish sustainable community partnerships\n• Implement robust monitoring and evaluation systems`,
 
-      methodology: `Our approach employs evidence-based strategies including:\n1. [Activity 1]: Detailed description of implementation\n2. [Activity 2]: Step-by-step procedures\n3. [Activity 3]: Staff roles and responsibilities\n4. [Activity 4]: Participant engagement methods\nTimeline: [Start date] to [End date] with key milestones`,
+      methodology: `Our approach employs proven strategies including:\n1. Community-centered program design and implementation\n2. Evidence-based interventions tailored to local needs\n3. Strategic partnerships with local organizations\n4. Continuous feedback mechanisms for program improvement\n\nTimeline: Multi-phase implementation with regular progress assessments`,
 
-      evaluation: `Evaluation Framework:\n• Quantitative Metrics: [Specific measurements]\n• Qualitative Data: [Collection methods]\n• Data Collection: [Tools and frequency]\n• Reporting: [Schedule and stakeholders]\nSuccess will be measured by [key indicators]`,
+      evaluation: `Comprehensive Evaluation Framework:\n• Quantitative Metrics: Pre/post assessments, participation rates, outcome measurements\n• Qualitative Data: Participant interviews, focus groups, case studies\n• Data Collection: Digital tools, surveys, on-site observations\n• Reporting: Quarterly progress reports, annual impact assessments\n\nSuccess will be measured by achievement of key performance indicators`,
 
-      budget: `Budget Breakdown:\n• Personnel: $[amount] - [justification]\n• Program Activities: $[amount] - [description]\n• Materials: $[amount] - [items list]\n• Administration: $[amount] - [overhead costs]\nTotal Request: $[amount] | Matching Funds: $[amount]`,
+      budget: `Strategic Budget Allocation:\n• Personnel: Investment in qualified staff and program leadership\n• Program Activities: Direct service delivery and community engagement\n• Materials & Equipment: Necessary resources for program implementation\n• Administration & Overhead: Essential operational support\n\nTotal funding request reflects cost-effective program delivery`,
 
-      sustainability: `Long-term Sustainability Plan:\n• Funding Diversification: [Strategies]\n• Community Partnerships: [Organization names]\n• Capacity Building: [Training plans]\n• Revenue Generation: [Income sources]\n• Program Replication: [Expansion plans]`
+      sustainability: `Long-term Sustainability Strategy:\n• Funding Diversification: Multiple revenue streams and grant opportunities\n• Community Partnerships: Deepened engagement with local stakeholders\n• Capacity Building: Staff development and organizational growth\n• Program Replication: Scalable model for broader impact\n• Outcome Measurement: Continuous demonstration of program effectiveness`
     };
 
     setGeneratedContent(prev => ({
       ...prev,
       [section]: demoContent[section]
     }));
+  };
+
+  // Get client display name
+  const getClientDisplayName = (client) => {
+    if (!client) return '';
+    return client.name || client.organizationName || 'Unknown Client';
   };
 
   return (
@@ -370,16 +402,33 @@ const WritingAssistant = ({
                 <label className="card-label">Client</label>
                 <select 
                   value={selectedClient?.id || ''} 
-                  onChange={(e) => onSelectClient(clients.find(c => c.id === e.target.value))}
+                  onChange={(e) => {
+                    const client = clients.find(c => c.id === e.target.value);
+                    onSelectClient(client);
+                    console.log('Selected client:', client);
+                  }}
                   className="modern-select"
                 >
                   <option value="">Choose client...</option>
-                  {clients.map(client => (
+                  {clients && clients.map(client => (
                     <option key={client.id} value={client.id}>
-                      {client.name}
+                      {getClientDisplayName(client)} 
+                      {client.category ? ` (${client.category})` : ''}
                     </option>
                   ))}
                 </select>
+                {clients && clients.length === 0 && !loading && (
+                  <div className="no-clients-message">
+                    <i className="fas fa-exclamation-triangle"></i>
+                    No clients found. Please add clients first.
+                  </div>
+                )}
+                {loading && (
+                  <div className="loading-message">
+                    <i className="fas fa-spinner fa-spin"></i>
+                    Loading clients...
+                  </div>
+                )}
               </div>
 
               <div className="selection-card">
@@ -391,12 +440,17 @@ const WritingAssistant = ({
                   disabled={!selectedClient}
                 >
                   <option value="">Choose grant...</option>
-                  {grants.map(grant => (
+                  {grants && grants.map(grant => (
                     <option key={grant.id} value={grant.id}>
                       {grant.title}
                     </option>
                   ))}
                 </select>
+                {!selectedClient && (
+                  <div className="selection-hint">
+                    Select a client first to choose a grant
+                  </div>
+                )}
               </div>
             </div>
           </div>
@@ -410,16 +464,28 @@ const WritingAssistant = ({
               </h3>
               <div className="context-card">
                 <div className="client-header">
-                  <h4>{selectedClient.name}</h4>
-                  <span className="client-category">{selectedClient.category}</span>
+                  <h4>{getClientDisplayName(selectedClient)}</h4>
+                  {selectedClient.category && (
+                    <span className="client-category">{selectedClient.category}</span>
+                  )}
                 </div>
-                <p className="client-mission">{selectedClient.mission}</p>
-                <div className="focus-areas">
-                  <strong>Focus Areas:</strong>
-                  <div className="focus-tags">
-                    {selectedClient.focusAreas?.map((area, index) => (
-                      <span key={index} className="focus-tag">{area}</span>
-                    ))}
+                <p className="client-mission">
+                  {selectedClient.mission || 'No mission statement provided'}
+                </p>
+                {selectedClient.focusAreas && selectedClient.focusAreas.length > 0 && (
+                  <div className="focus-areas">
+                    <strong>Focus Areas:</strong>
+                    <div className="focus-tags">
+                      {selectedClient.focusAreas.map((area, index) => (
+                        <span key={index} className="focus-tag">{area}</span>
+                      ))}
+                    </div>
+                  </div>
+                )}
+                <div className="client-meta">
+                  <div className="meta-item">
+                    <i className="fas fa-database"></i>
+                    Live MongoDB Data
                   </div>
                 </div>
               </div>
@@ -511,12 +577,19 @@ const WritingAssistant = ({
               <button 
                 className="btn-demo"
                 onClick={() => handleAddDemoContent(activeSection)}
+                disabled={!selectedClient}
               >
                 Add Demo Content
               </button>
               <button 
                 className="btn-log-state"
-                onClick={() => console.log('Current State:', { generatedContent, activeSection, userInput })}
+                onClick={() => console.log('Current State:', { 
+                  clients, 
+                  selectedClient, 
+                  generatedContent, 
+                  activeSection, 
+                  userInput 
+                })}
               >
                 Log State
               </button>
@@ -603,17 +676,18 @@ const WritingAssistant = ({
                 placeholder={getSectionPlaceholder(activeSection)}
                 className="modern-textarea"
                 rows="4"
+                disabled={!selectedClient || localLoading}
               />
               <div className="input-footer">
                 <span className="char-count">{userInput.length} characters</span>
                 <button 
                   className="btn-generate"
                   onClick={handleGenerateContent}
-                  disabled={loading || !selectedClient || !userInput.trim()}
+                  disabled={localLoading || !selectedClient || !userInput.trim()}
                 >
-                  {loading ? (
+                  {localLoading ? (
                     <>
-                      <i className="fas fa-robot"></i>
+                      <i className="fas fa-spinner fa-spin"></i>
                       Generating...
                     </>
                   ) : (
@@ -642,6 +716,7 @@ const WritingAssistant = ({
                       value={improvementType} 
                       onChange={(e) => setImprovementType(e.target.value)}
                       className="action-select"
+                      disabled={localLoading}
                     >
                       {improvementTypes.map(type => (
                         <option key={type.value} value={type.value}>
@@ -653,7 +728,7 @@ const WritingAssistant = ({
                   <button 
                     className="btn-improve"
                     onClick={handleImproveContent}
-                    disabled={!generatedContent[activeSection].trim()}
+                    disabled={localLoading || !generatedContent[activeSection].trim()}
                   >
                     <i className="fas fa-magic"></i>
                     Improve
@@ -661,7 +736,7 @@ const WritingAssistant = ({
                   <button 
                     className="btn-analyze"
                     onClick={handleAnalyzeContent}
-                    disabled={!generatedContent[activeSection].trim()}
+                    disabled={localLoading || !generatedContent[activeSection].trim()}
                   >
                     <i className="fas fa-chart-bar"></i>
                     Analyze
@@ -691,7 +766,11 @@ const WritingAssistant = ({
                     <i className="fas fa-robot"></i>
                   </div>
                   <h4>Ready to Create {sections[activeSection].label}</h4>
-                  <p>Provide instructions above and click "Generate Content" to create your {sections[activeSection].label.toLowerCase()}.</p>
+                  <p>
+                    {!selectedClient 
+                      ? 'Select a client first to start generating content.' 
+                      : 'Provide instructions above and click "Generate Content" to create your content.'}
+                  </p>
                 </div>
               )}
             </div>
