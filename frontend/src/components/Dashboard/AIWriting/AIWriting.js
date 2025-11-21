@@ -630,16 +630,8 @@ const AIWriting = () => {
         )}
       </div>
 
-      {/* Loading Overlay */}
-      {loading && (
-        <div className="loading-overlay">
-          <div className="loading-spinner">
-            <i className="fas fa-robot fa-spin"></i>
-            <p>AI is generating content...</p>
-          </div>
-        </div>
-      )}
-    </div>
+     
+     </div>
   );
 };
 
