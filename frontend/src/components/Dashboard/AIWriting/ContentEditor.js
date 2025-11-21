@@ -1,5 +1,6 @@
 // frontend/src/components/Dashboard/AIWriting/ContentEditor.js
 import React, { useState } from 'react';
+import './ContentEditor.css'; // Import the standalone CSS
 
 const ContentEditor = ({ clients, grants, selectedClient, selectedGrant, onSelectClient, onSelectGrant }) => {
   const [content, setContent] = useState('');

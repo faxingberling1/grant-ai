@@ -24,7 +24,7 @@ let model;
 try {
   if (process.env.GEMINI_API_KEY) {
     genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
-    model = genAI.getGenerativeModel({ model: "gemini-pro" });
+    model = genAI.getGenerativeModel({ model: "gemini-2.5-pro" });
     console.log('✅ Google Gemini AI initialized successfully');
   } else {
     console.log('⚠️  GEMINI_API_KEY not found - AI features will be disabled');

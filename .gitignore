@@ -1,0 +1,66 @@
+#############################
+# Node modules
+#############################
+node_modules/
+**/node_modules/
+
+#############################
+# Build / Dist Output
+#############################
+dist/
+build/
+.next/
+out/
+.vercel/
+.render/
+
+#############################
+# Environment Variables
+#############################
+.env
+.env.*
+.env.local
+.env.production
+.env.development
+.env.test
+backend/.env
+backend/.env.*
+frontend/.env
+frontend/.env.*
+
+# Allow example env files
+!.env.example
+!backend/.env.example
+!frontend/.env.example
+
+#############################
+# Logs
+#############################
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+#############################
+# OS / System files
+#############################
+.DS_Store
+Thumbs.db
+
+#############################
+# IDE / Editor files
+#############################
+.vscode/
+.idea/
+*.swp
+*.swo
+
+#############################
+# Misc
+#############################
+*.pid
+*.seed
+*.csv
+*.dat
+*.out
+*.log
