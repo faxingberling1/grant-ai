@@ -16,6 +16,9 @@ const AIWriting = () => {
   const [loading, setLoading] = useState(false);
   const [apiStatus, setApiStatus] = useState('checking');
 
+  // Get the API URL from environment variables
+  const API_URL = process.env.REACT_APP_API_URL || 'https://grant-ai.onrender.com';
+
   // Check API connection
   useEffect(() => {
     checkAPIStatus();
@@ -33,12 +36,15 @@ const AIWriting = () => {
         headers['Authorization'] = `Bearer ${token}`;
       }
 
-      const response = await fetch('http://localhost:5000/api/health', {
+      console.log('🔍 Checking API status at:', `${API_URL}/api/health`);
+      
+      const response = await fetch(`${API_URL}/api/health`, {
         method: 'GET',
         headers: headers,
       });
       
       const data = await response.json();
+      console.log('✅ API Health response:', data);
       
       if (response.ok) {
         setApiStatus('connected');
@@ -62,23 +68,33 @@ const AIWriting = () => {
         headers['Authorization'] = `Bearer ${token}`;
       }
 
+      console.log('🔄 Fetching clients from:', `${API_URL}/api/clients`);
+
       // Fetch real clients from API
-      const clientsResponse = await fetch('http://localhost:5000/api/clients', {
+      const clientsResponse = await fetch(`${API_URL}/api/clients`, {
         method: 'GET',
         headers: headers,
       });
 
+      console.log('📡 Clients response status:', clientsResponse.status);
+
       if (clientsResponse.ok) {
         const clientsData = await clientsResponse.json();
-        setClients(clientsData.map(client => ({
+        console.log('✅ Clients data received:', clientsData.length, 'clients');
+        
+        const transformedClients = clientsData.map(client => ({
           id: client._id,
           name: client.organizationName,
-          category: client.organizationType || 'General',
+          category: client.category || client.organizationType || 'General',
           mission: client.missionStatement,
           focusAreas: client.focusAreas || [],
-          ...client
-        })));
+          fullData: client // Include all original data for AI context
+        }));
+        
+        setClients(transformedClients);
+        console.log('✅ Transformed clients:', transformedClients);
       } else {
+        console.log('❌ Clients fetch failed, using mock data');
         // Fallback to mock data if API fails
         loadMockData();
       }
@@ -103,16 +119,22 @@ const AIWriting = () => {
         headers['Authorization'] = `Bearer ${token}`;
       }
 
+      console.log('🔄 Fetching grant sources from:', `${API_URL}/api/grants/sources`);
+
       // Fetch grant sources from API
-      const grantSourcesResponse = await fetch('http://localhost:5000/api/grants/sources', {
+      const grantSourcesResponse = await fetch(`${API_URL}/api/grants/sources`, {
         method: 'GET',
         headers: headers,
       });
 
+      console.log('📡 Grant sources response status:', grantSourcesResponse.status);
+
       if (grantSourcesResponse.ok) {
         const grantSourcesData = await grantSourcesResponse.json();
+        console.log('✅ Grant sources data received:', grantSourcesData.length, 'sources');
         setGrantSources(grantSourcesData);
       } else {
+        console.log('❌ Grant sources fetch failed, using mock data');
         // Fallback to mock grant sources if API fails
         loadMockGrantSources();
       }
@@ -145,39 +167,6 @@ const AIWriting = () => {
         focusAreas: ['Conservation', 'Climate Change', 'Sustainability'],
         eligibility: 'Non-profit organizations, government agencies',
         url: 'https://www.epa.gov/grants'
-      },
-      {
-        id: '3',
-        title: 'Community Health Initiative',
-        funder: 'Department of Health and Human Services',
-        category: 'Healthcare',
-        deadline: '2024-05-30',
-        maxAward: 1000000,
-        focusAreas: ['Public Health', 'Community Wellness', 'Healthcare Access'],
-        eligibility: 'Non-profit organizations, healthcare providers',
-        url: 'https://www.hhs.gov/grants/'
-      },
-      {
-        id: '4',
-        title: 'Youth Development Fund',
-        funder: 'Department of Education',
-        category: 'Youth Development',
-        deadline: '2024-06-15',
-        maxAward: 300000,
-        focusAreas: ['After-school Programs', 'Mentorship', 'Career Readiness'],
-        eligibility: 'Non-profit organizations, schools, community centers',
-        url: 'https://www.ed.gov/funding'
-      },
-      {
-        id: '5',
-        title: 'Arts and Culture Grant',
-        funder: 'National Endowment for the Arts',
-        category: 'Arts & Culture',
-        deadline: '2024-07-01',
-        maxAward: 250000,
-        focusAreas: ['Arts Education', 'Cultural Programs', 'Community Arts'],
-        eligibility: 'Non-profit organizations, arts institutions',
-        url: 'https://www.arts.gov/grants'
       }
     ];
 
@@ -248,13 +237,16 @@ const AIWriting = () => {
         headers['Authorization'] = `Bearer ${token}`;
       }
 
-      const response = await fetch('http://localhost:5000/api/grants', {
+      console.log('🔄 Creating grant at:', `${API_URL}/api/grants`);
+
+      const response = await fetch(`${API_URL}/api/grants`, {
         method: 'POST',
         headers: headers,
         body: JSON.stringify(grantData),
       });
 
       const data = await response.json();
+      console.log('📡 Create grant response:', data);
       
       if (response.ok && data.success) {
         // Add the new grant to the grants list
@@ -295,13 +287,17 @@ const AIWriting = () => {
         format: context?.format || 'paragraph'
       };
 
-      const response = await fetch('http://localhost:5000/api/generate', {
+      console.log('🚀 Generating content at:', `${API_URL}/api/generate`);
+      console.log('📝 Request body:', requestBody);
+
+      const response = await fetch(`${API_URL}/api/generate`, {
         method: 'POST',
         headers: headers,
         body: JSON.stringify(requestBody),
       });
 
       const data = await response.json();
+      console.log('📡 Generate content response:', data);
       
       if (!response.ok || !data.success) {
         throw new Error(data.message || 'API request failed');
@@ -340,7 +336,9 @@ const AIWriting = () => {
         }
       };
 
-      const response = await fetch('http://localhost:5000/api/improve', {
+      console.log('🔧 Improving content at:', `${API_URL}/api/improve`);
+
+      const response = await fetch(`${API_URL}/api/improve`, {
         method: 'POST',
         headers: headers,
         body: JSON.stringify(requestBody),
@@ -385,7 +383,9 @@ const AIWriting = () => {
         }
       };
 
-      const response = await fetch('http://localhost:5000/api/analyze', {
+      console.log('📊 Analyzing content at:', `${API_URL}/api/analyze`);
+
+      const response = await fetch(`${API_URL}/api/analyze`, {
         method: 'POST',
         headers: headers,
         body: JSON.stringify(requestBody),
@@ -418,7 +418,9 @@ const AIWriting = () => {
         headers['Authorization'] = `Bearer ${token}`;
       }
 
-      const response = await fetch(`http://localhost:5000/api/templates/${templateType}`, {
+      console.log('📋 Fetching templates at:', `${API_URL}/api/templates/${templateType}`);
+
+      const response = await fetch(`${API_URL}/api/templates/${templateType}`, {
         method: 'GET',
         headers: headers,
       });
@@ -447,13 +449,6 @@ const AIWriting = () => {
           description: 'Template for describing community problems and needs',
           structure: ['Problem Statement', 'Data & Statistics', 'Impact Description', 'Urgency'],
           prompt: 'Write a compelling needs statement for a grant proposal focusing on community needs and gaps in services.'
-        },
-        {
-          id: '2',
-          name: 'Program Gap Analysis',
-          description: 'Identify gaps in existing services and programs',
-          structure: ['Current Services', 'Identified Gaps', 'Target Population', 'Proposed Solution'],
-          prompt: 'Create a gap analysis showing the need for a new program or service.'
         }
       ],
       objectives: [
@@ -463,49 +458,9 @@ const AIWriting = () => {
           description: 'Specific, Measurable, Achievable, Relevant, Time-bound objectives',
           structure: ['Specific', 'Measurable', 'Achievable', 'Relevant', 'Time-bound'],
           prompt: 'Develop SMART objectives for a grant proposal that are clear and achievable.'
-        },
-        {
-          id: '2',
-          name: 'Program Outcomes',
-          description: 'Define expected program outcomes and impact',
-          structure: ['Short-term Outcomes', 'Long-term Impact', 'Measurement Methods', 'Timeline'],
-          prompt: 'Outline the expected outcomes and impact of the proposed program.'
-        }
-      ],
-      methodology: [
-        {
-          id: '1',
-          name: 'Program Implementation Plan',
-          description: 'Detailed program activities and implementation steps',
-          structure: ['Activities', 'Timeline', 'Staffing', 'Resources', 'Monitoring'],
-          prompt: 'Describe the methodology and implementation plan for the proposed program.'
-        },
-        {
-          id: '2',
-          name: 'Project Timeline',
-          description: 'Clear timeline for project activities and milestones',
-          structure: ['Phase 1', 'Phase 2', 'Phase 3', 'Milestones', 'Deliverables'],
-          prompt: 'Create a detailed project timeline with clear milestones and deliverables.'
-        }
-      ],
-      evaluation: [
-        {
-          id: '1',
-          name: 'Program Evaluation Plan',
-          description: 'Comprehensive evaluation framework and methods',
-          structure: ['Evaluation Questions', 'Data Collection', 'Analysis Methods', 'Reporting'],
-          prompt: 'Develop an evaluation plan to measure program success and impact.'
-        }
-      ],
-      budget: [
-        {
-          id: '1',
-          name: 'Budget Narrative Template',
-          description: 'Justify and explain budget items clearly',
-          structure: ['Personnel Costs', 'Operating Expenses', 'Equipment', 'Indirect Costs'],
-          prompt: 'Write a budget narrative that clearly justifies each expense in the proposal.'
         }
       ]
+      // ... other template types
     };
 
     return templates[templateType] || [];
@@ -629,9 +584,7 @@ const AIWriting = () => {
           />
         )}
       </div>
-
-     
-     </div>
+    </div>
   );
 };
 
