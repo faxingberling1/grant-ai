@@ -2,7 +2,7 @@ backend
 ├── .env
 ├── .env.production
 ├── config
-│   └── database.js
+│   └── db.js
 ├── middleware
 │   └── auth.js
 ├── models
@@ -27,7 +27,6 @@ backend
 frontend
 ├── .env.local
 ├── .env.production
-├── .gitignore
 ├── build
 ├── node_modules
 ├── package-lock.json
@@ -43,9 +42,13 @@ frontend
 │   │   │   ├── AIWriting
 │   │   │   │   ├── AIWriting.css
 │   │   │   │   ├── AIWriting.js
+│   │   │   │   ├── CollaborationTools.css
 │   │   │   │   ├── CollaborationTools.js
+│   │   │   │   ├── ContentEditor.css
 │   │   │   │   ├── ContentEditor.js
+│   │   │   │   ├── TemplateLibrary.css
 │   │   │   │   ├── TemplateLibrary.js
+│   │   │   │   ├── WritingAssistant.css
 │   │   │   │   └── WritingAssistant.js
 │   │   │   ├── CalendarModal
 │   │   │   │   ├── Calendar.css
