@@ -4,6 +4,9 @@ import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import './Register.css';
 
+// Use backend URL from environment or fallback to Render URL
+const API_URL = process.env.REACT_APP_API_URL || 'https://grant-ai.onrender.com';
+
 const Register = () => {
   const [formData, setFormData] = useState({
     name: '',
@@ -42,7 +45,7 @@ const Register = () => {
 
     setLoading(true);
     try {
-      const response = await axios.post('/api/auth/register', {
+      const response = await axios.post(`${API_URL}/api/auth/register`, {
         name: formData.name,
         email: formData.email,
         password: formData.password
@@ -50,9 +53,7 @@ const Register = () => {
 
       if (response.data.success) {
         setMessage('✅ Registration successful! Please check your email for next steps.');
-        // Clear form
         setFormData({ name: '', email: '', password: '', confirmPassword: '' });
-        // Redirect to login after 2.5 seconds
         setTimeout(() => navigate('/login'), 2500);
       } else {
         setMessage(response.data.message || 'Registration failed. Please try again.');
@@ -61,6 +62,7 @@ const Register = () => {
       console.error('Registration error:', error);
       setMessage(
         error.response?.data?.message ||
+        error.message ||
         'An unexpected error occurred. Please try again later.'
       );
     } finally {
@@ -71,7 +73,7 @@ const Register = () => {
   const fillDemoCredentials = () => {
     setFormData({
       name: 'Demo User',
-      email: 'demo+' + Date.now() + '@grantfunds.com',
+      email: `demo+${Date.now()}@grantfunds.com`,
       password: 'demo123',
       confirmPassword: 'demo123'
     });
