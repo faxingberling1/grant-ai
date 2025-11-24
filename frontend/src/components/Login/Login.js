@@ -1,18 +1,17 @@
+// src/components/Login/Login.js
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import './Login.css';
 
 const Login = () => {
-  const [isLogin, setIsLogin] = useState(true);
   const [formData, setFormData] = useState({
-    name: '',
     email: '',
     password: ''
   });
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState('');
-  const { login, register, isAuthenticated } = useAuth();
+  const { login, isAuthenticated } = useAuth();
   const navigate = useNavigate();
 
   // Animation states
@@ -103,19 +102,13 @@ const Login = () => {
     setMessage('');
 
     try {
-      let result;
-      if (isLogin) {
-        result = await login(formData.email, formData.password);
-      } else {
-        result = await register(formData.name, formData.email, formData.password);
-      }
+      const result = await login(formData.email, formData.password);
 
       if (result.success) {
         setMessage('Success! Redirecting to dashboard...');
-        // The redirect will happen automatically via the useEffect above
-        // and the ProtectedRoute in App.js
+        // Redirect handled by useEffect + ProtectedRoute
       } else {
-        setMessage(result.message);
+        setMessage(result.message || 'Invalid email or password.');
       }
     } catch (error) {
       setMessage('An error occurred. Please try again.');
@@ -126,7 +119,6 @@ const Login = () => {
 
   const fillDemoCredentials = (email, password) => {
     setFormData({
-      ...formData,
       email,
       password
     });
@@ -194,9 +186,8 @@ const Login = () => {
     }
   };
 
-  // Don't render login page if already authenticated
   if (isAuthenticated) {
-    return null; // or a loading spinner, redirect will happen
+    return null;
   }
 
   return (
@@ -240,25 +231,6 @@ const Login = () => {
           </div>
 
           <form className="login-form" onSubmit={handleSubmit}>
-            {!isLogin && (
-              <div className="form-group">
-                <label htmlFor="name">
-                  <i className="fas fa-user"></i>
-                  Full Name
-                </label>
-                <input
-                  type="text"
-                  id="name"
-                  name="name"
-                  className="form-control"
-                  placeholder="Enter your full name"
-                  value={formData.name}
-                  onChange={handleChange}
-                  required={!isLogin}
-                />
-              </div>
-            )}
-
             <div className="form-group">
               <label htmlFor="email">
                 <i className="fas fa-envelope"></i>
@@ -308,35 +280,31 @@ const Login = () => {
               {loading ? (
                 <>
                   <i className="fas fa-spinner fa-spin"></i>
-                  Processing...
+                  Signing In...
                 </>
               ) : (
                 <>
-                  <i className={`fas ${isLogin ? 'fa-sign-in-alt' : 'fa-user-plus'}`}></i>
-                  {isLogin ? 'Sign In' : 'Create Account'}
+                  <i className="fas fa-sign-in-alt"></i>
+                  Sign In
                 </>
               )}
             </button>
 
             <div className="login-footer">
               <p>
-                {isLogin ? "Don't have an account? " : "Already have an account? "}
+                Don't have an account?{' '}
                 <button 
                   type="button" 
                   className="link-btn"
-                  onClick={() => {
-                    setIsLogin(!isLogin);
-                    setMessage('');
-                  }}
+                  onClick={() => navigate('/register')}
                 >
-                  {isLogin ? 'Create one here' : 'Sign in here'}
+                  Create one here
                 </button>
               </p>
             </div>
           </form>
         </div>
 
-        {/* Watermark */}
         <div className="watermark">
           Tool Made with <span className="heart">❤️</span> by NeonByteAI
         </div>
@@ -355,7 +323,6 @@ const Login = () => {
               {renderSlideContent()}
             </div>
             
-            {/* Slide Indicators */}
             <div className="slide-indicators">
               {slides.map((_, index) => (
                 <button
@@ -373,7 +340,6 @@ const Login = () => {
             </div>
           </div>
 
-          {/* Static CTA */}
           <div className="static-cta">
             <div className="cta-text">
               Ready to transform your grant strategy?
@@ -384,7 +350,6 @@ const Login = () => {
           </div>
         </div>
 
-        {/* Floating Elements */}
         <div className="floating-elements">
           <div className="floating-element element-1">
             <i className="fas fa-star"></i>

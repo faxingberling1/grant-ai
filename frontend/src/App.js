@@ -1,9 +1,11 @@
+// src/App.js
 import React from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import { ClientsProvider } from './context/ClientsContext';
 import { TemplatesProvider } from './context/TemplatesContext';
 import Login from './components/Login/Login';
+import Register from './components/Login/Register'; // ← NEW
 import Dashboard from './components/Dashboard/Dashboard';
 import './App.css';
 
@@ -16,12 +18,16 @@ function App() {
             <div className="App">
               <Routes>
                 <Route path="/login" element={<Login />} />
-                <Route path="/dashboard" element={
-                  <ProtectedRoute>
-                    <Dashboard />
-                  </ProtectedRoute>
-                } />
-                <Route path="/" element={<Navigate to="/dashboard" />} />
+                <Route path="/register" element={<Register />} /> {/* ← NEW */}
+                <Route 
+                  path="/dashboard" 
+                  element={
+                    <ProtectedRoute>
+                      <Dashboard />
+                    </ProtectedRoute>
+                  } 
+                />
+                <Route path="/" element={<Navigate to="/login" />} /> {/* Updated */}
               </Routes>
             </div>
           </Router>

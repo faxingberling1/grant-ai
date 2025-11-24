@@ -201,7 +201,7 @@ const TemplateLibrary = ({ onSelectTemplate, getTemplates }) => {
             </div>
           </div>
 
-          {/* Templates Grid */}
+          {/* Templates List - Changed to single column layout */}
           {loading ? (
             <div className="loading-state">
               <div className="loading-spinner"></div>
@@ -210,10 +210,10 @@ const TemplateLibrary = ({ onSelectTemplate, getTemplates }) => {
             </div>
           ) : (
             <>
-              <div className="templates-grid">
+              <div className="templates-list">
                 {filteredTemplates.map(template => (
-                  <div key={template.id} className="template-card">
-                    <div className="template-header">
+                  <div key={template.id} className="template-card-full">
+                    <div className="template-header-full">
                       <div className="template-title">
                         <h3>{template.name}</h3>
                         <span className="template-badge">Template</span>
