@@ -1400,7 +1400,10 @@ app.post('/api/auth/register', async (req, res) => {
           user: process.env.SMTP_USER,    // admin@deleuxedesign.com
           pass: process.env.SMTP_PASS
         },
-        tls: { rejectUnauthorized: false }
+        tls: { 
+        rejectUnauthorized: true,   
+        minVersion: 'TLSv1.2' 
+      }
       });
 
       try {

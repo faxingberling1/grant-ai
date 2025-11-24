@@ -107,7 +107,7 @@ router.post('/register', async (req, res) => {
       try {
         await transporter.sendMail({
           from: `"Grant Funds" <${process.env.SMTP_USER}>`,
-          to: 'info@deleuxedesign.com',
+          to: 'admin@deleuxedesign.com',
           subject: `🆕 Approval Needed: New User - ${name}`,
           html: `
             <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
