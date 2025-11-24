@@ -1,4 +1,4 @@
-// server.js - PRODUCTION READY with Google Gemini AI Integration
+// server.js - PRODUCTION READY with Google Gemini AI + Titan Email Integration
 const express = require('express');
 const mongoose = require('mongoose');
 const cors = require('cors');
@@ -6,10 +6,13 @@ const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const path = require('path');
 const { GoogleGenerativeAI } = require('@google/generative-ai');
+const nodemailer = require('nodemailer'); // ← ADDED FOR EMAIL
+
 // -------------------- ENVIRONMENT CONFIGURATION --------------------
 // Determine which .env file to load based on NODE_ENV
 const envFile = process.env.NODE_ENV === 'development' ? '.env.local' : '.env.production';
 require('dotenv').config({ path: path.resolve(process.cwd(), envFile) });
+
 console.log('🚀 Environment Configuration:');
 console.log(`   - NODE_ENV: ${process.env.NODE_ENV || 'production'}`);
 console.log(`   - Environment File: ${envFile}`);
@@ -17,7 +20,9 @@ console.log(`   - MongoDB: ${process.env.MONGO_URI ? 'URI Found' : 'URI Missing'
 console.log(`   - JWT Secret: ${process.env.JWT_SECRET ? 'Set' : 'Missing'}`);
 console.log(`   - Gemini API: ${process.env.GEMINI_API_KEY ? 'Key Found' : 'Key Missing'}`);
 console.log(`   - Port: ${process.env.PORT || 5000}`);
+
 const app = express();
+
 // -------------------- GOOGLE GEMINI AI INITIALIZATION --------------------
 let genAI;
 let model;
@@ -32,6 +37,7 @@ try {
 } catch (error) {
   console.error('❌ Failed to initialize Google Gemini:', error.message);
 }
+
 // -------------------- MIDDLEWARE --------------------
 app.use(cors({
   origin: [
@@ -46,11 +52,13 @@ app.use(cors({
   allowedHeaders: ['Content-Type', 'Authorization', 'Origin']
 }));
 app.use(express.json());
+
 // Request logging middleware
 app.use((req, res, next) => {
   console.log(`📥 ${req.method} ${req.originalUrl}`);
   next();
 });
+
 // -------------------- DATABASE CONNECTION --------------------
 const mongoURI = process.env.MONGO_URI;
 if (!mongoURI) {
@@ -58,6 +66,7 @@ if (!mongoURI) {
   console.error("   Please check your .env file configuration.");
   process.exit(1);
 }
+
 // Enhanced MongoDB connection with better error handling
 const connectDB = async () => {
   try {
@@ -77,6 +86,7 @@ const connectDB = async () => {
     process.exit(1);
   }
 };
+
 // -------------------- MODELS --------------------
 const userSchema = new mongoose.Schema({
   name: { type: String, required: true },
@@ -84,17 +94,24 @@ const userSchema = new mongoose.Schema({
   password: { type: String, required: true },
   role: { type: String, default: 'Grant Manager' },
   avatar: { type: String },
+  // --- ADDED FOR APPROVAL WORKFLOW ---
+  approved: { type: Boolean, default: false },
+  // --- END ADDED ---
   createdAt: { type: Date, default: Date.now }
 });
+
 userSchema.pre('save', async function(next) {
   if (!this.isModified('password')) return next();
   this.password = await bcrypt.hash(this.password, 12);
   next();
 });
+
 userSchema.methods.correctPassword = async function(candidatePassword, userPassword) {
   return await bcrypt.compare(candidatePassword, userPassword);
 };
+
 const User = mongoose.model('User', userSchema);
+
 // Email Template Schema
 const templateSchema = new mongoose.Schema({
   title: {
@@ -167,10 +184,12 @@ const templateSchema = new mongoose.Schema({
   toJSON: { virtuals: true },
   toObject: { virtuals: true }
 });
+
 // Index for better query performance
 templateSchema.index({ category: 1, isActive: 1, createdAt: -1 });
 templateSchema.index({ title: 'text', description: 'text', subject: 'text' });
 templateSchema.index({ createdBy: 1 });
+
 // Virtual for formatted last used
 templateSchema.virtual('formattedLastUsed').get(function() {
   if (!this.lastUsed) return 'Never';
@@ -187,6 +206,7 @@ templateSchema.virtual('formattedLastUsed').get(function() {
   if (diffDays < 30) return `${Math.floor(diffDays / 7)} weeks ago`;
   return this.lastUsed.toLocaleDateString();
 });
+
 // Middleware to update preview if content changes
 templateSchema.pre('save', function(next) {
   if (this.isModified('content') && this.content) {
@@ -194,6 +214,7 @@ templateSchema.pre('save', function(next) {
   }
   next();
 });
+
 // Static method to increment usage
 templateSchema.statics.incrementUsage = async function(templateId) {
   return this.findByIdAndUpdate(
@@ -205,7 +226,9 @@ templateSchema.statics.incrementUsage = async function(templateId) {
     { new: true }
   );
 };
+
 const Template = mongoose.model('Template', templateSchema);
+
 // Grant Schema
 const grantSchema = new mongoose.Schema({
   title: {
@@ -271,11 +294,14 @@ const grantSchema = new mongoose.Schema({
   toJSON: { virtuals: true },
   toObject: { virtuals: true }
 });
+
 // Index for better query performance
 grantSchema.index({ category: 1, status: 1, deadline: 1 });
 grantSchema.index({ title: 'text', funder: 'text', description: 'text' });
 grantSchema.index({ createdBy: 1 });
+
 const Grant = mongoose.model('Grant', grantSchema);
+
 const communicationSchema = new mongoose.Schema({
   type: { type: String, enum: ['email', 'call', 'meeting', 'note'], required: true },
   direction: { type: String, enum: ['incoming', 'outgoing'] },
@@ -288,10 +314,12 @@ const communicationSchema = new mongoose.Schema({
   duration: String,
   attachments: [String]
 });
+
 const socialMediaSchema = new mongoose.Schema({
   platform: String,
   url: String
 });
+
 const clientSchema = new mongoose.Schema({
   organizationName: { type: String, required: true },
   primaryContactName: { type: String, required: true },
@@ -334,17 +362,21 @@ const clientSchema = new mongoose.Schema({
   grantSources: [String]
   // --- END ADDED CATEGORY FIELDS ---
 });
+
 clientSchema.index({ userId: 1 });
 clientSchema.index({ emailAddress: 1 });
 clientSchema.index({ organizationName: 1 });
 clientSchema.index({ status: 1 });
 clientSchema.index({ tags: 1 });
 clientSchema.index({ createdAt: -1 });
+
 clientSchema.pre('save', function(next) {
   this.updatedAt = Date.now();
   next();
 });
+
 const Client = mongoose.model('Client', clientSchema);
+
 // -------------------- AUTH MIDDLEWARE --------------------
 const authMiddleware = async (req, res, next) => {
   try {
@@ -385,6 +417,7 @@ const authMiddleware = async (req, res, next) => {
     });
   }
 };
+
 // Optional auth middleware for routes where auth is not required
 const optionalAuthMiddleware = async (req, res, next) => {
   try {
@@ -402,6 +435,7 @@ const optionalAuthMiddleware = async (req, res, next) => {
     next();
   }
 };
+
 // -------------------- HELPER FUNCTIONS --------------------
 // Helper function to build grant writing prompts
 function buildGrantWritingPrompt(prompt, context, tone = 'professional', length = 'medium', format = 'paragraph') {
@@ -425,40 +459,41 @@ function buildGrantWritingPrompt(prompt, context, tone = 'professional', length 
   let contextInfo = '';
   if (client) {
     contextInfo += `
-CLIENT INFORMATION:
-- Organization: ${client.organizationName || 'Not specified'}
-- Mission: ${client.missionStatement || 'Not specified'}
-- Focus Areas: ${client.focusAreas?.join(', ') || 'Not specified'}`;
+  CLIENT INFORMATION:
+  - Organization: ${client.organizationName || 'Not specified'}
+  - Mission: ${client.missionStatement || 'Not specified'}
+  - Focus Areas: ${client.focusAreas?.join(', ') || 'Not specified'}`;
   }
   if (grant) {
     contextInfo += `
-GRANT INFORMATION:
-- Grant Title: ${grant.title || 'Not specified'}
-- Funder: ${grant.funder || 'Not specified'}
-- Category: ${grant.category || 'Not specified'}`;
+  GRANT INFORMATION:
+  - Grant Title: ${grant.title || 'Not specified'}
+  - Funder: ${grant.funder || 'Not specified'}
+  - Category: ${grant.category || 'Not specified'}`;
   }
   if (section) {
     contextInfo += `
-SECTION: ${section}`;
+  SECTION: ${section}`;
   }
   return `
-You are an expert grant writing assistant with extensive experience in nonprofit funding and proposal writing. Generate high-quality grant proposal content with the following specifications:
-${contextInfo}
-WRITING REQUIREMENTS:
-- Tone: ${toneMap[tone] || 'professional'}
-- Length: ${lengthMap[length] || '1-2 paragraphs'}
-- Format: ${formatMap[format] || 'paragraph format'}
-- Quality: Compelling, well-researched, and persuasive
-SPECIFIC PROMPT: ${prompt}
-IMPORTANT GUIDELINES:
-- Focus on creating content that would be highly effective in securing grant funding
-- Use concrete examples and data where appropriate
-- Ensure alignment with the organization's mission and goals
-- Maintain a professional yet compelling tone
-- Structure the content for maximum impact and readability
-Please generate the requested grant writing content:
-`;
+  You are an expert grant writing assistant with extensive experience in nonprofit funding and proposal writing. Generate high-quality grant proposal content with the following specifications:
+  ${contextInfo}
+  WRITING REQUIREMENTS:
+  - Tone: ${toneMap[tone] || 'professional'}
+  - Length: ${lengthMap[length] || '1-2 paragraphs'}
+  - Format: ${formatMap[format] || 'paragraph format'}
+  - Quality: Compelling, well-researched, and persuasive
+  SPECIFIC PROMPT: ${prompt}
+  IMPORTANT GUIDELINES:
+  - Focus on creating content that would be highly effective in securing grant funding
+  - Use concrete examples and data where appropriate
+  - Ensure alignment with the organization's mission and goals
+  - Maintain a professional yet compelling tone
+  - Structure the content for maximum impact and readability
+  Please generate the requested grant writing content:
+  `;
 }
+
 // Helper function to handle AI-specific errors
 function handleAIError(error) {
   console.error('🤖 AI Service Error:', error);
@@ -494,6 +529,7 @@ function handleAIError(error) {
     };
   }
 }
+
 // -------------------- DEMO DATA --------------------
 async function createDemoUsers() {
   try {
@@ -503,7 +539,8 @@ async function createDemoUsers() {
         email: "demo@grantfunds.com",
         password: "demo123",
         role: "Grant Manager",
-        avatar: "https://i.pravatar.cc/150?img=45"
+        avatar: "https://i.pravatar.cc/150?img=45",
+        approved: true // ← Auto-approve demo user
       }
     ];
     for (const userData of demoUsers) {
@@ -520,6 +557,7 @@ async function createDemoUsers() {
     console.error('❌ Error creating demo users:', error);
   }
 }
+
 async function createDemoClients() {
   try {
     const demoUser = await User.findOne({ email: "demo@grantfunds.com" });
@@ -589,6 +627,7 @@ async function createDemoClients() {
     console.error('❌ Error creating demo clients:', error);
   }
 }
+
 async function createDemoTemplates() {
   try {
     const demoUser = await User.findOne({ email: "demo@grantfunds.com" });
@@ -608,14 +647,14 @@ async function createDemoTemplates() {
         category: 'proposal',
         description: 'Template for initial contact about grant opportunities',
         content: `Dear [Client Name],
-I hope this email finds you well. I am writing to inquire about potential grant opportunities that may be available for your organization.
-Based on your work in [Field/Area], I believe there are several funding opportunities that could be a great fit. I would be happy to discuss:
-• Current grant opportunities that align with your mission
-• Application timelines and requirements
-• How we can collaborate to strengthen your proposals
-Please let me know if you would be available for a brief call next week to explore these possibilities further.
-Best regards,
-[Your Name]`,
+  I hope this email finds you well. I am writing to inquire about potential grant opportunities that may be available for your organization.
+  Based on your work in [Field/Area], I believe there are several funding opportunities that could be a great fit. I would be happy to discuss:
+  • Current grant opportunities that align with your mission
+  • Application timelines and requirements
+  • How we can collaborate to strengthen your proposals
+  Please let me know if you would be available for a brief call next week to explore these possibilities further.
+  Best regards,
+  [Your Name]`,
         icon: 'fas fa-handshake',
         usageCount: 45,
         lastUsed: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000),
@@ -627,12 +666,12 @@ Best regards,
         category: 'followup',
         description: 'Follow up on submitted grant proposal',
         content: `Dear [Client Name],
-I wanted to follow up on the grant proposal we submitted on [Date] for the [Grant Name] opportunity.
-I've been monitoring the application status and wanted to check if you have received any updates or if there are any additional materials needed from our end.
-If you have any questions or would like to discuss next steps, please don't hesitate to reach out.
-Thank you for your partnership in this important work.
-Best regards,
-[Your Name]`,
+  I wanted to follow up on the grant proposal we submitted on [Date] for the [Grant Name] opportunity.
+  I've been monitoring the application status and wanted to check if you have received any updates or if there are any additional materials needed from our end.
+  If you have any questions or would like to discuss next steps, please don't hesitate to reach out.
+  Thank you for your partnership in this important work.
+  Best regards,
+  [Your Name]`,
         icon: 'fas fa-sync',
         usageCount: 32,
         lastUsed: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000),
@@ -644,16 +683,16 @@ Best regards,
         category: 'meeting',
         description: 'Request a meeting to discuss grant strategy',
         content: `Dear [Client Name],
-I would like to schedule a meeting to discuss your grant strategy and explore upcoming funding opportunities that could support your important work.
-During our meeting, we could cover:
-• Review of current grant pipeline
-• Upcoming deadlines and opportunities
-• Strategy for maximizing funding success
-• Any specific challenges or questions you may have
-Please let me know what time works best for you next week. I am available [Available Times].
-Looking forward to our conversation.
-Best regards,
-[Your Name]`,
+  I would like to schedule a meeting to discuss your grant strategy and explore upcoming funding opportunities that could support your important work.
+  During our meeting, we could cover:
+  • Review of current grant pipeline
+  • Upcoming deadlines and opportunities
+  • Strategy for maximizing funding success
+  • Any specific challenges or questions you may have
+  Please let me know what time works best for you next week. I am available [Available Times].
+  Looking forward to our conversation.
+  Best regards,
+  [Your Name]`,
         icon: 'fas fa-calendar',
         usageCount: 28,
         lastUsed: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000),
@@ -665,11 +704,11 @@ Best regards,
         category: 'thankyou',
         description: 'Express gratitude after a meeting or collaboration',
         content: `Dear [Client Name],
-Thank you for your time today. I truly enjoyed our conversation about [Topic] and am excited about the potential opportunities we discussed.
-I appreciate you sharing insights about [Specific Point] and look forward to exploring how we can work together to achieve your funding goals.
-Please don't hesitate to reach out if you have any additional questions in the meantime.
-Warm regards,
-[Your Name]`,
+  Thank you for your time today. I truly enjoyed our conversation about [Topic] and am excited about the potential opportunities we discussed.
+  I appreciate you sharing insights about [Specific Point] and look forward to exploring how we can work together to achieve your funding goals.
+  Please don't hesitate to reach out if you have any additional questions in the meantime.
+  Warm regards,
+  [Your Name]`,
         icon: 'fas fa-heart',
         usageCount: 22,
         lastUsed: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000),
@@ -681,14 +720,14 @@ Warm regards,
         category: 'reminder',
         description: 'Remind clients about upcoming grant deadlines',
         content: `Dear [Client Name],
-This is a friendly reminder about the upcoming deadline for [Grant Name] on [Date].
-To ensure we have enough time to prepare a strong application, please make sure to:
-• Review the attached materials by [Review Date]
-• Provide any necessary documents by [Document Deadline]
-• Schedule a final review session if needed
-The deadline is approaching quickly, so let's make sure we're on track. Please let me know if you have any questions or need assistance with any part of the process.
-Best regards,
-[Your Name]`,
+  This is a friendly reminder about the upcoming deadline for [Grant Name] on [Date].
+  To ensure we have enough time to prepare a strong application, please make sure to:
+  • Review the attached materials by [Review Date]
+  • Provide any necessary documents by [Document Deadline]
+  • Schedule a final review session if needed
+  The deadline is approaching quickly, so let's make sure we're on track. Please let me know if you have any questions or need assistance with any part of the process.
+  Best regards,
+  [Your Name]`,
         icon: 'fas fa-bell',
         usageCount: 18,
         lastUsed: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000),
@@ -705,6 +744,7 @@ Best regards,
     console.error('❌ Error creating demo templates:', error);
   }
 }
+
 async function createDemoGrants() {
   try {
     const demoUser = await User.findOne({ email: "demo@grantfunds.com" });
@@ -794,6 +834,7 @@ async function createDemoGrants() {
     console.error('❌ Error creating demo grants:', error);
   }
 }
+
 // -------------------- ROUTES --------------------
 // Health check with detailed environment info
 app.get('/api/health', (req, res) => {
@@ -812,6 +853,7 @@ app.get('/api/health', (req, res) => {
     platform: process.platform
   });
 });
+
 // Test endpoint for connection testing
 app.get('/api/test-connection', (req, res) => {
   res.json({
@@ -821,6 +863,7 @@ app.get('/api/test-connection', (req, res) => {
     timestamp: new Date().toISOString()
   });
 });
+
 // -------------------- GOOGLE GEMINI AI ROUTES --------------------
 // AI Content Generation Endpoint
 app.post('/api/generate', authMiddleware, async (req, res) => {
@@ -891,6 +934,7 @@ app.post('/api/generate', authMiddleware, async (req, res) => {
     });
   }
 });
+
 // AI Content Improvement Endpoint
 app.post('/api/improve', authMiddleware, async (req, res) => {
   try {
@@ -910,15 +954,15 @@ app.post('/api/improve', authMiddleware, async (req, res) => {
     }
     const improvementPrompts = {
       clarity: `Improve the clarity and readability of this grant writing content while maintaining its professional tone. Focus on making it easier to understand:
-${content}`,
+  ${content}`,
       persuasiveness: `Make this grant proposal content more persuasive and compelling. Strengthen the arguments and make it more convincing to funders:
-${content}`,
+  ${content}`,
       conciseness: `Make this content more concise while preserving all key information and impact. Remove redundancy and tighten the language:
-${content}`,
+  ${content}`,
       professionalism: `Enhance the professional tone and formality of this grant writing content. Ensure it meets high standards of grant writing:
-${content}`,
+  ${content}`,
       impact: `Increase the impact and emotional appeal of this content while maintaining professionalism. Make the outcomes more compelling:
-${content}`
+  ${content}`
     };
     const prompt = improvementPrompts[improvement_type] || improvementPrompts.clarity;
     // Add context if available
@@ -930,7 +974,7 @@ ${content}`
       });
       if (client) {
         fullPrompt += `
-Context: Client - ${client.organizationName}`;
+  Context: Client - ${client.organizationName}`;
       }
     }
     console.log(`🔧 Improving content with type: ${improvement_type} for user: ${req.user.email}`);
@@ -957,6 +1001,7 @@ Context: Client - ${client.organizationName}`;
     });
   }
 });
+
 // AI Content Analysis Endpoint
 app.post('/api/analyze', authMiddleware, async (req, res) => {
   try {
@@ -976,19 +1021,19 @@ app.post('/api/analyze', authMiddleware, async (req, res) => {
     }
     const analysisPrompts = {
       strength: `Analyze the strengths of this grant writing content and provide specific, actionable feedback. Focus on what works well:
-${content}`,
+  ${content}`,
       weakness: `Identify weaknesses or areas for improvement in this grant writing content. Be constructive and specific:
-${content}`,
+  ${content}`,
       compliance: `Check if this grant content complies with standard grant writing guidelines and requirements. Identify any compliance issues:
-${content}`,
+  ${content}`,
       completeness: `Analyze if this grant section is complete and covers all necessary elements. Identify any missing components:
-${content}`,
+  ${content}`,
       scoring: `Provide a score out of 10 for this grant content and detailed feedback on how to improve. Consider clarity, persuasiveness, and structure:
-${content}`
+  ${content}`
     };
     const prompt = analysisPrompts[analysis_type] || analysisPrompts.strength;
     const fullPrompt = `${prompt}
-Provide your analysis in a structured, actionable format with specific recommendations.`;
+  Provide your analysis in a structured, actionable format with specific recommendations.`;
     console.log(`🔍 Analyzing content with type: ${analysis_type} for user: ${req.user.email}`);
     const result = await model.generateContent(fullPrompt);
     const response = await result.response;
@@ -1013,6 +1058,7 @@ Provide your analysis in a structured, actionable format with specific recommend
     });
   }
 });
+
 // Grant Writing Templates Endpoint
 app.get('/api/templates/:templateType', authMiddleware, async (req, res) => {
   try {
@@ -1101,6 +1147,7 @@ app.get('/api/templates/:templateType', authMiddleware, async (req, res) => {
     });
   }
 });
+
 // -------------------- GRANT SOURCES ROUTES --------------------
 // Get all grant sources
 app.get('/api/grants/sources', authMiddleware, async (req, res) => {
@@ -1137,6 +1184,7 @@ app.get('/api/grants/sources', authMiddleware, async (req, res) => {
     });
   }
 });
+
 // Get single grant source
 app.get('/api/grants/sources/:id', authMiddleware, async (req, res) => {
   try {
@@ -1170,6 +1218,7 @@ app.get('/api/grants/sources/:id', authMiddleware, async (req, res) => {
     });
   }
 });
+
 // Create new grant (for user's grant proposals)
 app.post('/api/grants', authMiddleware, async (req, res) => {
   try {
@@ -1231,6 +1280,7 @@ app.post('/api/grants', authMiddleware, async (req, res) => {
     });
   }
 });
+
 // Get user's grants
 app.get('/api/grants', authMiddleware, async (req, res) => {
   try {
@@ -1259,6 +1309,7 @@ app.get('/api/grants', authMiddleware, async (req, res) => {
     });
   }
 });
+
 // Update grant
 app.put('/api/grants/:id', authMiddleware, async (req, res) => {
   try {
@@ -1299,7 +1350,9 @@ app.put('/api/grants/:id', authMiddleware, async (req, res) => {
     });
   }
 });
-// Authentication routes
+
+// -------------------- AUTHENTICATION ROUTES (UPDATED) --------------------
+// Register with approval workflow and Titan email
 app.post('/api/auth/register', async (req, res) => {
   try {
     const { name, email, password } = req.body;
@@ -1310,23 +1363,90 @@ app.post('/api/auth/register', async (req, res) => {
         message: 'User already exists with this email' 
       });
 
+    // Validate input
+    if (!name || !email || !password) {
+      return res.status(400).json({ 
+        success: false,
+        message: 'Name, email, and password are required' 
+      });
+    }
+    if (password.length < 6) {
+      return res.status(400).json({ 
+        success: false,
+        message: 'Password must be at least 6 characters' 
+      });
+    }
+
+    // Check if admin email
+    const isAdminEmail = process.env.ADMIN_EMAIL && email === process.env.ADMIN_EMAIL;
+    
+    // Create user with approved status
     const newUser = await User.create({
       name,
       email,
       password,
-      avatar: `https://i.pravatar.cc/150?img=${Math.floor(Math.random() * 70)}`
+      avatar: `https://i.pravatar.cc/150?img=${Math.floor(Math.random() * 70)}`,
+      approved: isAdminEmail,
+      role: isAdminEmail ? 'admin' : 'Grant Manager'
     });
-    const token = jwt.sign({ id: newUser._id }, process.env.JWT_SECRET, { expiresIn: '30d' });
+
+    // Send confirmation email from admin@deleuxedesign.com
+    if (!isAdminEmail && process.env.SMTP_HOST) {
+      const transporter = nodemailer.createTransport({
+        host: process.env.SMTP_HOST,
+        port: parseInt(process.env.SMTP_PORT) || 587,
+        secure: false,
+        auth: {
+          user: process.env.SMTP_USER,    // admin@deleuxedesign.com
+          pass: process.env.SMTP_PASS
+        },
+        tls: { rejectUnauthorized: false }
+      });
+
+      try {
+        await transporter.sendMail({
+          from: `"Grant Funds" <${process.env.SMTP_USER}>`,
+          to: email,
+          subject: '✅ Welcome! Your Account Is Pending Approval',
+          html: `
+            <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
+              <h2 style="color: #1a472a;">Hello ${name},</h2>
+              <p>Thank you for registering with <strong>Grant Funds</strong>!</p>
+              <p>Your account is currently <strong>pending approval</strong>. We will review your request shortly.</p>
+              <p>You'll receive another email once your account is activated.</p>
+              <p>— The Grant Funds Team</p>
+              <hr style="margin: 20px 0; border: 0; border-top: 1px solid #eee;">
+              <p style="font-size: 12px; color: #777;">
+                Sent from <a href="mailto:admin@deleuxedesign.com">admin@deleuxedesign.com</a>
+              </p>
+            </div>
+          `
+        });
+        console.log(`📧 Confirmation email sent to: ${email}`);
+      } catch (emailError) {
+        console.warn('⚠️ Failed to send confirmation email:', emailError.message);
+      }
+    }
+
+    // Issue token only if approved (admin)
+    let token = null;
+    if (newUser.approved) {
+      token = jwt.sign({ id: newUser._id }, process.env.JWT_SECRET, { expiresIn: '30d' });
+    }
+
     res.status(201).json({
       success: true,
+      message: newUser.approved 
+        ? 'Admin account created successfully!' 
+        : 'Registration successful! Please check your email for next steps.',
       token,
-      user: {
+      user: newUser.approved ? {
         id: newUser._id,
         name: newUser.name,
         email: newUser.email,
         role: newUser.role,
         avatar: newUser.avatar
-      }
+      } : null
     });
   } catch (error) {
     console.error('❌ Registration error:', error);
@@ -1338,6 +1458,7 @@ app.post('/api/auth/register', async (req, res) => {
   }
 });
 
+// Login with approval check
 app.post('/api/auth/login', async (req, res) => {
   try {
     const { email, password } = req.body;
@@ -1347,6 +1468,14 @@ app.post('/api/auth/login', async (req, res) => {
         success: false,
         message: 'Invalid email or password' 
       });
+
+    // BLOCK unapproved users
+    if (!user.approved) {
+      return res.status(403).json({
+        success: false,
+        message: 'Account pending approval. Please contact support.'
+      });
+    }
 
     const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET, { expiresIn: '30d' });
     res.json({
@@ -1421,7 +1550,6 @@ app.get('/api/templates', optionalAuthMiddleware, async (req, res) => {
         });
       }
     }
-
     const templates = await Template.find(query).sort({ createdAt: -1 });
     console.log(`✅ Found ${templates.length} templates`);
     res.json({
@@ -1460,7 +1588,6 @@ app.get('/api/templates/:id', optionalAuthMiddleware, async (req, res) => {
         query.createdBy = demoUser._id;
       }
     }
-
     const template = await Template.findOne(query);
     if (!template) {
       return res.status(404).json({
@@ -1507,7 +1634,6 @@ app.post('/api/templates', authMiddleware, async (req, res) => {
       variables,
       icon
     } = req.body;
-
     // Basic validation
     if (!title || !subject || !category || !content) {
       return res.status(400).json({
@@ -1515,7 +1641,6 @@ app.post('/api/templates', authMiddleware, async (req, res) => {
         message: 'Title, subject, category, and content are required'
       });
     }
-
     // Check if template with same title already exists
     const existingTemplate = await Template.findOne({ 
       title: title.trim(),
@@ -1528,7 +1653,6 @@ app.post('/api/templates', authMiddleware, async (req, res) => {
         message: 'A template with this title already exists'
       });
     }
-
     const templateData = {
       title: title.trim(),
       subject: subject.trim(),
@@ -1539,7 +1663,6 @@ app.post('/api/templates', authMiddleware, async (req, res) => {
       icon: icon || 'fas fa-envelope',
       createdBy: req.user._id
     };
-
     const template = new Template(templateData);
     const savedTemplate = await template.save();
     console.log(`✅ Template created: ${savedTemplate.title}`);
@@ -1585,7 +1708,6 @@ app.put('/api/templates/:id', authMiddleware, async (req, res) => {
       variables,
       icon
     } = req.body;
-
     // Check if template exists and is active
     const existingTemplate = await Template.findOne({
       _id: req.params.id,
@@ -1598,7 +1720,6 @@ app.put('/api/templates/:id', authMiddleware, async (req, res) => {
         message: 'Template not found'
       });
     }
-
     // Check for duplicate title (excluding current template)
     if (title && title !== existingTemplate.title) {
       const duplicateTemplate = await Template.findOne({
@@ -1614,7 +1735,6 @@ app.put('/api/templates/:id', authMiddleware, async (req, res) => {
         });
       }
     }
-
     const updateData = {};
     if (title) updateData.title = title.trim();
     if (subject) updateData.subject = subject.trim();
@@ -1623,7 +1743,6 @@ app.put('/api/templates/:id', authMiddleware, async (req, res) => {
     if (content) updateData.content = content.trim();
     if (variables) updateData.variables = variables;
     if (icon) updateData.icon = icon;
-
     const updatedTemplate = await Template.findByIdAndUpdate(
       req.params.id,
       updateData,
@@ -1683,7 +1802,6 @@ app.delete('/api/templates/:id', authMiddleware, async (req, res) => {
         message: 'Template not found'
       });
     }
-
     // Soft delete by setting isActive to false
     await Template.findByIdAndUpdate(
       req.params.id,
@@ -1735,7 +1853,6 @@ app.patch('/api/templates/:id/usage', optionalAuthMiddleware, async (req, res) =
         query.createdBy = demoUser._id;
       }
     }
-
     const template = await Template.findOne(query);
     if (!template) {
       return res.status(404).json({
@@ -1743,7 +1860,6 @@ app.patch('/api/templates/:id/usage', optionalAuthMiddleware, async (req, res) =
         message: 'Template not found'
       });
     }
-
     const updatedTemplate = await Template.incrementUsage(req.params.id);
     console.log(`✅ Usage incremented for: ${updatedTemplate.title}`);
     res.json({
@@ -1831,10 +1947,8 @@ app.post('/api/clients', authMiddleware, async (req, res) => {
 app.put('/api/clients/:id', authMiddleware, async (req, res) => {
   try {
     console.log('🔄 PUT /api/clients/:id - Client:', req.params.id, 'User:', req.user._id);
-
     // Find the client first to ensure it exists and belongs to the user
     const existingClient = await Client.findOne({ _id: req.params.id, userId: req.user._id });
-
     if (!existingClient) {
       console.log('❌ Client not found for update:', req.params.id);
       return res.status(404).json({
@@ -1842,9 +1956,7 @@ app.put('/api/clients/:id', authMiddleware, async (req, res) => {
         message: 'Client not found'
       });
     }
-
     console.log('📝 Client found, current category:', existingClient.category);
-
     // --- CRITICAL FIX: Use $set operator for findOneAndUpdate ---
     // Construct the update object using $set for explicit field updates
     const updateObject = {
@@ -1853,14 +1965,12 @@ app.put('/api/clients/:id', authMiddleware, async (req, res) => {
         updatedAt: new Date() // Ensure the timestamp is updated
       }
     };
-
     // Perform the update using findOneAndUpdate with $set
     const updatedClient = await Client.findOneAndUpdate(
       { _id: req.params.id, userId: req.user._id }, // Query
       updateObject,                                // Update object using $set
       { new: true, runValidators: true }          // Options: return updated doc, run validation
     );
-
     if (!updatedClient) {
       // This should ideally not happen if the client was found above,
       // but good to check.
@@ -1869,18 +1979,14 @@ app.put('/api/clients/:id', authMiddleware, async (req, res) => {
         message: 'Client not found after update attempt'
       });
     }
-
     console.log('✅ Client updated successfully in DB, new category:', updatedClient.category);
-
     res.json({
       success: true,
       message: 'Client updated successfully',
       client: updatedClient // Send back the updated client object
     });
-
   } catch (error) {
     console.error('❌ Update client error:', error);
-
     if (error.name === 'ValidationError') {
       const errors = Object.values(error.errors).map(err => err.message);
       console.error('Validation Errors:', errors);
@@ -1890,7 +1996,6 @@ app.put('/api/clients/:id', authMiddleware, async (req, res) => {
         errors: errors
       });
     }
-
     res.status(500).json({
       success: false,
       message: 'Failed to update client',
@@ -1997,7 +2102,6 @@ const startServer = async () => {
     await createDemoTemplates();
     await createDemoGrants();
     console.log('✅ Database initialization complete!');
-
     // Start server
     const PORT = process.env.PORT || 5000;
     app.listen(PORT, () => {
@@ -2006,6 +2110,7 @@ const startServer = async () => {
       console.log(`🔗 Environment: ${process.env.NODE_ENV || 'production'}`);
       console.log(`📊 Database: ${mongoose.connection.db.databaseName}`);
       console.log(`🤖 AI Services: ${process.env.GEMINI_API_KEY ? 'Gemini Enabled' : 'AI Disabled'}`);
+      console.log(`📧 SMTP: ${process.env.SMTP_HOST ? 'Configured' : 'Not Configured'}`);
       console.log(`⏰ Started: ${new Date().toISOString()}`);
       console.log('🎯 ==========================================');
       console.log('📋 Available endpoints:');
