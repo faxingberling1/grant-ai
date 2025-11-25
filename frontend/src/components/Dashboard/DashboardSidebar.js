@@ -47,6 +47,17 @@ const DashboardSidebar = ({ isOpen, activePage, onPageChange, onToggle }) => {
     { id: 'reports', icon: 'fas fa-chart-bar', label: 'Reports', badge: null },
   ];
 
+  // Admin-only menu items
+  const adminMenuItems = [
+    { 
+      id: 'user-management', 
+      icon: 'fas fa-user-shield', 
+      label: 'User Management', 
+      badge: 'New',
+      adminOnly: true
+    }
+  ];
+
   const bottomMenuItems = [
     { id: 'profile', icon: 'fas fa-user', label: 'My Profile' },
     { id: 'settings', icon: 'fas fa-cog', label: 'Settings' },
@@ -73,6 +84,9 @@ const DashboardSidebar = ({ isOpen, activePage, onPageChange, onToggle }) => {
     .find(item => item.id === 'calendar')
     ?.children?.some(child => child.id === activePage);
 
+  // Check if user is admin
+  const isAdmin = currentUser?.role === 'admin' || currentUser?.email === 'admin@deleuxedesign.com';
+
   return (
     <aside className={`dashboard-sidebar ${isOpen ? 'open' : 'closed'}`}>
       {/* Sidebar Header */}
@@ -91,7 +105,10 @@ const DashboardSidebar = ({ isOpen, activePage, onPageChange, onToggle }) => {
         <img src={currentUser?.avatar} alt={currentUser?.name} className="profile-avatar" />
         <div className="profile-info">
           <div className="profile-name">{currentUser?.name}</div>
-          <div className="profile-role">{currentUser?.role}</div>
+          <div className="profile-role">
+            {currentUser?.role}
+            {isAdmin && <span className="admin-badge">Admin</span>}
+          </div>
         </div>
         <div className="profile-status online"></div>
       </div>
@@ -168,6 +185,24 @@ const DashboardSidebar = ({ isOpen, activePage, onPageChange, onToggle }) => {
                     </ul>
                   </div>
                 )}
+              </li>
+            ))}
+            
+            {/* Admin-only menu items */}
+            {isAdmin && adminMenuItems.map((item) => (
+              <li key={item.id} className="nav-item">
+                <button
+                  className={`nav-link ${activePage === item.id ? 'active' : ''}`}
+                  onClick={() => onPageChange(item.id)}
+                >
+                  <i className={item.icon}></i>
+                  <span className="nav-text">{item.label}</span>
+                  {item.badge && (
+                    <span className={`nav-badge ${item.badge === 'New' ? 'new' : ''}`}>
+                      {item.badge}
+                    </span>
+                  )}
+                </button>
               </li>
             ))}
           </ul>

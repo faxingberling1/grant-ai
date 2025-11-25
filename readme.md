@@ -7,6 +7,7 @@ backend
 │   └── auth.js
 ├── models
 │   ├── Client.js
+│   ├── EmailVerification.js
 │   ├── GrantSource.js
 │   ├── Meeting.js
 │   ├── Template.js
@@ -22,9 +23,13 @@ backend
 │   ├── health.js
 │   ├── meetings.js
 │   └── templates.js
-└── server.js
+├── server.js
+├── services
+│   └── emailService.js
+└── test-gmail.js
 
 frontend
+├── .env.example
 ├── .env.local
 ├── .env.production
 ├── build
@@ -177,7 +182,9 @@ frontend
 │   │   │       └── Submissions.js
 │   │   └── Login
 │   │       ├── Login.css
-│   │       └── Login.js
+│   │       ├── Login.js
+│   │       ├── Register.css
+│   │       └── Register.js
 │   ├── config
 │   │   └── api.config.js
 │   ├── context

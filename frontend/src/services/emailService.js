@@ -1,113 +1,87 @@
-import api from './api';
-
-const emailService = {
-  // Send email
-  sendEmail: async (emailData) => {
-    try {
-      const response = await api.post('/api/email/send', emailData);
-      return response.data;
-    } catch (error) {
-      throw new Error(error.response?.data?.message || 'Failed to send email');
-    }
-  },
-
-  // Test SMTP configuration
-  testSMTP: async (smtpConfig) => {
-    try {
-      const response = await api.post('/api/email/test-smtp', { smtpConfig });
-      return response.data;
-    } catch (error) {
-      throw new Error(error.response?.data?.message || 'SMTP test failed');
-    }
-  },
-
-  // Get email templates
-  getTemplates: async () => {
-    try {
-      const response = await api.get('/api/email/templates');
-      return response.data;
-    } catch (error) {
-      throw new Error(error.response?.data?.message || 'Failed to fetch templates');
-    }
-  },
-
-  // Save email template
-  saveTemplate: async (template) => {
-    try {
-      const response = await api.post('/api/email/templates', template);
-      return response.data;
-    } catch (error) {
-      throw new Error(error.response?.data?.message || 'Failed to save template');
-    }
-  },
-
-  // Delete email template
-  deleteTemplate: async (templateId) => {
-    try {
-      const response = await api.delete(`/api/email/templates/${templateId}`);
-      return response.data;
-    } catch (error) {
-      throw new Error(error.response?.data?.message || 'Failed to delete template');
-    }
-  },
-
-  // Get email statistics
-  getEmailStats: async () => {
-    try {
-      const response = await api.get('/api/email/stats');
-      return response.data;
-    } catch (error) {
-      throw new Error(error.response?.data?.message || 'Failed to fetch email statistics');
-    }
-  },
-
-  // Send bulk email
-  sendBulkEmail: async (bulkEmailData) => {
-    try {
-      const response = await api.post('/api/email/bulk-send', bulkEmailData);
-      return response.data;
-    } catch (error) {
-      throw new Error(error.response?.data?.message || 'Failed to send bulk email');
-    }
-  },
-
-  // Mock function for demo purposes (when backend is not ready)
-  mockTestSMTP: async (smtpConfig) => {
-    // Simulate API call delay
-    await new Promise(resolve => setTimeout(resolve, 2000));
-    
-    // Validate required fields
-    if (!smtpConfig.host || !smtpConfig.user || !smtpConfig.pass) {
-      throw new Error('Missing required SMTP configuration fields');
-    }
-
-    // Simulate different test scenarios
-    const testScenarios = {
-      'smtp.gmail.com': { success: true, message: 'Successfully connected to Gmail SMTP server!' },
-      'smtp.office365.com': { success: true, message: 'Successfully connected to Outlook SMTP server!' },
-      'smtp.sendgrid.net': { success: true, message: 'Successfully connected to SendGrid SMTP server!' },
-      'smtp.mailgun.org': { success: true, message: 'Successfully connected to Mailgun SMTP server!' }
-    };
-
-    const result = testScenarios[smtpConfig.host] || { 
-      success: true, 
-      message: 'Successfully connected to SMTP server!' 
-    };
-
-    return result;
-  },
-
-  // Mock send email for demo
-  mockSendEmail: async (emailData) => {
-    await new Promise(resolve => setTimeout(resolve, 1500));
-    
-    return {
-      success: true,
-      message: 'Email sent successfully!',
-      messageId: `mock-${Date.now()}`,
-      timestamp: new Date().toISOString()
-    };
+// Frontend email service - for making API calls to backend
+class FrontendEmailService {
+  constructor() {
+    this.baseURL = process.env.REACT_APP_API_URL || 'http://localhost:5000/api';
   }
-};
 
-export default emailService;
+  /**
+   * Send verification email via backend API
+   */
+  async sendVerificationEmail(userId) {
+    try {
+      const response = await fetch(`${this.baseURL}/auth/send-verification-email`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ userId }),
+        credentials: 'include'
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.message || 'Failed to send verification email');
+      }
+
+      return data;
+    } catch (error) {
+      console.error('❌ Error sending verification email:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Send password reset email via backend API
+   */
+  async sendPasswordResetEmail(email) {
+    try {
+      const response = await fetch(`${this.baseURL}/auth/forgot-password`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ email }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.message || 'Failed to send password reset email');
+      }
+
+      return data;
+    } catch (error) {
+      console.error('❌ Error sending password reset email:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Verify email service configuration
+   */
+  async verifyConfiguration() {
+    try {
+      const response = await fetch(`${this.baseURL}/email/verify-config`, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.message || 'Failed to verify email configuration');
+      }
+
+      return data;
+    } catch (error) {
+      console.error('❌ Error verifying email configuration:', error);
+      throw error;
+    }
+  }
+}
+
+// Export singleton instance
+export default new FrontendEmailService();

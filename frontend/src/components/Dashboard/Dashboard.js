@@ -18,7 +18,6 @@ import EmailTemplates from './CommunicationHub/EmailTemplates';
 import EmailComposer from './CommunicationHub/EmailComposer';
 
 // Communication Hub Components
-import CommunicationHub from './Clients/CommunicationHub';
 import Inbox from './CommunicationHub/Inbox';
 import Sent from './CommunicationHub/Sent';
 import Starred from './CommunicationHub/Starred';
@@ -29,298 +28,12 @@ import Drafts from './CommunicationHub/Drafts';
 // Calendar Components
 import CalendarMain from './CalendarModal/CalendarMain';
 
+// User Management Component
+import UserManagement from './UserManagement/UserManagement';
+
 import './Dashboard.css';
 
-const Dashboard = () => {
-  const { currentUser } = useAuth();
-  const { clients, loading: clientsLoading } = useClients();
-  const [sidebarOpen, setSidebarOpen] = useState(true);
-  const [activePage, setActivePage] = useState('dashboard');
-  const [sourcesData, setSourcesData] = useState([]);
-  const [selectedTemplate, setSelectedTemplate] = useState(null);
-  const [emailComposerData, setEmailComposerData] = useState(null);
-
-  const toggleSidebar = () => {
-    setSidebarOpen(!sidebarOpen);
-  };
-
-  // Function to update sources data from Sources component
-  const updateSourcesData = (data) => {
-    console.log('📊 Dashboard: Sources data updated', data);
-    setSourcesData(data);
-  };
-
-  // Function to handle template selection for email composition
-  const handleUseTemplate = (template) => {
-    console.log('📧 Using template:', template);
-    setSelectedTemplate(template);
-    setEmailComposerData({
-      template: template,
-      subject: template.subject,
-      content: template.fullContent
-    });
-    setActivePage('email-composer');
-  };
-
-  // Function to handle direct email composition
-  const handleComposeEmail = (initialData = null) => {
-    console.log('📝 Composing email with data:', initialData);
-    setEmailComposerData(initialData);
-    setActivePage('email-composer');
-  };
-
-  const renderPageContent = () => {
-    console.log('🔄 Rendering page:', activePage);
-    
-    switch (activePage) {
-      case 'dashboard':
-        return (
-          <DashboardContent 
-            clients={clients}
-            clientsLoading={clientsLoading}
-            onNavigateToClients={() => setActivePage('clients')} 
-            onNavigateToFindGrants={() => setActivePage('find-grants')}
-            onNavigateToSources={() => setActivePage('sources')}
-            onNavigateToAIWriting={() => setActivePage('ai-writing')}
-            onNavigateToReports={() => setActivePage('reports')}
-            onNavigateToEmailTemplates={() => setActivePage('email-templates')}
-            onNavigateToEmailComposer={handleComposeEmail}
-            onNavigateToCalendar={() => setActivePage('calendar')}
-          />
-        );
-      case 'clients':
-        return <Clients />;
-      case 'grants':
-        return (
-          <Grants 
-            onNavigateToMatching={() => setActivePage('client-matching')}
-            onNavigateToNewGrant={() => {
-              console.log('New grant creation requested');
-              alert('New Grant form would open here');
-            }}
-            onNavigateToDrafts={() => {
-              console.log('Drafts page requested');
-              alert('Drafts page would open here');
-            }}
-            onNavigateToFindGrants={() => setActivePage('find-grants')}
-          />
-        );
-      case 'find-grants':
-        return (
-          <FindGrants 
-            onBack={() => setActivePage('grants')}
-            sourcesData={sourcesData}
-            onViewGrant={(grant) => {
-              console.log('Viewing grant details:', grant);
-              alert(`Viewing grant: ${grant.title}\n\nThis would open a detailed grant view with full information.`);
-            }}
-            onImportGrant={(grant) => {
-              console.log('Importing grant:', grant);
-              alert(`✅ Grant "${grant.title}" has been saved to your grants!\n\nYou can now track this grant in your Grants section.`);
-            }}
-          />
-        );
-      case 'client-matching':
-        return (
-          <ClientGrantMatching 
-            onNavigateToGrants={() => setActivePage('grants')}
-            onNavigateToNewGrant={(data) => {
-              console.log('Navigate to new grant with client data:', data);
-              alert(`New Grant form would open with:\n- Client: ${data.client.name}\n- Grant: ${data.grant.grantName}\n- Match Score: ${data.matchScore}%`);
-            }}
-          />
-        );
-      case 'submissions':
-        return <Submissions />;
-      case 'sources':
-        return <Sources onSourcesUpdate={updateSourcesData} />;
-      case 'matching':
-        return <Matching />;
-      case 'ai-writing':
-        return <AIWriting />;
-      case 'reports':
-        return <Reports />;
-      case 'profile':
-        return <Profile />;
-      case 'settings':
-        return <Settings />;
-      
-      // Calendar Pages
-      case 'calendar':
-        return (
-          <CalendarMain 
-            clients={clients}
-            onNavigateToClients={() => setActivePage('clients')}
-            onNavigateToGrants={() => setActivePage('grants')}
-            initialView="calendar"
-          />
-        );
-      case 'upcoming':
-        return (
-          <CalendarMain 
-            clients={clients}
-            onNavigateToClients={() => setActivePage('clients')}
-            onNavigateToGrants={() => setActivePage('grants')}
-            initialView="upcoming"
-          />
-        );
-      case 'list':
-        return (
-          <CalendarMain 
-            clients={clients}
-            onNavigateToClients={() => setActivePage('clients')}
-            onNavigateToGrants={() => setActivePage('grants')}
-            initialView="list"
-          />
-        );
-      case 'schedule-meeting':
-        return (
-          <CalendarMain 
-            clients={clients}
-            onNavigateToClients={() => setActivePage('clients')}
-            onNavigateToGrants={() => setActivePage('grants')}
-            initialView="calendar"
-            showScheduleForm={true}
-          />
-        );
-      
-      // Communication Hub Pages
-      case 'communication-hub':
-        return <CommunicationHub onBack={() => setActivePage('clients')} />;
-      case 'inbox':
-        return <Inbox />;
-      case 'sent':
-        return <Sent />;
-      case 'starred':
-        return <Starred />;
-      case 'drafts':
-        return <Drafts />;
-      case 'email-templates':
-        return (
-          <EmailTemplates 
-            onBack={() => setActivePage('communication-hub')}
-            onUseTemplate={handleUseTemplate}
-          />
-        );
-      case 'email-composer':
-        return (
-          <EmailComposer 
-            onBack={() => setActivePage('communication-hub')}
-            initialData={emailComposerData}
-            onSend={(emailData) => {
-              console.log('📤 Email sent:', emailData);
-              alert(`Email sent successfully to ${emailData.to}!\n\nSubject: ${emailData.subject}`);
-              setActivePage('communication-hub');
-            }}
-            onSaveDraft={(emailData) => {
-              console.log('💾 Email draft saved:', emailData);
-              alert('Email draft saved successfully!');
-              setActivePage('communication-hub');
-            }}
-          />
-        );
-      case 'spam':
-        return <Spam />;
-      case 'trash':
-        return <Trash />;
-      
-      // Help Page
-      case 'help':
-        return (
-          <div className="page-content">
-            <div className="page-header">
-              <h1>Help & Support</h1>
-              <p>Get help and learn how to use GrantFlow</p>
-            </div>
-            <div className="help-content">
-              <div className="help-sections">
-                <div className="help-section">
-                  <div className="help-icon">
-                    <i className="fas fa-book"></i>
-                  </div>
-                  <h3>Documentation</h3>
-                  <p>Comprehensive guides and tutorials</p>
-                  <button className="btn btn-outline">View Docs</button>
-                </div>
-                
-                <div className="help-section">
-                  <div className="help-icon">
-                    <i className="fas fa-video"></i>
-                  </div>
-                  <h3>Video Tutorials</h3>
-                  <p>Step-by-step video guides</p>
-                  <button className="btn btn-outline">Watch Videos</button>
-                </div>
-                
-                <div className="help-section">
-                  <div className="help-icon">
-                    <i className="fas fa-question-circle"></i>
-                  </div>
-                  <h3>FAQ</h3>
-                  <p>Frequently asked questions</p>
-                  <button className="btn btn-outline">View FAQ</button>
-                </div>
-              </div>
-              
-              <div className="support-contact">
-                <h3>Need More Help?</h3>
-                <p>Contact our support team for personalized assistance</p>
-                <div className="contact-actions">
-                  <button className="btn btn-primary">
-                    <i className="fas fa-envelope"></i>
-                    Email Support
-                  </button>
-                  <button className="btn btn-outline">
-                    <i className="fas fa-phone"></i>
-                    Call Support
-                  </button>
-                </div>
-              </div>
-            </div>
-          </div>
-        );
-      default:
-        return (
-          <DashboardContent 
-            clients={clients}
-            clientsLoading={clientsLoading}
-            onNavigateToClients={() => setActivePage('clients')} 
-            onNavigateToFindGrants={() => setActivePage('find-grants')}
-            onNavigateToSources={() => setActivePage('sources')}
-            onNavigateToEmailTemplates={() => setActivePage('email-templates')}
-            onNavigateToEmailComposer={handleComposeEmail}
-            onNavigateToCalendar={() => setActivePage('calendar')}
-          />
-        );
-    }
-  };
-
-  return (
-    <div className="dashboard-container">
-      <DashboardSidebar 
-        isOpen={sidebarOpen} 
-        activePage={activePage}
-        onPageChange={setActivePage}
-        onToggle={toggleSidebar}
-      />
-      
-      <div className={`dashboard-main ${sidebarOpen ? '' : 'sidebar-closed'}`}>
-        <DashboardHeader 
-          onToggleSidebar={toggleSidebar}
-          sidebarOpen={sidebarOpen}
-          currentPage={activePage}
-          user={currentUser}
-        />
-        
-        <div className="dashboard-content">
-          {renderPageContent()}
-        </div>
-      </div>
-    </div>
-  );
-};
-
-// DashboardContent Component - FIXED VERSION
+// Move DashboardContent component outside to avoid circular dependencies
 const DashboardContent = ({ 
   clients,
   clientsLoading,
@@ -913,6 +626,300 @@ const DashboardContent = ({
               </button>
             </div>
           )}
+        </div>
+      </div>
+    </div>
+  );
+};
+
+// Main Dashboard Component
+const Dashboard = () => {
+  const { currentUser } = useAuth();
+  const { clients, loading: clientsLoading } = useClients();
+  const [sidebarOpen, setSidebarOpen] = useState(true);
+  const [activePage, setActivePage] = useState('dashboard');
+  const [sourcesData, setSourcesData] = useState([]);
+  const [selectedTemplate, setSelectedTemplate] = useState(null);
+  const [emailComposerData, setEmailComposerData] = useState(null);
+
+  const toggleSidebar = () => {
+    setSidebarOpen(!sidebarOpen);
+  };
+
+  // Function to update sources data from Sources component
+  const updateSourcesData = (data) => {
+    console.log('📊 Dashboard: Sources data updated', data);
+    setSourcesData(data);
+  };
+
+  // Function to handle template selection for email composition
+  const handleUseTemplate = (template) => {
+    console.log('📧 Using template:', template);
+    setSelectedTemplate(template);
+    setEmailComposerData({
+      template: template,
+      subject: template.subject,
+      content: template.fullContent
+    });
+    setActivePage('email-composer');
+  };
+
+  // Function to handle direct email composition
+  const handleComposeEmail = (initialData = null) => {
+    console.log('📝 Composing email with data:', initialData);
+    setEmailComposerData(initialData);
+    setActivePage('email-composer');
+  };
+
+  const renderPageContent = () => {
+    console.log('🔄 Rendering page:', activePage);
+    
+    switch (activePage) {
+      case 'dashboard':
+        return (
+          <DashboardContent 
+            clients={clients}
+            clientsLoading={clientsLoading}
+            onNavigateToClients={() => setActivePage('clients')} 
+            onNavigateToFindGrants={() => setActivePage('find-grants')}
+            onNavigateToSources={() => setActivePage('sources')}
+            onNavigateToAIWriting={() => setActivePage('ai-writing')}
+            onNavigateToReports={() => setActivePage('reports')}
+            onNavigateToEmailTemplates={() => setActivePage('email-templates')}
+            onNavigateToEmailComposer={handleComposeEmail}
+            onNavigateToCalendar={() => setActivePage('calendar')}
+          />
+        );
+      case 'clients':
+        return <Clients />;
+      case 'grants':
+        return (
+          <Grants 
+            onNavigateToMatching={() => setActivePage('client-matching')}
+            onNavigateToNewGrant={() => {
+              console.log('New grant creation requested');
+              alert('New Grant form would open here');
+            }}
+            onNavigateToDrafts={() => {
+              console.log('Drafts page requested');
+              alert('Drafts page would open here');
+            }}
+            onNavigateToFindGrants={() => setActivePage('find-grants')}
+          />
+        );
+      case 'find-grants':
+        return (
+          <FindGrants 
+            onBack={() => setActivePage('grants')}
+            sourcesData={sourcesData}
+            onViewGrant={(grant) => {
+              console.log('Viewing grant details:', grant);
+              alert(`Viewing grant: ${grant.title}\n\nThis would open a detailed grant view with full information.`);
+            }}
+            onImportGrant={(grant) => {
+              console.log('Importing grant:', grant);
+              alert(`✅ Grant "${grant.title}" has been saved to your grants!\n\nYou can now track this grant in your Grants section.`);
+            }}
+          />
+        );
+      case 'client-matching':
+        return (
+          <ClientGrantMatching 
+            onNavigateToGrants={() => setActivePage('grants')}
+            onNavigateToNewGrant={(data) => {
+              console.log('Navigate to new grant with client data:', data);
+              alert(`New Grant form would open with:\n- Client: ${data.client.name}\n- Grant: ${data.grant.grantName}\n- Match Score: ${data.matchScore}%`);
+            }}
+          />
+        );
+      case 'submissions':
+        return <Submissions />;
+      case 'sources':
+        return <Sources onSourcesUpdate={updateSourcesData} />;
+      case 'matching':
+        return <Matching />;
+      case 'ai-writing':
+        return <AIWriting />;
+      case 'reports':
+        return <Reports />;
+      case 'profile':
+        return <Profile />;
+      case 'settings':
+        return <Settings />;
+      
+      // Calendar Pages
+      case 'calendar':
+        return (
+          <CalendarMain 
+            clients={clients}
+            onNavigateToClients={() => setActivePage('clients')}
+            onNavigateToGrants={() => setActivePage('grants')}
+            initialView="calendar"
+          />
+        );
+      case 'upcoming':
+        return (
+          <CalendarMain 
+            clients={clients}
+            onNavigateToClients={() => setActivePage('clients')}
+            onNavigateToGrants={() => setActivePage('grants')}
+            initialView="upcoming"
+          />
+        );
+      case 'list':
+        return (
+          <CalendarMain 
+            clients={clients}
+            onNavigateToClients={() => setActivePage('clients')}
+            onNavigateToGrants={() => setActivePage('grants')}
+            initialView="list"
+          />
+        );
+      case 'schedule-meeting':
+        return (
+          <CalendarMain 
+            clients={clients}
+            onNavigateToClients={() => setActivePage('clients')}
+            onNavigateToGrants={() => setActivePage('grants')}
+            initialView="calendar"
+            showScheduleForm={true}
+          />
+        );
+      
+      // Communication Hub Pages
+      case 'communication-hub':
+        return <CommunicationHub onBack={() => setActivePage('clients')} />;
+      case 'inbox':
+        return <Inbox />;
+      case 'sent':
+        return <Sent />;
+      case 'starred':
+        return <Starred />;
+      case 'drafts':
+        return <Drafts />;
+      case 'email-templates':
+        return (
+          <EmailTemplates 
+            onBack={() => setActivePage('communication-hub')}
+            onUseTemplate={handleUseTemplate}
+          />
+        );
+      case 'email-composer':
+        return (
+          <EmailComposer 
+            onBack={() => setActivePage('communication-hub')}
+            initialData={emailComposerData}
+            onSend={(emailData) => {
+              console.log('📤 Email sent:', emailData);
+              alert(`Email sent successfully to ${emailData.to}!\n\nSubject: ${emailData.subject}`);
+              setActivePage('communication-hub');
+            }}
+            onSaveDraft={(emailData) => {
+              console.log('💾 Email draft saved:', emailData);
+              alert('Email draft saved successfully!');
+              setActivePage('communication-hub');
+            }}
+          />
+        );
+      case 'spam':
+        return <Spam />;
+      case 'trash':
+        return <Trash />;
+      
+      // User Management Page (Admin Only)
+      case 'user-management':
+        return <UserManagement />;
+      
+      // Help Page
+      case 'help':
+        return (
+          <div className="page-content">
+            <div className="page-header">
+              <h1>Help & Support</h1>
+              <p>Get help and learn how to use GrantFlow</p>
+            </div>
+            <div className="help-content">
+              <div className="help-sections">
+                <div className="help-section">
+                  <div className="help-icon">
+                    <i className="fas fa-book"></i>
+                  </div>
+                  <h3>Documentation</h3>
+                  <p>Comprehensive guides and tutorials</p>
+                  <button className="btn btn-outline">View Docs</button>
+                </div>
+                
+                <div className="help-section">
+                  <div className="help-icon">
+                    <i className="fas fa-video"></i>
+                  </div>
+                  <h3>Video Tutorials</h3>
+                  <p>Step-by-step video guides</p>
+                  <button className="btn btn-outline">Watch Videos</button>
+                </div>
+                
+                <div className="help-section">
+                  <div className="help-icon">
+                    <i className="fas fa-question-circle"></i>
+                  </div>
+                  <h3>FAQ</h3>
+                  <p>Frequently asked questions</p>
+                  <button className="btn btn-outline">View FAQ</button>
+                </div>
+              </div>
+              
+              <div className="support-contact">
+                <h3>Need More Help?</h3>
+                <p>Contact our support team for personalized assistance</p>
+                <div className="contact-actions">
+                  <button className="btn btn-primary">
+                    <i className="fas fa-envelope"></i>
+                    Email Support
+                  </button>
+                  <button className="btn btn-outline">
+                    <i className="fas fa-phone"></i>
+                    Call Support
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        );
+      default:
+        return (
+          <DashboardContent 
+            clients={clients}
+            clientsLoading={clientsLoading}
+            onNavigateToClients={() => setActivePage('clients')} 
+            onNavigateToFindGrants={() => setActivePage('find-grants')}
+            onNavigateToSources={() => setActivePage('sources')}
+            onNavigateToEmailTemplates={() => setActivePage('email-templates')}
+            onNavigateToEmailComposer={handleComposeEmail}
+            onNavigateToCalendar={() => setActivePage('calendar')}
+          />
+        );
+    }
+  };
+
+  return (
+    <div className="dashboard-container">
+      <DashboardSidebar 
+        isOpen={sidebarOpen} 
+        activePage={activePage}
+        onPageChange={setActivePage}
+        onToggle={toggleSidebar}
+      />
+      
+      <div className={`dashboard-main ${sidebarOpen ? '' : 'sidebar-closed'}`}>
+        <DashboardHeader 
+          onToggleSidebar={toggleSidebar}
+          sidebarOpen={sidebarOpen}
+          currentPage={activePage}
+          user={currentUser}
+        />
+        
+        <div className="dashboard-content">
+          {renderPageContent()}
         </div>
       </div>
     </div>
