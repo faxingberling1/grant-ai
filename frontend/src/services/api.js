@@ -1,4 +1,4 @@
-// src/services/api.js - COMPLETE UPDATED VERSION WITH ADMIN USER MANAGEMENT
+// src/services/api.js - COMPLETE UPDATED VERSION WITH ALL HTTP METHODS
 const API_BASE_URL = process.env.REACT_APP_API_URL || 'https://grant-ai.onrender.com';
 
 class ApiService {
@@ -100,6 +100,45 @@ class ApiService {
       
       throw error;
     }
+  }
+
+  // ===== HTTP VERB METHODS =====
+  get(endpoint, options = {}) {
+    return this.request(endpoint, {
+      method: 'GET',
+      ...options
+    });
+  }
+
+  post(endpoint, data = {}, options = {}) {
+    return this.request(endpoint, {
+      method: 'POST',
+      data,
+      ...options
+    });
+  }
+
+  put(endpoint, data = {}, options = {}) {
+    return this.request(endpoint, {
+      method: 'PUT',
+      data,
+      ...options
+    });
+  }
+
+  patch(endpoint, data = {}, options = {}) {
+    return this.request(endpoint, {
+      method: 'PATCH',
+      data,
+      ...options
+    });
+  }
+
+  delete(endpoint, options = {}) {
+    return this.request(endpoint, {
+      method: 'DELETE',
+      ...options
+    });
   }
 
   // ===== USER MANAGEMENT METHODS =====

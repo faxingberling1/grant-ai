@@ -64,3 +64,6 @@ Thumbs.db
 *.dat
 *.out
 *.log
+
+uploads/
+backend/uploads/

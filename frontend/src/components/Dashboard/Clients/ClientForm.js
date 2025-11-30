@@ -56,6 +56,7 @@ const ClientForm = ({ client, onSave, onCancel, loading, environment, isNewClien
   const [newFocusArea, setNewFocusArea] = useState('');
   const [newSocialMedia, setNewSocialMedia] = useState({ platform: '', url: '' });
   const [newFundingArea, setNewFundingArea] = useState('');
+  const [formSubmitted, setFormSubmitted] = useState(false);
 
   // Fetch grant sources
   useEffect(() => {
@@ -339,13 +340,17 @@ const ClientForm = ({ client, onSave, onCancel, loading, environment, isNewClien
     }
   };
 
-  // FIXED: Enhanced submit with comprehensive category data validation
-  const handleSubmit = (e) => {
+  // FIXED: Enhanced submit with comprehensive category data validation and success handling
+  const handleSubmit = async (e) => {
     e.preventDefault();
+    setFormSubmitted(true);
     
+    console.log('🚀 FORM SUBMISSION STARTED...');
+
     // Validate required fields
     if (!formData.organizationName.trim() || !formData.primaryContactName.trim() || !formData.emailAddress.trim()) {
       alert('Please fill in all required fields (Organization Name, Primary Contact Name, and Email Address)');
+      setFormSubmitted(false);
       return;
     }
 
@@ -402,7 +407,21 @@ const ClientForm = ({ client, onSave, onCancel, loading, environment, isNewClien
       }
     });
 
-    onSave(submitData);
+    try {
+      // Call the onSave function and wait for it to complete
+      await onSave(submitData);
+      
+      console.log('✅ FORM SUBMISSION COMPLETED SUCCESSFULLY');
+      
+      // Reset form submission state after a short delay
+      setTimeout(() => {
+        setFormSubmitted(false);
+      }, 1000);
+      
+    } catch (error) {
+      console.error('❌ FORM SUBMISSION FAILED:', error);
+      setFormSubmitted(false);
+    }
   };
 
   const organizationTypes = [
@@ -1208,16 +1227,16 @@ const ClientForm = ({ client, onSave, onCancel, loading, environment, isNewClien
             type="button" 
             className="btn btn-outline" 
             onClick={onCancel}
-            disabled={loading}
+            disabled={loading || formSubmitted}
           >
             <i className="fas fa-times"></i> Cancel
           </button>
           <button 
             type="submit" 
             className="btn btn-primary"
-            disabled={loading}
+            disabled={loading || formSubmitted}
           >
-            {loading ? (
+            {loading || formSubmitted ? (
               <>
                 <i className="fas fa-spinner fa-spin"></i> 
                 {client ? 'Updating...' : 'Creating...'}

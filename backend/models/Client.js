@@ -32,6 +32,94 @@ const communicationSchema = new mongoose.Schema({
   createdBy: String
 });
 
+// NEW: Document schema for client-specific documents
+const clientDocumentSchema = new mongoose.Schema({
+  _id: {
+    type: mongoose.Schema.Types.ObjectId,
+    auto: true
+  },
+  filename: {
+    type: String,
+    required: true
+  },
+  originalName: {
+    type: String,
+    required: true
+  },
+  fileSize: {
+    type: Number,
+    required: true
+  },
+  mimeType: {
+    type: String,
+    required: true
+  },
+  category: {
+    type: String,
+    enum: ['proposals', 'financial', 'guidelines', 'planning', 'reports', 'templates', 'grants', 'contracts', 'other'],
+    default: 'other'
+  },
+  description: {
+    type: String,
+    maxlength: [500, 'Description cannot exceed 500 characters']
+  },
+  storagePath: {
+    type: String,
+    required: true
+  },
+  uploadDate: {
+    type: Date,
+    default: Date.now
+  },
+  lastAccessed: {
+    type: Date,
+    default: Date.now
+  },
+  isShared: {
+    type: Boolean,
+    default: false
+  },
+  sharedWith: [{
+    userId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'User'
+    },
+    permission: {
+      type: String,
+      enum: ['view', 'edit', 'download'],
+      default: 'view'
+    },
+    sharedAt: {
+      type: Date,
+      default: Date.now
+    }
+  }],
+  tags: [{
+    type: String,
+    trim: true,
+    maxlength: [50, 'Tag cannot exceed 50 characters']
+  }],
+  version: {
+    type: Number,
+    default: 1
+  },
+  parentDocument: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Client.documents',
+    default: null
+  },
+  grantRelated: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Grant',
+    default: null
+  },
+  uploadedBy: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'User',
+    required: true
+  }
+});
+
 const clientSchema = new mongoose.Schema({
   // User association - THIS IS CRITICAL
   userId: {
@@ -291,6 +379,35 @@ const clientSchema = new mongoose.Schema({
   // ===== COMMUNICATION HISTORY =====
   communicationHistory: [communicationSchema],
   
+  // ===== CLIENT DOCUMENTS - NEW =====
+  documents: [clientDocumentSchema],
+  
+  // ===== DOCUMENT STORAGE STATS - NEW =====
+  documentStats: {
+    totalDocuments: {
+      type: Number,
+      default: 0
+    },
+    totalStorageUsed: {
+      type: Number,
+      default: 0
+    },
+    lastDocumentUpload: {
+      type: Date
+    },
+    documentCategories: {
+      proposals: { type: Number, default: 0 },
+      financial: { type: Number, default: 0 },
+      guidelines: { type: Number, default: 0 },
+      planning: { type: Number, default: 0 },
+      reports: { type: Number, default: 0 },
+      templates: { type: Number, default: 0 },
+      grants: { type: Number, default: 0 },
+      contracts: { type: Number, default: 0 },
+      other: { type: Number, default: 0 }
+    }
+  },
+  
   // ===== ADDITIONAL FIELDS =====
   avatar: {
     type: String,
@@ -349,6 +466,24 @@ clientSchema.virtual('isOverdueForFollowUp').get(function() {
   return new Date() > new Date(this.nextFollowUp);
 });
 
+// NEW: Virtual for document statistics
+clientSchema.virtual('documentUsage').get(function() {
+  const formatBytes = (bytes) => {
+    if (bytes === 0) return '0 Bytes';
+    const k = 1024;
+    const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+    const i = Math.floor(Math.log(bytes) / Math.log(k));
+    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+  };
+  
+  return {
+    totalDocuments: this.documentStats.totalDocuments,
+    totalStorageUsed: formatBytes(this.documentStats.totalStorageUsed),
+    lastUpload: this.documentStats.lastDocumentUpload,
+    categories: this.documentStats.documentCategories
+  };
+});
+
 // ===== INDEXES FOR PERFORMANCE =====
 clientSchema.index({ userId: 1, organizationName: 1 });
 clientSchema.index({ userId: 1, category: 1 });
@@ -356,6 +491,13 @@ clientSchema.index({ userId: 1, status: 1 });
 clientSchema.index({ userId: 1, priority: 1 });
 clientSchema.index({ userId: 1, createdAt: -1 });
 clientSchema.index({ userId: 1, nextFollowUp: 1 });
+
+// NEW: Indexes for document queries
+clientSchema.index({ 'documents.category': 1 });
+clientSchema.index({ 'documents.uploadDate': 1 });
+clientSchema.index({ 'documents.tags': 1 });
+clientSchema.index({ 'documents.grantRelated': 1 });
+clientSchema.index({ 'documents.uploadedBy': 1 });
 
 // ===== MIDDLEWARE =====
 // Update the updatedAt field before saving
@@ -374,6 +516,11 @@ clientSchema.pre('save', function(next) {
   }
   if (this.grantSources) {
     this.grantSources = this.grantSources.filter(source => source && source.toString().trim() !== '');
+  }
+  
+  // NEW: Update document statistics
+  if (this.isModified('documents')) {
+    this.updateDocumentStats();
   }
   
   next();
@@ -424,6 +571,32 @@ clientSchema.statics.getCategoryStats = function(userId) {
   ]);
 };
 
+// NEW: Static methods for document management
+clientSchema.statics.findClientsWithDocuments = function(userId) {
+  return this.find({ 
+    userId, 
+    'documentStats.totalDocuments': { $gt: 0 } 
+  });
+};
+
+clientSchema.statics.getDocumentStatsByUser = function(userId) {
+  return this.aggregate([
+    { $match: { userId: new mongoose.Types.ObjectId(userId) } },
+    {
+      $group: {
+        _id: null,
+        totalClients: { $sum: 1 },
+        clientsWithDocuments: {
+          $sum: { $cond: [{ $gt: ['$documentStats.totalDocuments', 0] }, 1, 0] }
+        },
+        totalDocuments: { $sum: '$documentStats.totalDocuments' },
+        totalStorageUsed: { $sum: '$documentStats.totalStorageUsed' },
+        averageDocumentsPerClient: { $avg: '$documentStats.totalDocuments' }
+      }
+    }
+  ]);
+};
+
 // ===== INSTANCE METHODS =====
 clientSchema.methods.addCommunication = function(communicationData) {
   this.communicationHistory.push({
@@ -450,6 +623,127 @@ clientSchema.methods.addTag = function(tag) {
 clientSchema.methods.removeTag = function(tag) {
   this.tags = this.tags.filter(t => t !== tag);
   return this.save();
+};
+
+// NEW: Instance methods for document management
+clientSchema.methods.addDocument = function(documentData) {
+  const newDocument = {
+    ...documentData,
+    _id: new mongoose.Types.ObjectId(),
+    uploadDate: new Date(),
+    lastAccessed: new Date()
+  };
+  
+  this.documents.push(newDocument);
+  return this.save();
+};
+
+clientSchema.methods.removeDocument = function(documentId) {
+  const documentIndex = this.documents.findIndex(doc => doc._id.toString() === documentId);
+  if (documentIndex > -1) {
+    this.documents.splice(documentIndex, 1);
+    return this.save();
+  }
+  throw new Error('Document not found');
+};
+
+clientSchema.methods.updateDocument = function(documentId, updates) {
+  const document = this.documents.id(documentId);
+  if (document) {
+    Object.assign(document, updates);
+    document.lastAccessed = new Date();
+    return this.save();
+  }
+  throw new Error('Document not found');
+};
+
+clientSchema.methods.getDocument = function(documentId) {
+  const document = this.documents.id(documentId);
+  if (document) {
+    document.lastAccessed = new Date();
+    this.save(); // Update last accessed time
+    return document;
+  }
+  return null;
+};
+
+clientSchema.methods.getDocumentsByCategory = function(category) {
+  return this.documents.filter(doc => doc.category === category);
+};
+
+clientSchema.methods.getDocumentsByGrant = function(grantId) {
+  return this.documents.filter(doc => doc.grantRelated && doc.grantRelated.toString() === grantId);
+};
+
+clientSchema.methods.updateDocumentStats = function() {
+  const totalDocuments = this.documents.length;
+  const totalStorageUsed = this.documents.reduce((total, doc) => total + (doc.fileSize || 0), 0);
+  
+  // Calculate category counts
+  const categoryCounts = {
+    proposals: 0,
+    financial: 0,
+    guidelines: 0,
+    planning: 0,
+    reports: 0,
+    templates: 0,
+    grants: 0,
+    contracts: 0,
+    other: 0
+  };
+  
+  this.documents.forEach(doc => {
+    if (categoryCounts.hasOwnProperty(doc.category)) {
+      categoryCounts[doc.category]++;
+    } else {
+      categoryCounts.other++;
+    }
+  });
+  
+  this.documentStats = {
+    totalDocuments,
+    totalStorageUsed,
+    lastDocumentUpload: this.documents.length > 0 ? 
+      new Date(Math.max(...this.documents.map(d => new Date(d.uploadDate)))) : 
+      null,
+    documentCategories: categoryCounts
+  };
+  
+  return this;
+};
+
+clientSchema.methods.shareDocument = function(documentId, userId, permission = 'view') {
+  const document = this.documents.id(documentId);
+  if (document) {
+    // Remove existing share if it exists
+    document.sharedWith = document.sharedWith.filter(share => 
+      share.userId.toString() !== userId.toString()
+    );
+    
+    // Add new share
+    document.sharedWith.push({
+      userId,
+      permission,
+      sharedAt: new Date()
+    });
+    
+    document.isShared = document.sharedWith.length > 0;
+    return this.save();
+  }
+  throw new Error('Document not found');
+};
+
+clientSchema.methods.unshareDocument = function(documentId, userId) {
+  const document = this.documents.id(documentId);
+  if (document) {
+    document.sharedWith = document.sharedWith.filter(share => 
+      share.userId.toString() !== userId.toString()
+    );
+    
+    document.isShared = document.sharedWith.length > 0;
+    return this.save();
+  }
+  throw new Error('Document not found');
 };
 
 // ===== QUERY HELPERS =====
@@ -483,6 +777,19 @@ clientSchema.query.search = function(searchTerm) {
     { missionStatement: regex },
     { serviceArea: regex }
   ]);
+};
+
+// NEW: Query helpers for documents
+clientSchema.query.withDocuments = function() {
+  return this.where('documentStats.totalDocuments').gt(0);
+};
+
+clientSchema.query.byDocumentCategory = function(category) {
+  return this.where('documents.category', category);
+};
+
+clientSchema.query.hasGrantDocuments = function(grantId) {
+  return this.where('documents.grantRelated', grantId);
 };
 
 module.exports = mongoose.model('Client', clientSchema);

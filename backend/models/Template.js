@@ -17,8 +17,8 @@ const templateSchema = new mongoose.Schema({
     type: String,
     required: [true, 'Category is required'],
     enum: {
-      values: ['proposal', 'followup', 'meeting', 'thankyou', 'reminder'],
-      message: 'Category must be one of: proposal, followup, meeting, thankyou, reminder'
+      values: ['proposal', 'followup', 'meeting', 'thankyou', 'reminder', 'newsletter', 'fundraising', 'notification', 'other'],
+      message: 'Category must be one of: proposal, followup, meeting, thankyou, reminder, newsletter, fundraising, notification, other'
     }
   },
   description: {
@@ -57,10 +57,17 @@ const templateSchema = new mongoose.Schema({
     type: Date,
     default: null
   },
+  // NEW: Mark as system template available to all users
+  isSystemTemplate: {
+    type: Boolean,
+    default: false
+  },
   createdBy: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'User',
-    default: null // For now, we'll set this to null. Add authentication later.
+    required: function() {
+      return !this.isSystemTemplate; // Only required for non-system templates
+    }
   },
   isActive: {
     type: Boolean,
@@ -74,8 +81,10 @@ const templateSchema = new mongoose.Schema({
 
 // Index for better query performance
 templateSchema.index({ category: 1, isActive: 1, createdAt: -1 });
+templateSchema.index({ isSystemTemplate: 1, isActive: 1 });
 templateSchema.index({ title: 'text', description: 'text', subject: 'text' });
 templateSchema.index({ createdBy: 1 });
+templateSchema.index({ isSystemTemplate: 1, category: 1 });
 
 // Virtual for formatted last used
 templateSchema.virtual('formattedLastUsed').get(function() {
@@ -97,20 +106,86 @@ templateSchema.virtual('formattedLastUsed').get(function() {
   return this.lastUsed.toLocaleDateString();
 });
 
+// Virtual to check if template can be edited
+templateSchema.virtual('canEdit').get(function() {
+  return !this.isSystemTemplate; // Only non-system templates can be edited by regular users
+});
+
 // Middleware to update preview if content changes
 templateSchema.pre('save', function(next) {
   if (this.isModified('content') && this.content) {
     this.preview = this.content.substring(0, 100) + (this.content.length > 100 ? '...' : '');
   }
+  
+  // Auto-populate variables from content if not provided
+  if (this.isModified('content') && (!this.variables || this.variables.length === 0)) {
+    const variableRegex = /\[(.*?)\]/g;
+    const matches = this.content.match(variableRegex);
+    if (matches) {
+      this.variables = [...new Set(matches)]; // Remove duplicates
+    }
+  }
+  
   next();
 });
 
 // Static method to get templates by category
-templateSchema.statics.findByCategory = function(category) {
-  if (category === 'all') {
-    return this.find({ isActive: true }).sort({ createdAt: -1 });
+templateSchema.statics.findByCategory = function(category, includeSystem = true) {
+  let query = { isActive: true };
+  
+  if (category !== 'all') {
+    query.category = category;
   }
-  return this.find({ category, isActive: true }).sort({ createdAt: -1 });
+  
+  if (!includeSystem) {
+    query.isSystemTemplate = false;
+  }
+  
+  return this.find(query).sort({ isSystemTemplate: -1, createdAt: -1 });
+};
+
+// Static method to get system templates
+templateSchema.statics.getSystemTemplates = function(category = 'all') {
+  let query = { isActive: true, isSystemTemplate: true };
+  
+  if (category !== 'all') {
+    query.category = category;
+  }
+  
+  return this.find(query).sort({ category: 1, title: 1 });
+};
+
+// Static method to get user templates
+templateSchema.statics.getUserTemplates = function(userId, category = 'all') {
+  let query = { 
+    isActive: true, 
+    isSystemTemplate: false,
+    createdBy: userId 
+  };
+  
+  if (category !== 'all') {
+    query.category = category;
+  }
+  
+  return this.find(query).sort({ createdAt: -1 });
+};
+
+// Static method to get all templates for a user (system + user templates)
+templateSchema.statics.getAllTemplatesForUser = function(userId, category = 'all') {
+  let categoryQuery = {};
+  
+  if (category !== 'all') {
+    categoryQuery.category = category;
+  }
+  
+  return this.find({
+    isActive: true,
+    $or: [
+      { isSystemTemplate: true }, // System templates
+      { isSystemTemplate: false, createdBy: userId } // User's own templates
+    ],
+    ...categoryQuery
+  }).sort({ isSystemTemplate: -1, createdAt: -1 });
 };
 
 // Static method to increment usage
@@ -123,6 +198,30 @@ templateSchema.statics.incrementUsage = async function(templateId) {
     },
     { new: true }
   );
+};
+
+// Static method to create system template (admin only)
+templateSchema.statics.createSystemTemplate = async function(templateData) {
+  const template = new this({
+    ...templateData,
+    isSystemTemplate: true,
+    createdBy: null // System templates don't belong to any specific user
+  });
+  
+  return template.save();
+};
+
+// Static method to check if user can modify template
+templateSchema.statics.canUserModify = function(templateId, userId, isAdmin = false) {
+  return this.findOne({
+    _id: templateId,
+    isActive: true,
+    $or: [
+      { createdBy: userId, isSystemTemplate: false }, // User's own non-system templates
+      { isSystemTemplate: true, createdBy: userId }, // User's system templates (if any)
+      { isSystemTemplate: true, isAdmin: true } // Admins can modify any system template
+    ]
+  });
 };
 
 module.exports = mongoose.model('Template', templateSchema);

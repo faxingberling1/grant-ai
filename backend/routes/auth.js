@@ -9,7 +9,7 @@ const { authMiddleware, optionalAuthMiddleware } = require('../middleware/auth')
 const router = express.Router();
 
 /**
- * Register new user with email verification
+ * Register new user with email verification and document storage initialization
  */
 router.post('/register', async (req, res) => {
   try {
@@ -45,7 +45,7 @@ router.post('/register', async (req, res) => {
     // Check if this is an admin email (auto-approve but still verify)
     const isAdminEmail = process.env.ADMIN_EMAIL && email === process.env.ADMIN_EMAIL;
 
-    // Create user
+    // Create user with document storage initialization
     const userData = {
       name: name.trim(),
       email: email.toLowerCase().trim(),
@@ -53,12 +53,75 @@ router.post('/register', async (req, res) => {
       avatar: `https://i.pravatar.cc/150?img=${Math.floor(Math.random() * 70)}`,
       approved: isDemoEmail || isAdminEmail, // Auto-approve demo and admin
       emailVerified: isDemoEmail, // Only demo is auto-verified
-      role: isAdminEmail ? 'admin' : (isDemoEmail ? 'Grant Manager' : 'user')
+      role: isAdminEmail ? 'admin' : (isDemoEmail ? 'Grant Manager' : 'user'),
+      // Initialize document storage settings
+      documents: [],
+      storageUsage: 0,
+      storageLimit: isDemoEmail ? 500 * 1024 * 1024 : 100 * 1024 * 1024, // 500MB for demo, 100MB for regular
+      documentCount: 0,
+      maxDocumentCount: isDemoEmail ? 5000 : 1000, // Higher limits for demo
+      documentPreferences: {
+        autoCategorize: true,
+        defaultCategory: 'other',
+        backupEnabled: true,
+        versioningEnabled: true,
+        allowedFileTypes: [
+          'pdf', 'doc', 'docx', 'xls', 'xlsx', 'ppt', 'pptx', 
+          'txt', 'jpg', 'jpeg', 'png', 'gif', 'zip', 'rar'
+        ]
+      }
     };
 
-    // For demo user, create and return immediately
+    // For demo user, create and return immediately with sample documents
     if (isDemoEmail) {
       const demoUser = await User.create(userData);
+      
+      // Add sample documents for demo user
+      const sampleDocuments = [
+        {
+          filename: 'grant-proposal-template.docx',
+          originalName: 'Grant Proposal Template.docx',
+          fileSize: 2457600,
+          mimeType: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+          category: 'templates',
+          description: 'Comprehensive grant proposal template with all required sections',
+          storagePath: 'demo/grant-proposal-template.docx',
+          tags: ['template', 'proposal', 'grant'],
+          version: 1,
+          uploadedBy: demoUser._id
+        },
+        {
+          filename: 'nonprofit-budget-worksheet.xlsx',
+          originalName: 'Nonprofit Budget Worksheet.xlsx',
+          fileSize: 1887437,
+          mimeType: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+          category: 'financial',
+          description: 'Detailed budget planning worksheet for grant applications',
+          storagePath: 'demo/nonprofit-budget-worksheet.xlsx',
+          tags: ['budget', 'financial', 'worksheet'],
+          version: 1,
+          uploadedBy: demoUser._id
+        },
+        {
+          filename: 'project-timeline-template.pptx',
+          originalName: 'Project Timeline Template.pptx',
+          fileSize: 4194304,
+          mimeType: 'application/vnd.openxmlformats-officedocument.presentationml.presentation',
+          category: 'planning',
+          description: 'Project timeline presentation template for grant proposals',
+          storagePath: 'demo/project-timeline-template.pptx',
+          tags: ['timeline', 'project', 'presentation'],
+          version: 1,
+          uploadedBy: demoUser._id
+        }
+      ];
+
+      // Add sample documents to demo user
+      demoUser.documents = sampleDocuments;
+      demoUser.documentCount = sampleDocuments.length;
+      demoUser.storageUsage = sampleDocuments.reduce((total, doc) => total + doc.fileSize, 0);
+      await demoUser.save();
+
       const token = jwt.sign({ id: demoUser._id }, process.env.JWT_SECRET, { expiresIn: '30d' });
       
       return res.status(201).json({
@@ -71,7 +134,14 @@ router.post('/register', async (req, res) => {
           email: demoUser.email,
           role: demoUser.role,
           avatar: demoUser.avatar,
-          emailVerified: true
+          emailVerified: true,
+          storageStats: {
+            used: demoUser.storageUsage,
+            limit: demoUser.storageLimit,
+            available: demoUser.availableStorage,
+            percentage: demoUser.getStorageUsagePercentage()
+          },
+          documentCount: demoUser.documentCount
         }
       });
     }
@@ -91,7 +161,8 @@ router.post('/register', async (req, res) => {
           userAgent: req.get('User-Agent'),
           metadata: {
             browser: req.get('User-Agent') || 'Unknown',
-            registrationType: isAdminEmail ? 'admin' : 'regular'
+            registrationType: isAdminEmail ? 'admin' : 'regular',
+            documentStorageInitialized: true
           }
         }
       );
@@ -114,7 +185,14 @@ router.post('/register', async (req, res) => {
           email: newUser.email,
           role: newUser.role,
           avatar: newUser.avatar,
-          emailVerified: false
+          emailVerified: false,
+          storageStats: {
+            used: newUser.storageUsage,
+            limit: newUser.storageLimit,
+            available: newUser.availableStorage,
+            percentage: newUser.getStorageUsagePercentage()
+          },
+          documentCount: newUser.documentCount
         }
       });
     } catch (emailError) {
@@ -132,7 +210,14 @@ router.post('/register', async (req, res) => {
           email: newUser.email,
           role: newUser.role,
           avatar: newUser.avatar,
-          emailVerified: false
+          emailVerified: false,
+          storageStats: {
+            used: newUser.storageUsage,
+            limit: newUser.storageLimit,
+            available: newUser.availableStorage,
+            percentage: newUser.getStorageUsagePercentage()
+          },
+          documentCount: newUser.documentCount
         }
       });
     }
@@ -216,9 +301,13 @@ router.post('/verify-email', async (req, res) => {
     // Mark verification token as used
     await verification.markAsUsed();
 
-    // Send welcome email
+    // Send welcome email with document storage information
     try {
-      await EmailService.sendWelcomeEmail(user);
+      await EmailService.sendWelcomeEmail(user, {
+        storageLimit: user.storageLimit,
+        documentLimit: user.maxDocumentCount,
+        features: ['Document Storage', 'File Sharing', 'Version Control']
+      });
     } catch (welcomeEmailError) {
       console.warn('⚠️ Failed to send welcome email:', welcomeEmailError.message);
       // Continue even if welcome email fails
@@ -240,7 +329,15 @@ router.post('/verify-email', async (req, res) => {
         email: user.email,
         role: user.role,
         avatar: user.avatar,
-        emailVerified: true
+        emailVerified: true,
+        storageStats: {
+          used: user.storageUsage,
+          limit: user.storageLimit,
+          available: user.availableStorage,
+          percentage: user.getStorageUsagePercentage()
+        },
+        documentCount: user.documentCount,
+        documentPreferences: user.documentPreferences
       }
     });
 
@@ -311,7 +408,8 @@ router.post('/resend-verification', async (req, res) => {
           userAgent: req.get('User-Agent'),
           metadata: {
             browser: req.get('User-Agent') || 'Unknown',
-            resend: true
+            resend: true,
+            documentStorageInitialized: true
           }
         }
       );
@@ -393,7 +491,15 @@ router.post('/login', async (req, res) => {
           email: user.email,
           role: user.role,
           avatar: user.avatar,
-          emailVerified: true
+          emailVerified: true,
+          storageStats: {
+            used: user.storageUsage,
+            limit: user.storageLimit,
+            available: user.availableStorage,
+            percentage: user.getStorageUsagePercentage()
+          },
+          documentCount: user.documentCount,
+          documentPreferences: user.documentPreferences
         }
       });
     }
@@ -439,7 +545,15 @@ router.post('/login', async (req, res) => {
         avatar: user.avatar,
         emailVerified: user.emailVerified,
         company: user.company,
-        phone: user.phone
+        phone: user.phone,
+        storageStats: {
+          used: user.storageUsage,
+          limit: user.storageLimit,
+          available: user.availableStorage,
+          percentage: user.getStorageUsagePercentage()
+        },
+        documentCount: user.documentCount,
+        documentPreferences: user.documentPreferences
       }
     });
   } catch (error) {
@@ -453,25 +567,55 @@ router.post('/login', async (req, res) => {
 });
 
 /**
- * Get current user (protected)
+ * Get current user (protected) with document storage info
  */
 router.get('/me', authMiddleware, async (req, res) => {
   try {
+    // Get fresh user data with document stats
+    const user = await User.findById(req.user._id);
+    
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        message: 'User not found'
+      });
+    }
+
     res.json({
       success: true,
       user: {
-        id: req.user._id,
-        name: req.user.name,
-        email: req.user.email,
-        role: req.user.role,
-        avatar: req.user.avatar,
-        emailVerified: req.user.emailVerified,
-        company: req.user.company,
-        phone: req.user.phone,
-        timezone: req.user.timezone,
-        notifications: req.user.notifications,
-        lastLogin: req.user.lastLogin,
-        createdAt: req.user.createdAt
+        id: user._id,
+        name: user.name,
+        email: user.email,
+        role: user.role,
+        avatar: user.avatar,
+        emailVerified: user.emailVerified,
+        company: user.company,
+        phone: user.phone,
+        timezone: user.timezone,
+        notifications: user.notifications,
+        lastLogin: user.lastLogin,
+        createdAt: user.createdAt,
+        // Document storage information
+        storageStats: {
+          used: user.storageUsage,
+          limit: user.storageLimit,
+          available: user.availableStorage,
+          percentage: user.getStorageUsagePercentage(),
+          formatted: user.storageUsageFormatted
+        },
+        documentCount: user.documentCount,
+        maxDocumentCount: user.maxDocumentCount,
+        documentPreferences: user.documentPreferences,
+        // Quick document stats
+        documentStats: {
+          totalDocuments: user.documentCount,
+          totalStorage: user.storageUsage,
+          categories: user.documents.reduce((acc, doc) => {
+            acc[doc.category] = (acc[doc.category] || 0) + 1;
+            return acc;
+          }, {})
+        }
       }
     });
   } catch (error) {
@@ -502,7 +646,14 @@ router.get('/verification-status', authMiddleware, async (req, res) => {
       emailVerified: user.emailVerified,
       approved: user.approved,
       active: user.active,
-      status: user.status
+      status: user.status,
+      storageStats: {
+        used: user.storageUsage,
+        limit: user.storageLimit,
+        available: user.availableStorage,
+        percentage: user.getStorageUsagePercentage()
+      },
+      documentCount: user.documentCount
     });
   } catch (error) {
     console.error('❌ Verification status error:', error);
@@ -514,11 +665,11 @@ router.get('/verification-status', authMiddleware, async (req, res) => {
 });
 
 /**
- * Update user profile
+ * Update user profile with document preferences
  */
 router.put('/profile', authMiddleware, async (req, res) => {
   try {
-    const { name, company, phone, timezone, notifications } = req.body;
+    const { name, company, phone, timezone, notifications, documentPreferences } = req.body;
     
     const updateData = {};
     if (name) updateData.name = name.trim();
@@ -526,6 +677,17 @@ router.put('/profile', authMiddleware, async (req, res) => {
     if (phone !== undefined) updateData.phone = phone.trim();
     if (timezone) updateData.timezone = timezone;
     if (notifications) updateData.notifications = notifications;
+    
+    // Update document preferences if provided
+    if (documentPreferences) {
+      updateData.documentPreferences = {
+        autoCategorize: documentPreferences.autoCategorize !== undefined ? documentPreferences.autoCategorize : req.user.documentPreferences.autoCategorize,
+        defaultCategory: documentPreferences.defaultCategory || req.user.documentPreferences.defaultCategory,
+        backupEnabled: documentPreferences.backupEnabled !== undefined ? documentPreferences.backupEnabled : req.user.documentPreferences.backupEnabled,
+        versioningEnabled: documentPreferences.versioningEnabled !== undefined ? documentPreferences.versioningEnabled : req.user.documentPreferences.versioningEnabled,
+        allowedFileTypes: documentPreferences.allowedFileTypes || req.user.documentPreferences.allowedFileTypes
+      };
+    }
 
     const updatedUser = await User.findByIdAndUpdate(
       req.user._id,
@@ -546,7 +708,15 @@ router.put('/profile', authMiddleware, async (req, res) => {
         company: updatedUser.company,
         phone: updatedUser.phone,
         timezone: updatedUser.timezone,
-        notifications: updatedUser.notifications
+        notifications: updatedUser.notifications,
+        storageStats: {
+          used: updatedUser.storageUsage,
+          limit: updatedUser.storageLimit,
+          available: updatedUser.availableStorage,
+          percentage: updatedUser.getStorageUsagePercentage()
+        },
+        documentCount: updatedUser.documentCount,
+        documentPreferences: updatedUser.documentPreferences
       }
     });
   } catch (error) {
@@ -593,6 +763,128 @@ router.get('/check-email', async (req, res) => {
     res.status(500).json({
       success: false,
       message: 'Error checking email availability'
+    });
+  }
+});
+
+/**
+ * Get user storage statistics (protected)
+ */
+router.get('/storage/stats', authMiddleware, async (req, res) => {
+  try {
+    const user = await User.findById(req.user._id);
+    
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        message: 'User not found'
+      });
+    }
+
+    // Calculate document category distribution
+    const categoryStats = user.documents.reduce((acc, doc) => {
+      acc[doc.category] = (acc[doc.category] || 0) + 1;
+      return acc;
+    }, {});
+
+    // Get recent documents
+    const recentDocuments = user.documents
+      .sort((a, b) => new Date(b.uploadDate) - new Date(a.uploadDate))
+      .slice(0, 5)
+      .map(doc => ({
+        id: doc._id,
+        filename: doc.originalName,
+        category: doc.category,
+        fileSize: doc.fileSize,
+        uploadDate: doc.uploadDate
+      }));
+
+    res.json({
+      success: true,
+      stats: {
+        storage: {
+          used: user.storageUsage,
+          limit: user.storageLimit,
+          available: user.availableStorage,
+          percentage: user.getStorageUsagePercentage(),
+          formatted: user.storageUsageFormatted
+        },
+        documents: {
+          total: user.documentCount,
+          limit: user.maxDocumentCount,
+          available: user.maxDocumentCount - user.documentCount
+        },
+        categories: categoryStats,
+        recentUploads: recentDocuments
+      }
+    });
+  } catch (error) {
+    console.error('❌ Storage stats error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Error retrieving storage statistics'
+    });
+  }
+});
+
+/**
+ * Upgrade storage plan (placeholder for future implementation)
+ */
+router.post('/storage/upgrade', authMiddleware, async (req, res) => {
+  try {
+    const { plan } = req.body;
+    
+    if (!plan) {
+      return res.status(400).json({
+        success: false,
+        message: 'Storage plan is required'
+      });
+    }
+
+    const plans = {
+      basic: { storage: 100 * 1024 * 1024, documents: 1000 },
+      professional: { storage: 500 * 1024 * 1024, documents: 5000 },
+      enterprise: { storage: 2 * 1024 * 1024 * 1024, documents: 20000 }
+    };
+
+    const selectedPlan = plans[plan];
+    if (!selectedPlan) {
+      return res.status(400).json({
+        success: false,
+        message: 'Invalid storage plan'
+      });
+    }
+
+    // In a real implementation, you would process payment here
+    // For now, we'll just update the user's limits
+    const updatedUser = await User.findByIdAndUpdate(
+      req.user._id,
+      {
+        storageLimit: selectedPlan.storage,
+        maxDocumentCount: selectedPlan.documents
+      },
+      { new: true }
+    );
+
+    res.json({
+      success: true,
+      message: `Storage plan upgraded to ${plan} successfully!`,
+      user: {
+        storageStats: {
+          used: updatedUser.storageUsage,
+          limit: updatedUser.storageLimit,
+          available: updatedUser.availableStorage,
+          percentage: updatedUser.getStorageUsagePercentage()
+        },
+        documentCount: updatedUser.documentCount,
+        maxDocumentCount: updatedUser.maxDocumentCount
+      }
+    });
+  } catch (error) {
+    console.error('❌ Storage upgrade error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Error upgrading storage plan'
     });
   }
 });

@@ -2,31 +2,85 @@ backend
 ├── .env
 ├── .env.production
 ├── config
-│   └── db.js
+│   ├── constants.js
+│   ├── database.js
+│   ├── environment.js
+│   ├── index.js
+│   └── mongoAtlas.js
+├── controllers
+│   ├── adminController.js
+│   ├── aiController.js
+│   ├── authController.js
+│   ├── clientController.js
+│   ├── debugController.js
+│   ├── grantController.js
+│   ├── notificationController.js
+│   ├── templateController.js
+│   └── userController.js
 ├── middleware
-│   └── auth.js
+│   ├── admin.js
+│   ├── auth.js
+│   ├── errorHandler.js
+│   ├── global.js
+│   └── validation.js
 ├── models
 │   ├── Client.js
+│   ├── Document.js
 │   ├── EmailVerification.js
+│   ├── Grant.js
 │   ├── GrantSource.js
 │   ├── Meeting.js
+│   ├── Notification.js
+│   ├── PasswordReset.js
 │   ├── Template.js
 │   └── User.js
 ├── node_modules
 ├── package-lock.json
 ├── package.json
 ├── routes
+│   ├── admin.js
+│   ├── ai.js
 │   ├── aiRoutes.js
 │   ├── auth.js
 │   ├── clients.js
+│   ├── debug.js
+│   ├── documents.js
 │   ├── grantSources.js
+│   ├── grants.js
 │   ├── health.js
 │   ├── meetings.js
-│   └── templates.js
+│   ├── notifications.js
+│   ├── templates.js
+│   └── users.js
+├── seeders
+│   └── demoData.js
 ├── server.js
 ├── services
-│   └── emailService.js
-└── test-gmail.js
+│   ├── AIService.js
+│   ├── AuthService.js
+│   ├── documentService.js
+│   ├── emailService.js
+│   ├── notificationService.js
+│   ├── socketService.js
+│   └── storageService.js
+├── socket
+│   └── notificationSocket.js
+├── test-gmail.js
+├── uploads
+│   ├── documents
+│   │   └── 69253140bf28db131c93f2ac
+│   │       ├── doc_1764354412758_993491add611e302_AIE_Eric_Hicks.pdf
+│   │       ├── doc_1764354715936_30b24beb30261eff_AIE_Eric_Hicks.pdf
+│   │       ├── doc_1764354846029_bae47e0f13b2e604_AIE_Eric_Hicks.pdf
+│   │       ├── doc_1764355290789_e5c0d09b7a2f904f_AIE_Eric_Hicks.pdf
+│   │       ├── doc_1764355371046_b20d8d6df9c21e73_AIE_Eric_Hicks.pdf
+│   │       ├── doc_1764355897105_ed282bf29bd2b315_AIE_Eric_Hicks.pdf
+│   │       └── doc_1764359709013_025897945897bb31_AIE_Eric_Hicks.pdf
+│   └── temp
+└── utils
+    ├── ai.js
+    ├── helpers.js
+    └── validators.js
 
 frontend
 ├── .env.example
@@ -111,9 +165,21 @@ frontend
 │   │   │   │   └── Trash.js
 │   │   │   ├── Dashboard.css
 │   │   │   ├── Dashboard.js
+│   │   │   ├── DashboardHeader.css
 │   │   │   ├── DashboardHeader.js
 │   │   │   ├── DashboardSidebar.css
 │   │   │   ├── DashboardSidebar.js
+│   │   │   ├── Documents
+│   │   │   │   ├── DocumentList.css
+│   │   │   │   ├── DocumentList.js
+│   │   │   │   ├── DocumentPreview.css
+│   │   │   │   ├── DocumentPreview.js
+│   │   │   │   ├── DocumentUpload.css
+│   │   │   │   ├── DocumentUpload.js
+│   │   │   │   ├── Documents.css
+│   │   │   │   ├── Documents.js
+│   │   │   │   ├── StorageStats.css
+│   │   │   │   └── StorageStats.js
 │   │   │   ├── Grants
 │   │   │   │   ├── ClientGrantMatching.css
 │   │   │   │   ├── ClientGrantMatching.js
@@ -136,6 +202,15 @@ frontend
 │   │   │   │   ├── MatchResults.js
 │   │   │   │   ├── Matching.css
 │   │   │   │   └── Matching.js
+│   │   │   ├── Notifications
+│   │   │   │   ├── NotificationBell.css
+│   │   │   │   ├── NotificationBell.js
+│   │   │   │   ├── NotificationHub.css
+│   │   │   │   ├── NotificationHub.js
+│   │   │   │   ├── NotificationItem.css
+│   │   │   │   ├── NotificationItem.js
+│   │   │   │   ├── NotificationList.css
+│   │   │   │   └── NotificationList.js
 │   │   │   ├── Profile
 │   │   │   │   ├── Profile.css
 │   │   │   │   ├── Profile.js
@@ -173,13 +248,16 @@ frontend
 │   │   │   │   ├── SourceList.js
 │   │   │   │   ├── Sources.css
 │   │   │   │   └── Sources.js
-│   │   │   └── Submissions
-│   │   │       ├── SubmissionDetails.js
-│   │   │       ├── SubmissionForm.js
-│   │   │       ├── SubmissionList.js
-│   │   │       ├── SubmissionTimeline.js
-│   │   │       ├── Submissions.css
-│   │   │       └── Submissions.js
+│   │   │   ├── Submissions
+│   │   │   │   ├── SubmissionDetails.js
+│   │   │   │   ├── SubmissionForm.js
+│   │   │   │   ├── SubmissionList.js
+│   │   │   │   ├── SubmissionTimeline.js
+│   │   │   │   ├── Submissions.css
+│   │   │   │   └── Submissions.js
+│   │   │   └── UserManagement
+│   │   │       ├── UserManagement.css
+│   │   │       └── UserManagement.js
 │   │   └── Login
 │   │       ├── Login.css
 │   │       ├── Login.js
@@ -190,6 +268,8 @@ frontend
 │   ├── context
 │   │   ├── AuthContext.js
 │   │   ├── ClientsContext.js
+│   │   ├── DocumentsContext.js
+│   │   ├── NotificationContext.js
 │   │   └── TemplatesContext.js
 │   ├── index.css
 │   ├── index.js
@@ -201,5 +281,6 @@ frontend
 │       ├── grantWatchApi.js
 │       ├── grantsGovApi.js
 │       ├── meetingService.js
+│       ├── notificationService.js
 │       └── templateService.js
 └── vercel.json

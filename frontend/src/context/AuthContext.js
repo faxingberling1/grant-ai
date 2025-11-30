@@ -8,6 +8,7 @@ export function useAuth() {
 
 export function AuthProvider({ children }) {
   const [currentUser, setCurrentUser] = useState(null);
+  const [authToken, setAuthToken] = useState(null); // 👈 NEW: raw token for WebSocket/API
   const [loading, setLoading] = useState(true);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
 
@@ -20,6 +21,7 @@ export function AuthProvider({ children }) {
     const user = localStorage.getItem('user');
 
     if (token && user) {
+      setAuthToken(token); // 👈 store token
       setCurrentUser(JSON.parse(user));
       setIsAuthenticated(true);
       verifyToken(token);
@@ -39,12 +41,14 @@ export function AuthProvider({ children }) {
       if (response.ok) {
         const data = await response.json();
         setCurrentUser(data.user);
+        setAuthToken(token); // 👈 ensure token stays in sync
         setIsAuthenticated(true);
       } else {
         // If backend verification fails, check if we have demo data
         const user = localStorage.getItem('user');
         if (user) {
           console.log('Using existing session - backend may be unavailable');
+          setAuthToken(token); // 👈 keep token even in fallback
           setIsAuthenticated(true);
         } else {
           logout();
@@ -57,6 +61,7 @@ export function AuthProvider({ children }) {
       const user = localStorage.getItem('user');
       if (user) {
         console.log('Backend unavailable, using existing session');
+        setAuthToken(token); // 👈
         setIsAuthenticated(true);
       }
     } finally {
@@ -84,6 +89,7 @@ export function AuthProvider({ children }) {
         // Use 'token' and 'user' to match API service expectations
         localStorage.setItem('token', data.token);
         localStorage.setItem('user', JSON.stringify(data.user));
+        setAuthToken(data.token); // 👈
         setCurrentUser(data.user);
         setIsAuthenticated(true);
         return { success: true };
@@ -92,13 +98,13 @@ export function AuthProvider({ children }) {
       }
     } catch (error) {
       console.error('Login failed:', error);
-      
+
       // For deployment: provide demo login when backend is down
-      if (error.message.includes('Failed to fetch') || 
+      if (error.message.includes('Failed to fetch') ||
           error.message.includes('non-JSON response') ||
           error.message.includes('Route not found')) {
         console.warn('Backend unavailable - using demo login');
-        
+
         const demoUser = {
           _id: 'demo-user-' + Date.now(),
           name: 'Demo User',
@@ -106,21 +112,22 @@ export function AuthProvider({ children }) {
           role: 'user'
         };
         const demoToken = 'demo-token-' + Date.now();
-        
+
         localStorage.setItem('token', demoToken);
         localStorage.setItem('user', JSON.stringify(demoUser));
+        setAuthToken(demoToken); // 👈
         setCurrentUser(demoUser);
         setIsAuthenticated(true);
-        
-        return { 
-          success: true, 
-          message: 'Logged in successfully (demo mode - backend unavailable)' 
+
+        return {
+          success: true,
+          message: 'Logged in successfully (demo mode - backend unavailable)'
         };
       }
-      
-      return { 
-        success: false, 
-        message: error.message || 'Network error. Please try again.' 
+
+      return {
+        success: false,
+        message: error.message || 'Network error. Please try again.'
       };
     }
   };
@@ -145,6 +152,7 @@ export function AuthProvider({ children }) {
         // Use 'token' and 'user' to match API service expectations
         localStorage.setItem('token', data.token);
         localStorage.setItem('user', JSON.stringify(data.user));
+        setAuthToken(data.token); // 👈
         setCurrentUser(data.user);
         setIsAuthenticated(true);
         return { success: true };
@@ -153,13 +161,13 @@ export function AuthProvider({ children }) {
       }
     } catch (error) {
       console.error('Registration failed:', error);
-      
+
       // For deployment: provide demo registration when backend is down
-      if (error.message.includes('Failed to fetch') || 
+      if (error.message.includes('Failed to fetch') ||
           error.message.includes('non-JSON response') ||
           error.message.includes('Route not found')) {
         console.warn('Backend unavailable - using demo registration');
-        
+
         const demoUser = {
           _id: 'demo-user-' + Date.now(),
           name: name,
@@ -167,21 +175,22 @@ export function AuthProvider({ children }) {
           role: 'user'
         };
         const demoToken = 'demo-token-' + Date.now();
-        
+
         localStorage.setItem('token', demoToken);
         localStorage.setItem('user', JSON.stringify(demoUser));
+        setAuthToken(demoToken); // 👈
         setCurrentUser(demoUser);
         setIsAuthenticated(true);
-        
-        return { 
-          success: true, 
-          message: 'Registered successfully (demo mode - backend unavailable)' 
+
+        return {
+          success: true,
+          message: 'Registered successfully (demo mode - backend unavailable)'
         };
       }
-      
-      return { 
-        success: false, 
-        message: error.message || 'Network error. Please try again.' 
+
+      return {
+        success: false,
+        message: error.message || 'Network error. Please try again.'
       };
     }
   };
@@ -191,6 +200,7 @@ export function AuthProvider({ children }) {
     localStorage.removeItem('token');
     localStorage.removeItem('user');
     setCurrentUser(null);
+    setAuthToken(null); // 👈
     setIsAuthenticated(false);
   };
 
@@ -202,6 +212,7 @@ export function AuthProvider({ children }) {
 
   const value = {
     currentUser,
+    authToken,         // 👈 exposed for WebSocket and API services
     isAuthenticated,
     loading,
     login,

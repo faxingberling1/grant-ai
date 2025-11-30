@@ -17,12 +17,13 @@ const AIWriting = () => {
   const [apiStatus, setApiStatus] = useState('checking');
 
   // Get the API URL from environment variables
-  const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000'; // Fallback remains localhost for local dev
+  const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000';
 
   // Check API connection
   useEffect(() => {
     checkAPIStatus();
     loadInitialData();
+    testClientsAPI(); // Temporary debug function
   }, []);
 
   const checkAPIStatus = async () => {
@@ -57,6 +58,35 @@ const AIWriting = () => {
     }
   };
 
+  // Temporary debug function to check API response structure
+  const testClientsAPI = async () => {
+    try {
+      const token = localStorage.getItem('token');
+      console.log('🔍 Debug: Token exists:', !!token);
+      
+      const response = await fetch(`${API_URL}/api/clients`, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+          ...(token && { 'Authorization': `Bearer ${token}` })
+        }
+      });
+      
+      console.log('🔍 Debug: Response status:', response.status);
+      const rawText = await response.text();
+      console.log('🔍 Debug: Raw response text:', rawText);
+      
+      try {
+        const parsedData = JSON.parse(rawText);
+        console.log('🔍 Debug: Parsed response structure:', parsedData);
+      } catch (parseError) {
+        console.log('🔍 Debug: JSON parse error:', parseError);
+      }
+    } catch (error) {
+      console.error('🔍 Debug: API test error:', error);
+    }
+  };
+
   const loadInitialData = async () => {
     try {
       const token = localStorage.getItem('token');
@@ -79,22 +109,52 @@ const AIWriting = () => {
       console.log('📡 Clients response status:', clientsResponse.status);
 
       if (clientsResponse.ok) {
-        const clientsData = await clientsResponse.json();
-        console.log('✅ Clients data received:', clientsData.length, 'clients');
+        const responseData = await clientsResponse.json();
+        console.log('✅ Clients API response:', responseData);
+        
+        // Handle different possible response structures
+        let clientsData = [];
+        
+        if (Array.isArray(responseData)) {
+          // If response is directly an array
+          clientsData = responseData;
+          console.log('✅ Response is direct array');
+        } else if (responseData.data && Array.isArray(responseData.data)) {
+          // If response has { data: [] } structure
+          clientsData = responseData.data;
+          console.log('✅ Response has data array');
+        } else if (responseData.clients && Array.isArray(responseData.clients)) {
+          // If response has { clients: [] } structure
+          clientsData = responseData.clients;
+          console.log('✅ Response has clients array');
+        } else if (responseData.success && responseData.data && Array.isArray(responseData.data)) {
+          // If response has { success: true, data: [] } structure
+          clientsData = responseData.data;
+          console.log('✅ Response has success with data array');
+        } else {
+          console.log('❌ Unknown response structure:', responseData);
+        }
+        
+        console.log('✅ Extracted clients data:', clientsData);
 
-        const transformedClients = clientsData.map(client => ({
-          id: client._id,
-          name: client.organizationName,
-          category: client.category || client.organizationType || 'General',
-          mission: client.missionStatement,
-          focusAreas: client.focusAreas || [],
-          fullData: client // Include all original data for AI context
-        }));
+        if (clientsData && Array.isArray(clientsData)) {
+          const transformedClients = clientsData.map(client => ({
+            id: client._id || client.id,
+            name: client.organizationName || client.name || 'Unnamed Client',
+            category: client.category || client.organizationType || 'General',
+            mission: client.missionStatement || client.mission || '',
+            focusAreas: client.focusAreas || [],
+            fullData: client // Include all original data for AI context
+          }));
 
-        setClients(transformedClients);
-        console.log('✅ Transformed clients:', transformedClients);
+          setClients(transformedClients);
+          console.log('✅ Transformed clients:', transformedClients.length, 'clients');
+        } else {
+          console.log('❌ No valid clients data found, using mock data');
+          loadMockData();
+        }
       } else {
-        console.log('❌ Clients fetch failed, using mock data');
+        console.log('❌ Clients fetch failed, status:', clientsResponse.status);
         // Fallback to mock data if API fails
         loadMockData();
       }
@@ -130,12 +190,32 @@ const AIWriting = () => {
       console.log('📡 Grant sources response status:', grantSourcesResponse.status);
 
       if (grantSourcesResponse.ok) {
-        const grantSourcesData = await grantSourcesResponse.json();
-        console.log('✅ Grant sources data received:', grantSourcesData.length, 'sources');
-        setGrantSources(grantSourcesData);
+        const responseData = await grantSourcesResponse.json();
+        console.log('✅ Grant sources API response:', responseData);
+        
+        let grantSourcesData = [];
+        
+        // Handle different response structures
+        if (Array.isArray(responseData)) {
+          grantSourcesData = responseData;
+        } else if (responseData.data && Array.isArray(responseData.data)) {
+          grantSourcesData = responseData.data;
+        } else if (responseData.sources && Array.isArray(responseData.sources)) {
+          grantSourcesData = responseData.sources;
+        } else if (responseData.success && responseData.data) {
+          grantSourcesData = responseData.data;
+        }
+        
+        console.log('✅ Extracted grant sources:', grantSourcesData.length, 'sources');
+        
+        if (grantSourcesData && Array.isArray(grantSourcesData)) {
+          setGrantSources(grantSourcesData);
+        } else {
+          console.log('❌ No valid grant sources data, using mock data');
+          loadMockGrantSources();
+        }
       } else {
         console.log('❌ Grant sources fetch failed, using mock data');
-        // Fallback to mock grant sources if API fails
         loadMockGrantSources();
       }
     } catch (error) {
@@ -257,6 +337,7 @@ const AIWriting = () => {
 
     setClients(mockClients);
     setGrants(mockGrants);
+    console.log('✅ Loaded mock data:', mockClients.length, 'clients,', mockGrants.length, 'grants');
   };
 
   const createNewGrant = async (grantData) => {
@@ -320,10 +401,10 @@ const AIWriting = () => {
         format: context?.format || 'paragraph'
       };
 
-      console.log('🚀 Generating content at:', `${API_URL}/api/generate`);
+      console.log('🚀 Generating content at:', `${API_URL}/api/ai/generate`);
       console.log('📝 Request body:', requestBody);
 
-      const response = await fetch(`${API_URL}/api/generate`, {
+      const response = await fetch(`${API_URL}/api/ai/generate`, {
         method: 'POST',
         headers: headers,
         body: JSON.stringify(requestBody),
@@ -369,9 +450,9 @@ const AIWriting = () => {
         }
       };
 
-      console.log('🔧 Improving content at:', `${API_URL}/api/improve`);
+      console.log('🔧 Improving content at:', `${API_URL}/api/ai/improve`);
 
-      const response = await fetch(`${API_URL}/api/improve`, {
+      const response = await fetch(`${API_URL}/api/ai/improve`, {
         method: 'POST',
         headers: headers,
         body: JSON.stringify(requestBody),
@@ -416,9 +497,9 @@ const AIWriting = () => {
         }
       };
 
-      console.log('📊 Analyzing content at:', `${API_URL}/api/analyze`);
+      console.log('📊 Analyzing content at:', `${API_URL}/api/ai/analyze`);
 
-      const response = await fetch(`${API_URL}/api/analyze`, {
+      const response = await fetch(`${API_URL}/api/ai/analyze`, {
         method: 'POST',
         headers: headers,
         body: JSON.stringify(requestBody),
@@ -451,9 +532,9 @@ const AIWriting = () => {
         headers['Authorization'] = `Bearer ${token}`;
       }
 
-      console.log('📋 Fetching templates at:', `${API_URL}/api/templates/${templateType}`);
+      console.log('📋 Fetching templates at:', `${API_URL}/api/ai/templates/${templateType}`);
 
-      const response = await fetch(`${API_URL}/api/templates/${templateType}`, {
+      const response = await fetch(`${API_URL}/api/ai/templates/${templateType}`, {
         method: 'GET',
         headers: headers,
       });

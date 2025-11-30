@@ -89,8 +89,114 @@ const userSchema = new mongoose.Schema({
   
   lastLogin: {
     type: Date
+  },
+
+  // Document Storage Fields - NEW
+  documents: [{
+    _id: {
+      type: mongoose.Schema.Types.ObjectId,
+      auto: true
+    },
+    filename: {
+      type: String,
+      required: true
+    },
+    originalName: {
+      type: String,
+      required: true
+    },
+    fileSize: {
+      type: Number,
+      required: true
+    },
+    mimeType: {
+      type: String,
+      required: true
+    },
+    category: {
+      type: String,
+      enum: ['proposals', 'financial', 'guidelines', 'planning', 'reports', 'templates', 'other'],
+      default: 'other'
+    },
+    description: {
+      type: String,
+      maxlength: [500, 'Description cannot exceed 500 characters']
+    },
+    storagePath: {
+      type: String,
+      required: true
+    },
+    uploadDate: {
+      type: Date,
+      default: Date.now
+    },
+    lastAccessed: {
+      type: Date,
+      default: Date.now
+    },
+    isPublic: {
+      type: Boolean,
+      default: false
+    },
+    tags: [{
+      type: String,
+      trim: true,
+      maxlength: [50, 'Tag cannot exceed 50 characters']
+    }],
+    version: {
+      type: Number,
+      default: 1
+    },
+    parentDocument: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'User.documents',
+      default: null
+    }
+  }],
+
+  // Document Storage Limits and Usage - NEW
+  storageUsage: {
+    type: Number,
+    default: 0 // in bytes
+  },
+  storageLimit: {
+    type: Number,
+    default: 100 * 1024 * 1024 // 100MB default limit in bytes
+  },
+  documentCount: {
+    type: Number,
+    default: 0
+  },
+  maxDocumentCount: {
+    type: Number,
+    default: 1000 // Maximum number of documents allowed
+  },
+
+  // Document Preferences - NEW
+  documentPreferences: {
+    autoCategorize: {
+      type: Boolean,
+      default: true
+    },
+    defaultCategory: {
+      type: String,
+      enum: ['proposals', 'financial', 'guidelines', 'planning', 'reports', 'templates', 'other'],
+      default: 'other'
+    },
+    backupEnabled: {
+      type: Boolean,
+      default: true
+    },
+    versioningEnabled: {
+      type: Boolean,
+      default: true
+    },
+    allowedFileTypes: [{
+      type: String,
+      enum: ['pdf', 'doc', 'docx', 'xls', 'xlsx', 'ppt', 'pptx', 'txt', 'jpg', 'jpeg', 'png', 'gif', 'zip', 'rar']
+    }]
   }
-  
+
 }, {
   timestamps: true // Adds createdAt and updatedAt
 });
@@ -102,6 +208,12 @@ userSchema.index({ emailVerificationExpires: 1 });
 userSchema.index({ role: 1 });
 userSchema.index({ approved: 1 });
 userSchema.index({ emailVerified: 1 });
+
+// NEW: Indexes for document queries
+userSchema.index({ 'documents.category': 1 });
+userSchema.index({ 'documents.uploadDate': 1 });
+userSchema.index({ 'documents.tags': 1 });
+userSchema.index({ 'documents.isPublic': 1 });
 
 // Hash password before saving (only if modified)
 userSchema.pre('save', async function(next) {
@@ -120,6 +232,15 @@ userSchema.pre('save', async function(next) {
 // Update updatedAt timestamp before saving
 userSchema.pre('save', function(next) {
   this.updatedAt = Date.now();
+  next();
+});
+
+// NEW: Update document count and storage usage before saving
+userSchema.pre('save', function(next) {
+  if (this.isModified('documents')) {
+    this.documentCount = this.documents.length;
+    this.storageUsage = this.documents.reduce((total, doc) => total + (doc.fileSize || 0), 0);
+  }
   next();
 });
 
@@ -157,6 +278,61 @@ userSchema.methods.updateLastLogin = function() {
   return this.save();
 };
 
+// NEW: Instance methods for document management
+userSchema.methods.addDocument = function(documentData) {
+  this.documents.push(documentData);
+  return this.save();
+};
+
+userSchema.methods.removeDocument = function(documentId) {
+  const documentIndex = this.documents.findIndex(doc => doc._id.toString() === documentId);
+  if (documentIndex > -1) {
+    this.documents.splice(documentIndex, 1);
+    return this.save();
+  }
+  throw new Error('Document not found');
+};
+
+userSchema.methods.updateDocument = function(documentId, updates) {
+  const document = this.documents.id(documentId);
+  if (document) {
+    Object.assign(document, updates);
+    document.lastAccessed = new Date();
+    return this.save();
+  }
+  throw new Error('Document not found');
+};
+
+userSchema.methods.getDocument = function(documentId) {
+  const document = this.documents.id(documentId);
+  if (document) {
+    document.lastAccessed = new Date();
+    this.save(); // Update last accessed time
+    return document;
+  }
+  return null;
+};
+
+userSchema.methods.getDocumentsByCategory = function(category) {
+  return this.documents.filter(doc => doc.category === category);
+};
+
+userSchema.methods.getDocumentsByTag = function(tag) {
+  return this.documents.filter(doc => doc.tags.includes(tag));
+};
+
+userSchema.methods.hasStorageSpace = function(fileSize) {
+  return (this.storageUsage + fileSize) <= this.storageLimit;
+};
+
+userSchema.methods.canUploadMoreDocuments = function() {
+  return this.documentCount < this.maxDocumentCount;
+};
+
+userSchema.methods.getStorageUsagePercentage = function() {
+  return (this.storageUsage / this.storageLimit) * 100;
+};
+
 // Static method to find user by verification token
 userSchema.statics.findByVerificationToken = function(token) {
   return this.findOne({
@@ -180,6 +356,18 @@ userSchema.statics.emailExists = async function(email) {
   return !!user;
 };
 
+// NEW: Static method to find users with large storage usage
+userSchema.statics.findUsersWithHighStorageUsage = function(thresholdPercentage = 80) {
+  return this.find({
+    $expr: {
+      $gte: [
+        { $multiply: [{ $divide: ['$storageUsage', '$storageLimit'] }, 100] },
+        thresholdPercentage
+      ]
+    }
+  });
+};
+
 // Virtual for user status
 userSchema.virtual('status').get(function() {
   if (!this.emailVerified) return 'pending_verification';
@@ -191,6 +379,28 @@ userSchema.virtual('status').get(function() {
 // Virtual for isDemo (check if demo account)
 userSchema.virtual('isDemo').get(function() {
   return this.email === 'demo@grantfunds.com';
+});
+
+// NEW: Virtuals for document management
+userSchema.virtual('availableStorage').get(function() {
+  return this.storageLimit - this.storageUsage;
+});
+
+userSchema.virtual('storageUsageFormatted').get(function() {
+  const formatBytes = (bytes) => {
+    if (bytes === 0) return '0 Bytes';
+    const k = 1024;
+    const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+    const i = Math.floor(Math.log(bytes) / Math.log(k));
+    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+  };
+  
+  return {
+    used: formatBytes(this.storageUsage),
+    total: formatBytes(this.storageLimit),
+    available: formatBytes(this.availableStorage),
+    percentage: this.getStorageUsagePercentage().toFixed(1)
+  };
 });
 
 // Transform output to remove sensitive fields

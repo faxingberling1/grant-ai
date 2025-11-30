@@ -1,421 +1,426 @@
-/* EmailComposer.css - Professional Dark Green & Gold Theme for CommunicationHub */
+/* Email Composer - Streamlined Forest Green & Gold Theme */
+:root {
+  --forest-dark: #1a472a;
+  --forest-medium: #2d5a2d;
+  --forest-light: #4a725a;
+  --forest-lighter: #6b8e6b;
+  --forest-lightest: #f8faf8;
+  --gold-primary: #d4af37;
+  --gold-secondary: #ffd700;
+  --gold-light: #f8e8b0;
+  --white: #ffffff;
+  --gray-light: #f8f9fa;
+  --gray-border: #e8ecef;
+  --text-dark: #1a472a;
+  --text-medium: #4a725a;
+  --text-light: #6b8e6b;
+  --border-radius: 8px;
+  --transition: 0.2s ease;
+}
 
-/* Email Composer Container */
+/* Base Styles */
 .communication-hub-email-composer {
-  background: #fff;
-  border-radius: 20px;
-  box-shadow: 0 8px 32px rgba(26, 71, 42, 0.1);
+  height: 100vh;
+  background: var(--gray-light);
+  display: flex;
+  flex-direction: column;
+  font-family: 'Inter', system-ui, sans-serif;
   overflow: hidden;
-  border: 1px solid #e1e5e9;
-  max-width: 1200px;
-  margin: 0 auto;
 }
 
-/* Email Composer Header */
+/* Header */
 .communication-hub-composer-header {
-  background: linear-gradient(135deg, #1a472a 0%, #2d5a3a 100%);
-  color: #fff;
-  padding: 2rem;
-  position: relative;
-  overflow: hidden;
-}
-
-.communication-hub-composer-header::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  right: 0;
-  width: 150px;
-  height: 150px;
-  background: radial-gradient(circle, rgba(212, 175, 55, 0.1) 0%, transparent 70%);
+  background: var(--forest-dark);
+  color: var(--white);
+  padding: 1.5rem 2rem;
+  border-bottom: 3px solid var(--gold-primary);
+  flex-shrink: 0;
 }
 
 .communication-hub-composer-header-content {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  max-width: 1200px;
+  max-width: 1400px;
   margin: 0 auto;
-  position: relative;
-  z-index: 2;
+  width: 100%;
 }
 
 .communication-hub-composer-title h1 {
-  margin: 0 0 0.5rem 0;
-  font-size: 2rem;
-  font-weight: 800;
-  color: #fff;
-  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+  margin: 0 0 0.25rem 0;
+  font-size: 1.5rem;
+  font-weight: 600;
+  color: var(--white);
 }
 
 .communication-hub-composer-title p {
   margin: 0;
+  font-size: 0.9rem;
+  color: var(--gold-light);
   opacity: 0.9;
-  font-size: 1.1rem;
-  color: rgba(255, 255, 255, 0.9);
 }
 
-.communication-hub-composer-actions {
-  display: flex;
-  gap: 1rem;
-  align-items: center;
-  flex-wrap: wrap;
-}
-
-/* Back Button Styling - Gold Theme */
 .communication-hub-composer-back-btn {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 0.5rem;
-  padding: 0.75rem 1.5rem;
-  border: 2px solid #d4af37;
-  border-radius: 10px;
-  background: #d4af37;
-  color: #1a472a;
-  font-size: 0.95rem;
-  font-weight: 700;
+  background: var(--gold-primary);
+  color: var(--forest-dark);
+  border: none;
+  padding: 0.75rem 1.25rem;
+  border-radius: var(--border-radius);
   cursor: pointer;
-  transition: all 0.3s ease;
-  white-space: nowrap;
-  box-shadow: 0 4px 15px rgba(212, 175, 55, 0.3);
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  transition: var(--transition);
 }
 
 .communication-hub-composer-back-btn:hover {
-  background: #e6c44a;
-  border-color: #e6c44a;
-  transform: translateY(-2px);
-  box-shadow: 0 6px 20px rgba(212, 175, 55, 0.4);
+  background: var(--gold-secondary);
 }
 
-/* Composer Layout */
+/* Main Layout */
 .communication-hub-composer-layout {
-  display: grid;
-  grid-template-columns: 300px 1fr;
-  min-height: 70vh;
+  display: flex;
+  flex: 1;
+  max-width: 1400px;
+  margin: 0 auto;
+  width: 100%;
+  min-height: 0;
+  overflow: hidden;
+  background: var(--white);
 }
 
-/* Templates Sidebar */
-.communication-hub-composer-sidebar {
-  background: #f8f9fa;
-  border-right: 1px solid #e1e5e9;
-  padding: 1.5rem;
-  overflow-y: auto;
+/* Sidebars */
+.communication-hub-composer-sidebar,
+.communication-hub-documents-sidebar {
+  width: 320px;
+  background: var(--white);
+  border-right: 1px solid var(--gray-border);
+  display: flex;
+  flex-direction: column;
+  flex-shrink: 0;
+  min-height: 0;
 }
 
-.communication-hub-composer-sidebar-header {
-  margin-bottom: 1.5rem;
+.communication-hub-documents-sidebar {
+  border-left: 1px solid var(--gray-border);
+  border-right: none;
 }
 
-.communication-hub-composer-sidebar-title {
+/* Mobile Sidebars */
+.communication-hub-composer-sidebar.mobile-sidebar,
+.communication-hub-documents-sidebar.mobile-sidebar {
+  position: absolute;
+  top: 0;
+  left: 0;
+  height: 100%;
+  width: 90%;
+  max-width: 400px;
+  z-index: 1000;
+  box-shadow: 0 0 20px rgba(0,0,0,0.1);
+}
+
+.communication-hub-documents-sidebar.mobile-sidebar {
+  left: auto;
+  right: 0;
+}
+
+/* Sidebar Headers */
+.communication-hub-composer-sidebar-header,
+.communication-hub-documents-sidebar-header {
+  padding: 1.25rem;
+  border-bottom: 1px solid var(--gray-border);
+  background: var(--forest-lightest);
+  flex-shrink: 0;
+}
+
+.communication-hub-composer-sidebar-title,
+.communication-hub-documents-sidebar-title {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 0.75rem;
-}
-
-.communication-hub-composer-sidebar-title h3 {
-  color: #1a472a;
-  font-size: 1.25rem;
-  font-weight: 700;
-  margin: 0;
-}
-
-.communication-hub-composer-sidebar-toggle {
-  background: none;
-  border: 1px solid #e1e5e9;
-  border-radius: 6px;
-  width: 32px;
-  height: 32px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  cursor: pointer;
-  color: #6c757d;
-  transition: all 0.3s ease;
-}
-
-.communication-hub-composer-sidebar-toggle:hover {
-  border-color: #1a472a;
-  color: #1a472a;
-}
-
-.communication-hub-templates-search {
-  position: relative;
   margin-bottom: 1rem;
 }
 
-.communication-hub-templates-search i {
+.communication-hub-composer-sidebar-title h3,
+.communication-hub-documents-sidebar-title h3 {
+  margin: 0;
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: var(--forest-dark);
+}
+
+.communication-hub-composer-sidebar-toggle,
+.communication-hub-documents-sidebar-toggle {
+  background: var(--forest-medium);
+  color: var(--white);
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  padding: 0.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+}
+
+/* Search */
+.communication-hub-templates-search,
+.communication-hub-documents-search {
+  position: relative;
+}
+
+.communication-hub-templates-search i,
+.communication-hub-documents-search i {
   position: absolute;
-  left: 1rem;
+  left: 0.75rem;
   top: 50%;
   transform: translateY(-50%);
-  color: #1a472a;
+  color: var(--forest-light);
 }
 
-.communication-hub-templates-search input {
+.communication-hub-templates-search input,
+.communication-hub-documents-search input {
   width: 100%;
-  padding: 0.75rem 1rem 0.75rem 2.5rem;
-  border: 2px solid #e1e5e9;
-  border-radius: 8px;
+  padding: 0.75rem 0.75rem 0.75rem 2.25rem;
+  border: 1px solid var(--gray-border);
+  border-radius: var(--border-radius);
   font-size: 0.9rem;
-  background: #fff;
-  transition: all 0.3s ease;
+  background: var(--white);
 }
 
-.communication-hub-templates-search input:focus {
+.communication-hub-templates-search input:focus,
+.communication-hub-documents-search input:focus {
   outline: none;
-  border-color: #1a472a;
-  box-shadow: 0 0 0 3px rgba(26, 71, 42, 0.1);
+  border-color: var(--gold-primary);
 }
 
-.communication-hub-templates-list {
-  display: flex;
-  flex-direction: column;
-  gap: 0.75rem;
-}
-
-.communication-hub-template-item {
+/* Lists */
+.communication-hub-templates-list,
+.communication-hub-documents-list {
+  flex: 1;
+  overflow-y: auto;
   padding: 1rem;
-  background: #fff;
-  border: 2px solid #e1e5e9;
-  border-radius: 8px;
-  cursor: pointer;
-  transition: all 0.3s ease;
+  background: var(--forest-lightest);
+  min-height: 0;
 }
 
-.communication-hub-template-item:hover {
-  border-color: #1a472a;
+/* Items */
+.communication-hub-template-item,
+.communication-hub-document-item {
+  background: var(--white);
+  border: 1px solid var(--gray-border);
+  border-radius: var(--border-radius);
+  padding: 1.25rem;
+  margin-bottom: 0.75rem;
+  cursor: pointer;
+  transition: var(--transition);
+}
+
+.communication-hub-template-item:hover,
+.communication-hub-document-item:hover {
+  border-color: var(--gold-primary);
   transform: translateY(-1px);
-  box-shadow: 0 4px 12px rgba(26, 71, 42, 0.1);
 }
 
 .communication-hub-template-item.active {
-  border-color: #d4af37;
-  background: rgba(212, 175, 55, 0.05);
+  border-color: var(--gold-primary);
+  background: var(--forest-lightest);
 }
 
-.communication-hub-template-item-header {
+.communication-hub-template-item-header,
+.communication-hub-document-item-header {
   display: flex;
   align-items: center;
   gap: 0.75rem;
-  margin-bottom: 0.5rem;
+  margin-bottom: 0.75rem;
 }
 
-.communication-hub-template-item-icon {
-  width: 32px;
-  height: 32px;
+.communication-hub-template-item-icon,
+.communication-hub-document-item-icon {
+  width: 40px;
+  height: 40px;
+  background: var(--forest-dark);
   border-radius: 6px;
   display: flex;
   align-items: center;
   justify-content: center;
-  background: rgba(26, 71, 42, 0.1);
-  color: #1a472a;
-  font-size: 0.9rem;
+  color: var(--gold-primary);
+  flex-shrink: 0;
 }
 
-.communication-hub-template-item-title {
+.communication-hub-template-item-title,
+.communication-hub-document-item-title {
+  flex: 1;
   font-weight: 600;
-  color: #1a472a;
+  color: var(--text-dark);
   font-size: 0.95rem;
 }
 
 .communication-hub-template-item-subject {
-  color: #6c757d;
   font-size: 0.85rem;
-  font-style: italic;
+  color: var(--forest-medium);
+  font-weight: 500;
   margin-bottom: 0.5rem;
-  border-left: 2px solid #d4af37;
-  padding-left: 0.5rem;
 }
 
 .communication-hub-template-item-preview {
-  color: #6c757d;
-  font-size: 0.85rem;
+  font-size: 0.8rem;
+  color: var(--text-medium);
   line-height: 1.4;
-  display: -webkit-box;
-  -webkit-line-clamp: 2;
-  -webkit-box-orient: vertical;
+  margin-bottom: 0.5rem;
+}
+
+.communication-hub-template-item-stats {
+  font-size: 0.75rem;
+  color: var(--text-light);
+}
+
+.communication-hub-document-add-btn {
+  background: var(--gold-primary);
+  color: var(--forest-dark);
+  border: none;
+  border-radius: 6px;
+  padding: 0.5rem 0.75rem;
+  cursor: pointer;
+  font-size: 0.8rem;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+  transition: var(--transition);
+}
+
+.communication-hub-document-add-btn:hover {
+  background: var(--gold-secondary);
+}
+
+.communication-hub-document-item-meta {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.75rem;
+  color: var(--text-light);
+  margin-bottom: 0.5rem;
+}
+
+.communication-hub-document-item-description {
+  font-size: 0.8rem;
+  color: var(--text-medium);
+  line-height: 1.3;
+}
+
+/* Main Composer */
+.communication-hub-composer-main {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
   overflow: hidden;
 }
 
-/* Composer Main Content */
-.communication-hub-composer-main {
-  padding: 2rem;
+.communication-hub-composer-main.full-width {
+  margin: 0;
+}
+
+.communication-hub-composer-main.mobile-main {
+  width: 100%;
+}
+
+/* Scrollable Content */
+.communication-hub-composer-content {
+  flex: 1;
   display: flex;
   flex-direction: column;
-  gap: 1.5rem;
-  position: relative;
+  overflow-y: auto;
+  min-height: 0;
 }
 
-.communication-hub-composer-main.full-width {
-  grid-column: 1 / -1;
+/* Toggle Containers */
+.communication-hub-composer-sidebar-toggle-container,
+.communication-hub-documents-toggle-container {
+  padding: 1rem;
+  border-bottom: 1px solid var(--gray-border);
+  background: var(--forest-lightest);
+  flex-shrink: 0;
 }
 
-.communication-hub-composer-sidebar-toggle-container {
-  position: absolute;
-  top: 1rem;
-  left: 1rem;
-  z-index: 10;
-}
-
-.communication-hub-composer-sidebar-toggle-btn {
-  display: inline-flex;
+.communication-hub-composer-sidebar-toggle-btn,
+.communication-hub-documents-toggle-btn {
+  background: var(--forest-dark);
+  color: var(--white);
+  border: none;
+  padding: 0.75rem 1rem;
+  border-radius: var(--border-radius);
+  cursor: pointer;
+  font-weight: 600;
+  display: flex;
   align-items: center;
   gap: 0.5rem;
-  padding: 0.5rem 1rem;
-  border: 2px solid #e1e5e9;
-  border-radius: 6px;
-  background: #fff;
-  color: #6c757d;
-  font-size: 0.9rem;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.3s ease;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  transition: var(--transition);
 }
 
-.communication-hub-composer-sidebar-toggle-btn:hover {
-  border-color: #1a472a;
-  color: #1a472a;
-  transform: translateX(-2px);
+.communication-hub-composer-sidebar-toggle-btn:hover,
+.communication-hub-documents-toggle-btn:hover {
+  background: var(--forest-medium);
 }
 
 /* Email Header */
 .communication-hub-email-header {
-  display: flex;
-  flex-direction: column;
-  gap: 1rem;
+  padding: 1.5rem 2rem;
+  border-bottom: 1px solid var(--gray-border);
+  flex-shrink: 0;
 }
 
 .communication-hub-email-field {
-  display: flex;
-  flex-direction: column;
-  gap: 0.5rem;
+  margin-bottom: 1.25rem;
+}
+
+.communication-hub-email-field:last-child {
+  margin-bottom: 0;
 }
 
 .communication-hub-email-field label {
+  display: block;
+  margin-bottom: 0.5rem;
   font-weight: 600;
-  color: #1a472a;
+  color: var(--text-dark);
   font-size: 0.9rem;
 }
 
 .communication-hub-email-input {
+  width: 100%;
   padding: 1rem;
-  border: 2px solid #e1e5e9;
-  border-radius: 8px;
-  font-size: 1rem;
-  transition: all 0.3s ease;
-  background: #f8f9fa;
+  border: 1px solid var(--gray-border);
+  border-radius: var(--border-radius);
+  font-size: 0.95rem;
+  background: var(--white);
 }
 
 .communication-hub-email-input:focus {
   outline: none;
-  border-color: #1a472a;
-  background: #fff;
-  box-shadow: 0 0 0 3px rgba(26, 71, 42, 0.1);
+  border-color: var(--gold-primary);
 }
 
 .communication-hub-email-input.subject {
-  font-size: 1.25rem;
+  font-size: 1.1rem;
   font-weight: 600;
-  padding: 1.25rem;
-}
-
-/* Email Editor */
-.communication-hub-email-editor {
-  border: 2px solid #e1e5e9;
-  border-radius: 12px;
-  overflow: hidden;
-  background: #fff;
-}
-
-.communication-hub-editor-toolbar {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  padding: 1rem;
-  background: #f8f9fa;
-  border-bottom: 1px solid #e1e5e9;
-  flex-wrap: wrap;
-}
-
-.communication-hub-editor-tool-group {
-  display: flex;
-  align-items: center;
-  gap: 0.25rem;
-  padding: 0.5rem;
-  border-right: 1px solid #e1e5e9;
-}
-
-.communication-hub-editor-tool-group:last-child {
-  border-right: none;
-}
-
-.communication-hub-editor-tool-btn {
-  width: 36px;
-  height: 36px;
-  border: 1px solid #e1e5e9;
-  border-radius: 6px;
-  background: #fff;
-  color: #6c757d;
-  cursor: pointer;
-  transition: all 0.3s ease;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.communication-hub-editor-tool-btn:hover {
-  border-color: #1a472a;
-  color: #1a472a;
-  background: rgba(26, 71, 42, 0.05);
-}
-
-.communication-hub-editor-tool-btn.active {
-  background: #1a472a;
-  border-color: #1a472a;
-  color: #fff;
-}
-
-.communication-hub-editor-select {
-  padding: 0.5rem;
-  border: 1px solid #e1e5e9;
-  border-radius: 6px;
-  background: #fff;
-  color: #6c757d;
-  font-size: 0.9rem;
-  cursor: pointer;
-}
-
-.communication-hub-editor-content {
-  min-height: 400px;
-  padding: 1.5rem;
-  font-size: 1rem;
-  line-height: 1.6;
-  outline: none;
-  background: #fff;
-}
-
-.communication-hub-editor-content:focus {
-  outline: none;
+  border-color: var(--gold-primary);
 }
 
 /* Email Variables */
 .communication-hub-email-variables {
-  background: rgba(212, 175, 55, 0.1);
-  border: 1px solid rgba(212, 175, 55, 0.3);
-  border-radius: 8px;
-  padding: 1rem;
+  padding: 1.25rem 2rem;
+  border-bottom: 1px solid var(--gray-border);
+  background: var(--forest-lightest);
+  flex-shrink: 0;
 }
 
 .communication-hub-email-variables h4 {
-  color: #b8941f;
   margin: 0 0 0.75rem 0;
-  font-size: 0.9rem;
+  font-size: 0.95rem;
   font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
+  color: var(--text-dark);
 }
 
 .communication-hub-variables-list {
@@ -425,250 +430,360 @@
 }
 
 .communication-hub-variable-item {
+  background: var(--white);
+  border: 1px solid var(--gold-primary);
+  color: var(--forest-dark);
   padding: 0.5rem 0.75rem;
-  background: rgba(212, 175, 55, 0.2);
-  color: #b8941f;
   border-radius: 6px;
-  font-size: 0.85rem;
-  font-weight: 600;
   cursor: pointer;
-  border: 1px solid rgba(212, 175, 55, 0.4);
-  transition: all 0.3s ease;
-  border: none;
+  font-size: 0.8rem;
+  font-weight: 600;
+  transition: var(--transition);
 }
 
 .communication-hub-variable-item:hover {
-  background: rgba(212, 175, 55, 0.3);
-  transform: translateY(-1px);
-  box-shadow: 0 2px 8px rgba(212, 175, 55, 0.2);
+  background: var(--gold-primary);
 }
 
-/* Email Attachments */
-.communication-hub-email-attachments {
-  border: 2px dashed #e1e5e9;
-  border-radius: 8px;
-  padding: 1.5rem;
-  text-align: center;
-  transition: all 0.3s ease;
+/* Email Editor */
+.communication-hub-email-editor {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-height: 300px;
+  overflow: hidden;
 }
 
-.communication-hub-email-attachments:hover {
-  border-color: #1a472a;
-  background: rgba(26, 71, 42, 0.02);
+.communication-hub-editor-toolbar {
+  padding: 1rem 2rem;
+  border-bottom: 1px solid var(--gray-border);
+  background: var(--forest-lightest);
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 1rem;
+  flex-shrink: 0;
 }
 
-.communication-hub-attachments-dropzone {
+.communication-hub-editor-tool-group {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+  padding-right: 1rem;
+  border-right: 1px solid var(--gray-border);
+}
+
+.communication-hub-editor-tool-group:last-child {
+  border-right: none;
+  padding-right: 0;
+}
+
+.communication-hub-editor-select {
+  padding: 0.5rem;
+  border: 1px solid var(--gray-border);
+  border-radius: 6px;
+  background: var(--white);
+  font-size: 0.85rem;
   cursor: pointer;
 }
 
-.communication-hub-attachments-icon {
-  font-size: 2rem;
-  color: #6c757d;
-  margin-bottom: 0.75rem;
+.communication-hub-editor-select:focus {
+  outline: none;
+  border-color: var(--gold-primary);
 }
 
-.communication-hub-attachments-text {
-  color: #6c757d;
+.communication-hub-editor-tool-btn {
+  background: var(--white);
+  border: 1px solid var(--gray-border);
+  color: var(--text-dark);
+  padding: 0.5rem;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 0.85rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 36px;
+  height: 36px;
+  transition: var(--transition);
+}
+
+.communication-hub-editor-tool-btn:hover {
+  background: var(--gold-primary);
+  color: var(--forest-dark);
+  border-color: var(--gold-primary);
+}
+
+.communication-hub-editor-content {
+  flex: 1;
+  padding: 1.5rem 2rem;
+  border: none;
+  font-size: 0.95rem;
+  line-height: 1.6;
+  color: var(--text-dark);
+  background: var(--white);
+  overflow-y: auto;
+  min-height: 200px;
+  font-family: 'Inter', sans-serif;
+}
+
+.communication-hub-editor-content:focus {
+  outline: none;
+}
+
+/* Attachments */
+.communication-hub-email-attachments {
+  padding: 1.5rem 2rem;
+  border-top: 1px solid var(--gray-border);
+  flex-shrink: 0;
+  max-height: 250px;
+  overflow-y: auto;
+}
+
+.communication-hub-attachments-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
   margin-bottom: 1rem;
+  flex-shrink: 0;
+  gap: 1rem;
+}
+
+.communication-hub-attachments-header h4 {
+  margin: 0;
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: var(--text-dark);
+}
+
+.communication-hub-attachments-actions {
+  display: flex;
+  gap: 0.75rem;
 }
 
 .communication-hub-attachments-btn {
-  padding: 0.75rem 1.5rem;
-  border: 2px solid #1a472a;
-  border-radius: 8px;
-  background: #1a472a;
-  color: white;
-  font-weight: 600;
+  background: var(--white);
+  border: 1px solid var(--gold-primary);
+  color: var(--forest-dark);
+  padding: 0.75rem 1rem;
+  border-radius: var(--border-radius);
   cursor: pointer;
-  transition: all 0.3s ease;
-  display: inline-flex;
+  font-size: 0.9rem;
+  font-weight: 600;
+  display: flex;
   align-items: center;
   gap: 0.5rem;
+  transition: var(--transition);
 }
 
 .communication-hub-attachments-btn:hover {
-  background: #2d5a3a;
-  border-color: #2d5a3a;
-  transform: translateY(-1px);
+  background: var(--gold-primary);
 }
 
 .communication-hub-attachments-list {
-  display: flex;
-  flex-direction: column;
+  display: grid;
   gap: 0.75rem;
-  margin-top: 1rem;
+  max-height: 150px;
+  overflow-y: auto;
 }
 
 .communication-hub-attachment-item {
   display: flex;
   align-items: center;
   gap: 0.75rem;
-  padding: 0.75rem;
-  background: #f8f9fa;
-  border-radius: 6px;
-  border: 1px solid #e1e5e9;
+  padding: 1rem;
+  background: var(--forest-lightest);
+  border: 1px solid var(--gray-border);
+  border-radius: var(--border-radius);
+  transition: var(--transition);
+}
+
+.communication-hub-attachment-item:hover {
+  border-color: var(--gold-primary);
 }
 
 .communication-hub-attachment-icon {
-  color: #1a472a;
-  font-size: 1.25rem;
+  width: 40px;
+  height: 40px;
+  background: var(--forest-dark);
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--gold-primary);
+  flex-shrink: 0;
 }
 
 .communication-hub-attachment-info {
   flex: 1;
+  min-width: 0;
 }
 
 .communication-hub-attachment-name {
   font-weight: 600;
-  color: #1a472a;
+  color: var(--text-dark);
+  margin-bottom: 0.25rem;
   font-size: 0.9rem;
 }
 
-.communication-hub-attachment-size {
-  color: #6c757d;
+.communication-hub-attachment-meta {
+  display: flex;
+  gap: 1rem;
   font-size: 0.8rem;
+  color: var(--text-medium);
+}
+
+.communication-hub-attachment-source {
+  color: var(--gold-primary);
+  font-weight: 600;
 }
 
 .communication-hub-attachment-remove {
-  color: #dc3545;
-  cursor: pointer;
-  padding: 0.25rem;
-  border-radius: 4px;
-  transition: all 0.3s ease;
-  background: none;
+  background: #dc3545;
+  color: white;
   border: none;
-  font-size: 1rem;
+  border-radius: 6px;
+  padding: 0.5rem;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  transition: var(--transition);
 }
 
 .communication-hub-attachment-remove:hover {
-  background: rgba(220, 53, 69, 0.1);
+  background: #c82333;
 }
 
 /* Email Options */
 .communication-hub-email-options {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-  gap: 1rem;
-  padding: 1.5rem;
-  background: #f8f9fa;
-  border-radius: 8px;
-  border: 1px solid #e1e5e9;
+  padding: 1.25rem 2rem;
+  border-top: 1px solid var(--gray-border);
+  background: var(--forest-lightest);
+  display: flex;
+  align-items: center;
+  gap: 2rem;
+  flex-wrap: wrap;
+  flex-shrink: 0;
 }
 
 .communication-hub-email-option {
   display: flex;
   align-items: center;
-  gap: 0.75rem;
+  gap: 0.5rem;
+  flex-shrink: 0;
 }
 
 .communication-hub-email-option input[type="checkbox"] {
   width: 18px;
   height: 18px;
-  accent-color: #1a472a;
+  cursor: pointer;
+  accent-color: var(--gold-primary);
 }
 
 .communication-hub-email-option label {
-  font-weight: 500;
-  color: #1a472a;
   font-size: 0.9rem;
+  color: var(--text-dark);
   cursor: pointer;
+  font-weight: 500;
 }
 
 .communication-hub-email-option select {
   padding: 0.5rem;
-  border: 1px solid #e1e5e9;
+  border: 1px solid var(--gray-border);
   border-radius: 6px;
-  background: #fff;
-  color: #1a472a;
+  background: var(--white);
   font-size: 0.9rem;
   cursor: pointer;
 }
 
 .communication-hub-email-option select:focus {
   outline: none;
-  border-color: #1a472a;
-  box-shadow: 0 0 0 3px rgba(26, 71, 42, 0.1);
+  border-color: var(--gold-primary);
 }
 
-/* Composer Actions */
+/* Footer */
 .communication-hub-composer-actions-footer {
+  padding: 1.25rem 2rem;
+  background: var(--forest-dark);
+  border-top: 3px solid var(--gold-primary);
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 1.5rem 2rem;
-  background: #f8f9fa;
-  border-top: 1px solid #e1e5e9;
+  flex-shrink: 0;
+  gap: 1rem;
 }
 
-.communication-hub-composer-secondary-actions {
+.communication-hub-composer-secondary-actions,
+.communication-hub-composer-primary-actions {
   display: flex;
-  gap: 1rem;
+  gap: 0.75rem;
+}
+
+.communication-hub-composer-save-btn,
+.communication-hub-composer-schedule-btn,
+.communication-hub-composer-send-btn {
+  padding: 0.875rem 1.5rem;
+  border-radius: var(--border-radius);
+  cursor: pointer;
+  font-size: 0.9rem;
+  font-weight: 600;
+  display: flex;
   align-items: center;
+  gap: 0.5rem;
+  border: none;
+  transition: var(--transition);
 }
 
 .communication-hub-composer-save-btn {
-  padding: 0.75rem 1.5rem;
-  border: 2px solid #e1e5e9;
-  border-radius: 8px;
-  background: #fff;
-  color: #6c757d;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.3s ease;
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
+  background: var(--forest-light);
+  color: var(--white);
 }
 
 .communication-hub-composer-save-btn:hover {
-  border-color: #1a472a;
-  color: #1a472a;
+  background: var(--forest-medium);
 }
 
-.communication-hub-composer-primary-actions {
-  display: flex;
-  gap: 1rem;
-  align-items: center;
-}
-
-.communication-hub-composer-schedule-btn {
-  padding: 0.75rem 1.5rem;
-  border: 2px solid #d4af37;
-  border-radius: 8px;
-  background: #fff;
-  color: #b8941f;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.3s ease;
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-}
-
-.communication-hub-composer-schedule-btn:hover {
-  background: rgba(212, 175, 55, 0.1);
-  transform: translateY(-1px);
-}
-
+.communication-hub-composer-schedule-btn,
 .communication-hub-composer-send-btn {
-  padding: 0.75rem 2rem;
-  border: 2px solid #1a472a;
-  border-radius: 8px;
-  background: #1a472a;
-  color: white;
-  font-weight: 700;
-  cursor: pointer;
-  transition: all 0.3s ease;
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
+  background: var(--gold-primary);
+  color: var(--forest-dark);
 }
 
+.communication-hub-composer-schedule-btn:hover,
 .communication-hub-composer-send-btn:hover {
-  background: #2d5a3a;
-  border-color: #2d5a3a;
-  transform: translateY(-2px);
-  box-shadow: 0 6px 20px rgba(26, 71, 42, 0.3);
+  background: var(--gold-secondary);
+}
+
+/* Loading and Empty States */
+.communication-hub-documents-loading,
+.communication-hub-documents-empty {
+  text-align: center;
+  padding: 2rem;
+  color: var(--text-medium);
+}
+
+.communication-hub-documents-loading i,
+.communication-hub-documents-empty i {
+  font-size: 2rem;
+  margin-bottom: 1rem;
+  display: block;
+  color: var(--gold-primary);
+}
+
+.communication-hub-documents-loading {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+
+.communication-hub-documents-empty-hint {
+  font-size: 0.8rem;
+  color: var(--text-light);
+  margin-top: 0.5rem;
 }
 
 /* Schedule Modal */
@@ -678,89 +793,75 @@
   left: 0;
   right: 0;
   bottom: 0;
-  background: rgba(0, 0, 0, 0.5);
+  background: rgba(26, 71, 42, 0.8);
   display: flex;
   align-items: center;
   justify-content: center;
   z-index: 2000;
   padding: 2rem;
-  backdrop-filter: blur(5px);
 }
 
 .communication-hub-schedule-container {
-  background: white;
-  border-radius: 20px;
-  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+  background: var(--white);
+  border-radius: var(--border-radius);
+  box-shadow: 0 10px 30px rgba(0,0,0,0.2);
   max-width: 500px;
   width: 100%;
   max-height: 90vh;
-  overflow: hidden;
-  display: flex;
-  flex-direction: column;
+  overflow-y: auto;
+  border: 2px solid var(--gold-primary);
 }
 
 .communication-hub-schedule-header {
+  padding: 1.5rem;
+  border-bottom: 1px solid var(--gray-border);
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 2rem;
-  background: linear-gradient(135deg, #1a472a, #2d5a3a);
-  color: white;
+  background: var(--forest-lightest);
 }
 
 .communication-hub-schedule-header h3 {
   margin: 0;
-  font-size: 1.5rem;
-  font-weight: 700;
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: var(--text-dark);
 }
 
 .communication-hub-schedule-close {
-  background: rgba(255, 255, 255, 0.2);
+  background: var(--forest-light);
+  color: var(--white);
   border: none;
-  color: white;
-  width: 40px;
-  height: 40px;
-  border-radius: 50%;
+  border-radius: 6px;
+  padding: 0.5rem;
+  cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
-  cursor: pointer;
-  transition: all 0.3s ease;
-}
-
-.communication-hub-schedule-close:hover {
-  background: rgba(255, 255, 255, 0.3);
-  transform: rotate(90deg);
+  width: 32px;
+  height: 32px;
 }
 
 .communication-hub-schedule-content {
-  padding: 2rem;
-  flex: 1;
-  overflow: auto;
+  padding: 1.5rem;
 }
 
 .communication-hub-schedule-options {
-  display: flex;
-  flex-direction: column;
-  gap: 1rem;
+  margin-bottom: 1.5rem;
 }
 
 .communication-hub-schedule-option {
-  padding: 1rem;
-  border: 2px solid #e1e5e9;
-  border-radius: 8px;
+  border: 1px solid var(--gray-border);
+  border-radius: var(--border-radius);
+  padding: 1.25rem;
   cursor: pointer;
-  transition: all 0.3s ease;
-}
-
-.communication-hub-schedule-option:hover {
-  border-color: #1a472a;
-  background: rgba(26, 71, 42, 0.02);
+  transition: var(--transition);
+  background: var(--white);
 }
 
 .communication-hub-schedule-option.active {
-  border-color: #d4af37;
-  background: rgba(212, 175, 55, 0.05);
+  border-color: var(--gold-primary);
+  background: var(--forest-lightest);
 }
 
 .communication-hub-schedule-option-header {
@@ -771,162 +872,178 @@
 }
 
 .communication-hub-schedule-option-icon {
-  color: #1a472a;
-  font-size: 1.25rem;
+  width: 40px;
+  height: 40px;
+  background: var(--forest-dark);
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--gold-primary);
 }
 
 .communication-hub-schedule-option-title {
   font-weight: 600;
-  color: #1a472a;
+  color: var(--text-dark);
 }
 
 .communication-hub-schedule-option-description {
-  color: #6c757d;
-  font-size: 0.9rem;
+  font-size: 0.85rem;
+  color: var(--text-medium);
+  line-height: 1.4;
 }
 
 .communication-hub-schedule-datetime {
-  margin-top: 1rem;
+  margin-bottom: 1.5rem;
 }
 
 .communication-hub-schedule-datetime label {
   display: block;
+  margin-bottom: 0.75rem;
   font-weight: 600;
-  color: #1a472a;
-  margin-bottom: 0.5rem;
+  color: var(--text-dark);
+  font-size: 0.9rem;
 }
 
 .communication-hub-schedule-input {
   width: 100%;
-  padding: 0.75rem;
-  border: 2px solid #e1e5e9;
-  border-radius: 8px;
-  font-size: 1rem;
-  transition: all 0.3s ease;
+  padding: 1rem;
+  border: 1px solid var(--gray-border);
+  border-radius: var(--border-radius);
+  font-size: 0.95rem;
+  background: var(--white);
 }
 
 .communication-hub-schedule-input:focus {
   outline: none;
-  border-color: #1a472a;
-  box-shadow: 0 0 0 3px rgba(26, 71, 42, 0.1);
+  border-color: var(--gold-primary);
 }
 
 .communication-hub-schedule-actions {
   display: flex;
-  gap: 1rem;
+  gap: 0.75rem;
   justify-content: flex-end;
-  padding-top: 2rem;
-  border-top: 1px solid #e1e5e9;
-  margin-top: 2rem;
 }
 
-/* Responsive Design */
+/* Scrollbars */
+.communication-hub-templates-list::-webkit-scrollbar,
+.communication-hub-documents-list::-webkit-scrollbar,
+.communication-hub-editor-content::-webkit-scrollbar,
+.communication-hub-attachments-list::-webkit-scrollbar,
+.communication-hub-composer-content::-webkit-scrollbar {
+  width: 6px;
+}
+
+.communication-hub-templates-list::-webkit-scrollbar-track,
+.communication-hub-documents-list::-webkit-scrollbar-track,
+.communication-hub-editor-content::-webkit-scrollbar-track,
+.communication-hub-attachments-list::-webkit-scrollbar-track,
+.communication-hub-composer-content::-webkit-scrollbar-track {
+  background: var(--forest-lightest);
+}
+
+.communication-hub-templates-list::-webkit-scrollbar-thumb,
+.communication-hub-documents-list::-webkit-scrollbar-thumb,
+.communication-hub-editor-content::-webkit-scrollbar-thumb,
+.communication-hub-attachments-list::-webkit-scrollbar-thumb,
+.communication-hub-composer-content::-webkit-scrollbar-thumb {
+  background: var(--forest-light);
+  border-radius: 3px;
+}
+
+/* Responsive */
 @media (max-width: 1024px) {
-  .communication-hub-composer-layout {
-    grid-template-columns: 1fr;
-  }
-  
-  .communication-hub-composer-sidebar {
-    border-right: none;
-    border-bottom: 1px solid #e1e5e9;
-    max-height: 300px;
+  .communication-hub-composer-sidebar,
+  .communication-hub-documents-sidebar {
+    width: 300px;
   }
 }
 
 @media (max-width: 768px) {
+  .communication-hub-composer-header {
+    padding: 1rem;
+  }
+  
   .communication-hub-composer-header-content {
     flex-direction: column;
-    gap: 1.5rem;
+    gap: 1rem;
     text-align: center;
   }
   
-  .communication-hub-composer-actions {
-    justify-content: center;
+  .communication-hub-composer-layout {
+    flex-direction: column;
+    height: auto;
   }
   
-  .communication-hub-composer-main {
-    padding: 1.5rem;
+  .communication-hub-composer-sidebar,
+  .communication-hub-documents-sidebar {
+    width: 100%;
+    height: 50vh;
   }
   
   .communication-hub-editor-toolbar {
-    gap: 0.25rem;
+    flex-direction: column;
+    gap: 0.75rem;
+    padding: 1rem;
   }
   
   .communication-hub-editor-tool-group {
-    padding: 0.25rem;
+    border-right: none;
+    padding-right: 0;
+    justify-content: center;
+  }
+  
+  .communication-hub-email-options {
+    flex-direction: column;
+    gap: 1rem;
   }
   
   .communication-hub-composer-actions-footer {
     flex-direction: column;
     gap: 1rem;
-    align-items: stretch;
   }
   
   .communication-hub-composer-secondary-actions,
   .communication-hub-composer-primary-actions {
+    width: 100%;
     justify-content: center;
+  }
+  
+  .communication-hub-attachments-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 1rem;
+  }
+  
+  .communication-hub-attachments-actions {
+    width: 100%;
+    justify-content: center;
+  }
+  
+  .communication-hub-email-header,
+  .communication-hub-email-variables,
+  .communication-hub-email-attachments,
+  .communication-hub-email-options {
+    padding: 1.25rem;
+  }
+  
+  .communication-hub-editor-content {
+    padding: 1.25rem;
   }
 }
 
 @media (max-width: 480px) {
-  .communication-hub-composer-header {
-    padding: 1.5rem;
+  .communication-hub-composer-back-btn {
+    padding: 0.75rem 1rem;
   }
   
-  .communication-hub-composer-title h1 {
-    font-size: 1.75rem;
-  }
-  
-  .communication-hub-composer-main {
-    padding: 1rem;
-  }
-  
-  .communication-hub-email-options {
-    grid-template-columns: 1fr;
+  .communication-hub-composer-save-btn,
+  .communication-hub-composer-schedule-btn,
+  .communication-hub-composer-send-btn {
+    padding: 0.75rem 1.25rem;
   }
   
   .communication-hub-schedule-modal {
     padding: 1rem;
   }
-  
-  .communication-hub-schedule-container {
-    border-radius: 16px;
-  }
-  
-  .communication-hub-schedule-header,
-  .communication-hub-schedule-content {
-    padding: 1.5rem;
-  }
-}
-
-/* Animation for template switching */
-@keyframes communication-hub-fadeIn {
-  from {
-    opacity: 0;
-    transform: translateY(10px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-.communication-hub-editor-content {
-  animation: communication-hub-fadeIn 0.3s ease;
-}
-
-/* Sidebar toggle animation */
-@keyframes communication-hub-slideIn {
-  from {
-    transform: translateX(-100%);
-    opacity: 0;
-  }
-  to {
-    transform: translateX(0);
-    opacity: 1;
-  }
-}
-
-.communication-hub-composer-sidebar {
-  animation: communication-hub-slideIn 0.3s ease;
 }

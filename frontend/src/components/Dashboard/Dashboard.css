@@ -477,7 +477,7 @@
   display: flex;
   align-items: center;
   gap: 12px;
-  background: none;
+  background: #1e5432;
   border: none;
   cursor: pointer;
   padding: 6px 12px;
@@ -506,13 +506,17 @@
 
 .dashboard-header .user-name {
   font-weight: 600;
-  color: #1e293b;
+  color: #ffffff;
   font-size: 14px;
   display: block;
   line-height: 1.3;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+}
+
+.dashboard-header .user-trigger:hover .user-name {
+  color: #000000; /* Changed to black on hover */
 }
 
 .dashboard-header .user-role {
@@ -588,7 +592,7 @@
 
 .dashboard-header .user-email {
   font-size: 14px;
-  color: #64748b;
+  color: #ffffff;
   line-height: 1.3;
   white-space: nowrap;
   overflow: hidden;
@@ -2132,3 +2136,42 @@
   }
 }
 
+/* Initials Avatar Styles */
+.client-avatar-initials {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 600;
+  font-size: 14px;
+  color: white;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+}
+
+.client-avatar-container {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.client-online-status {
+  position: absolute;
+  bottom: 2px;
+  right: 2px;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  border: 2px solid white;
+  background-color: #27ae60;
+}
+
+.client-online-status.offline {
+  background-color: #95a5a6;
+}
+
+.client-online-status.away {
+  background-color: #f39c12;
+}

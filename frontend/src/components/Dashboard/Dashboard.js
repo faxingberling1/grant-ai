@@ -31,7 +31,36 @@ import CalendarMain from './CalendarModal/CalendarMain';
 // User Management Component
 import UserManagement from './UserManagement/UserManagement';
 
+// Documents Components
+import Documents from './Documents/Documents';
+import DocumentUpload from './Documents/DocumentUpload';
+
 import './Dashboard.css';
+
+// Helper function to generate initials from name
+const getInitials = (name) => {
+  if (!name) return 'U';
+  
+  const names = name.trim().split(' ');
+  if (names.length === 1) {
+    return names[0].charAt(0).toUpperCase();
+  }
+  
+  return (names[0].charAt(0) + names[names.length - 1].charAt(0)).toUpperCase();
+};
+
+// Helper function to generate a consistent color based on name
+const getAvatarColor = (name) => {
+  if (!name) return '#6c757d';
+  
+  const colors = [
+    '#3498db', '#2ecc71', '#e74c3c', '#f39c12', '#9b59b6',
+    '#1abc9c', '#34495e', '#d35400', '#c0392b', '#16a085'
+  ];
+  
+  const index = name.length % colors.length;
+  return colors[index];
+};
 
 // Move DashboardContent component outside to avoid circular dependencies
 const DashboardContent = ({ 
@@ -44,7 +73,9 @@ const DashboardContent = ({
   onNavigateToReports,
   onNavigateToEmailTemplates,
   onNavigateToEmailComposer,
-  onNavigateToCalendar
+  onNavigateToCalendar,
+  onNavigateToDocuments,
+  onNavigateToDocumentUpload
 }) => {
   const { currentUser } = useAuth();
   const [activeClientTab, setActiveClientTab] = useState('all');
@@ -90,7 +121,9 @@ const DashboardContent = ({
       status: client.status || 'active',
       isVerified: client.isVerified || false,
       isOnline: client.isOnline || false,
-      avatar: client.avatar || `https://i.pravatar.cc/150?img=${Math.floor(Math.random() * 70) + 1}`
+      // Remove avatar URL and use initials instead
+      initials: getInitials(client.primaryContactName || client.name),
+      avatarColor: getAvatarColor(client.primaryContactName || client.name)
     }));
   };
 
@@ -383,6 +416,20 @@ const DashboardContent = ({
               <i className="fas fa-arrow-right"></i>
             </div>
           </div>
+
+          {/* Documents Quick Action */}
+          <div className="action-card documents" onClick={onNavigateToDocuments}>
+            <div className="action-icon">
+              <i className="fas fa-folder"></i>
+            </div>
+            <div className="action-content">
+              <h3>Documents</h3>
+              <p>Manage all your grant documents and files</p>
+            </div>
+            <div className="action-arrow">
+              <i className="fas fa-arrow-right"></i>
+            </div>
+          </div>
         </div>
       </div>
 
@@ -545,7 +592,13 @@ const DashboardContent = ({
                       <td>
                         <div className="client-info-cell">
                           <div className="client-avatar-container">
-                            <img src={client.avatar} alt={client.name} className="client-avatar" />
+                            {/* Replace image with initials avatar */}
+                            <div 
+                              className="client-avatar-initials"
+                              style={{ backgroundColor: client.avatarColor }}
+                            >
+                              {client.initials}
+                            </div>
                             <div className={`client-online-status ${onlineStatus}`}></div>
                           </div>
                           <div className="client-details">
@@ -688,6 +741,8 @@ const Dashboard = () => {
             onNavigateToEmailTemplates={() => setActivePage('email-templates')}
             onNavigateToEmailComposer={handleComposeEmail}
             onNavigateToCalendar={() => setActivePage('calendar')}
+            onNavigateToDocuments={() => setActivePage('documents')}
+            onNavigateToDocumentUpload={() => setActivePage('document-upload')}
           />
         );
       case 'clients':
@@ -826,6 +881,24 @@ const Dashboard = () => {
       case 'trash':
         return <Trash />;
       
+      // Documents Pages
+      case 'documents':
+        return <Documents />;
+      case 'document-upload':
+        return <DocumentUpload />;
+      case 'all-documents':
+        return <Documents initialView="all" />;
+      case 'recent-documents':
+        return <Documents initialView="recent" />;
+      case 'shared-documents':
+        return <Documents initialView="shared" />;
+      case 'my-documents':
+        return <Documents initialView="my" />;
+      case 'document-templates':
+        return <Documents initialView="templates" />;
+      case 'archived-documents':
+        return <Documents initialView="archived" />;
+      
       // User Management Page (Admin Only)
       case 'user-management':
         return <UserManagement />;
@@ -896,6 +969,8 @@ const Dashboard = () => {
             onNavigateToEmailTemplates={() => setActivePage('email-templates')}
             onNavigateToEmailComposer={handleComposeEmail}
             onNavigateToCalendar={() => setActivePage('calendar')}
+            onNavigateToDocuments={() => setActivePage('documents')}
+            onNavigateToDocumentUpload={() => setActivePage('document-upload')}
           />
         );
     }

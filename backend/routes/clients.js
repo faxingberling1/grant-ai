@@ -3,6 +3,7 @@ const express = require('express');
 const router = express.Router();
 const Client = require('../models/Client');
 const { authMiddleware } = require('../middleware/auth');
+const notificationService = require('../services/notificationService');
 
 // GET all clients for authenticated user with search and pagination
 router.get('/', authMiddleware, async (req, res) => {
@@ -147,39 +148,65 @@ router.get('/:id', authMiddleware, async (req, res) => {
   }
 });
 
-// CREATE new client
+// CREATE new client - WITH ENHANCED VALIDATION
 router.post('/', authMiddleware, async (req, res) => {
   try {
     console.log('🆕 POST /api/clients - User:', req.user.id);
 
-    console.log('📦 Request body with categories:', {
-      organizationName: req.body.organizationName,
-      category: req.body.category,
-      priority: req.body.priority,
-      focusAreas: req.body.focusAreas,
-      fundingAreas: req.body.fundingAreas,
-      grantSources: req.body.grantSources
-    });
+    // Pre-validate required fields before creating client
+    if (!req.body.organizationName || !req.body.primaryContactName || !req.body.emailAddress) {
+      const missingFields = [];
+      if (!req.body.organizationName) missingFields.push('organizationName');
+      if (!req.body.primaryContactName) missingFields.push('primaryContactName');
+      if (!req.body.emailAddress) missingFields.push('emailAddress');
+      
+      return res.status(400).json({
+        success: false,
+        message: 'Missing required fields',
+        missingFields: missingFields,
+        details: 'Organization name, primary contact name, and email address are required'
+      });
+    }
+
+    // Validate email format
+    const emailRegex = /^\w+([.-]?\w+)*@\w+([.-]?\w+)*(\.\w{2,3})+$/;
+    if (!emailRegex.test(req.body.emailAddress)) {
+      return res.status(400).json({
+        success: false,
+        message: 'Please enter a valid email address',
+        field: 'emailAddress',
+        value: req.body.emailAddress
+      });
+    }
+
+    // Validate enum fields
+    const organizationTypeOptions = [
+      'Nonprofit 501(c)(3)', 'Nonprofit 501(c)(4)', 'Nonprofit 501(c)(6)',
+      'Government Agency', 'Educational Institution', 'For-Profit Corporation',
+      'Small Business', 'Startup', 'Community Organization',
+      'Religious Organization', 'Foundation', 'Other'
+    ];
+
+    if (req.body.organizationType && !organizationTypeOptions.includes(req.body.organizationType)) {
+      return res.status(400).json({
+        success: false,
+        message: `Invalid organization type. Must be one of: ${organizationTypeOptions.join(', ')}`,
+        field: 'organizationType',
+        value: req.body.organizationType,
+        allowedValues: organizationTypeOptions
+      });
+    }
 
     const clientData = {
       ...req.body,
       userId: req.user.id
     };
 
-    // Required field validation
-    if (!clientData.organizationName || !clientData.primaryContactName || !clientData.emailAddress) {
-      return res.status(400).json({
-        success: false,
-        message: 'Organization name, primary contact name, and email address are required'
-      });
-    }
-
     // Enhanced array formatting with validation
     const arrayFields = ['focusAreas', 'fundingAreas', 'grantSources', 'tags', 'socialMediaLinks'];
     arrayFields.forEach(field => {
       if (clientData[field]) {
         if (Array.isArray(clientData[field])) {
-          // Filter out empty strings and ensure proper formatting
           clientData[field] = clientData[field]
             .filter(item => item && item.toString().trim() !== '')
             .map(item => item.toString().trim());
@@ -214,6 +241,27 @@ router.post('/', authMiddleware, async (req, res) => {
       focusAreas: savedClient.focusAreas
     });
 
+    // 🔔 NOTIFICATION INTEGRATION - Send client creation notification
+    try {
+      console.log('📢 Attempting to create notification for new client...');
+      
+      const notification = await notificationService.createClientNotification(
+        req.user.id,
+        savedClient.organizationName,
+        savedClient._id.toString()
+      );
+      
+      console.log('✅ Client creation notification sent successfully:', {
+        notificationId: notification._id,
+        clientName: savedClient.organizationName,
+        userId: req.user.id
+      });
+      
+    } catch (notificationError) {
+      console.error('❌ Failed to create client notification:', notificationError);
+      // Don't fail the client creation if notification fails
+    }
+
     res.status(201).json({
       success: true,
       message: 'Client created successfully',
@@ -224,7 +272,11 @@ router.post('/', authMiddleware, async (req, res) => {
     console.error('❌ Create client error:', error);
 
     if (error.name === 'ValidationError') {
-      const errors = Object.values(error.errors).map(err => err.message);
+      const errors = Object.values(error.errors).map(err => ({
+        field: err.path,
+        message: err.message,
+        value: err.value
+      }));
       return res.status(400).json({
         success: false,
         message: 'Validation error',
@@ -247,17 +299,10 @@ router.post('/', authMiddleware, async (req, res) => {
   }
 });
 
-// UPDATE client - FIXED VERSION
+// UPDATE client - WITH VALIDATION ENABLED
 router.put('/:id', authMiddleware, async (req, res) => {
   try {
     console.log('🔄 PUT /api/clients/:id - Client:', req.params.id, 'User:', req.user.id);
-
-    console.log('📦 Raw update data received:', {
-      organizationName: req.body.organizationName,
-      category: req.body.category, // Log the incoming category
-      priority: req.body.priority,
-      // ... other fields you are interested in logging
-    });
 
     // Find the client first to ensure it exists and belongs to the user
     const existingClient = await Client.findOne({ _id: req.params.id, userId: req.user.id });
@@ -270,57 +315,346 @@ router.put('/:id', authMiddleware, async (req, res) => {
       });
     }
 
-    console.log('📝 Client found, current category:', existingClient.category);
+    console.log('📦 Raw update data received:', JSON.stringify(req.body, null, 2));
 
-    // --- CRITICAL FIX: Use $set operator for findOneAndUpdate ---
-    // Construct the update object using $set for explicit field updates
-    const updateObject = {
-      $set: {
-        ...req.body, // Spread all fields from the request body
-        updatedAt: new Date() // Ensure the timestamp is updated
+    // Create a safe update object that only includes fields that exist in the schema
+    const updateData = {};
+    
+    // List of allowed fields from your Client schema
+    const allowedFields = [
+      'organizationName',
+      'primaryContactName', 
+      'titleRole',
+      'emailAddress',
+      'phoneNumbers',
+      'organizationType',
+      'category',
+      'priority',
+      'status',
+      'focusAreas',
+      'fundingAreas',
+      'grantSources',
+      'tags',
+      'socialMediaLinks',
+      'missionStatement',
+      'serviceArea',
+      'website',
+      'avatar',
+      'grantsSubmitted',
+      'grantsAwarded',
+      'totalFunding',
+      'lastContact',
+      'nextFollowUp',
+      'notes'
+    ];
+
+    // Only copy allowed fields
+    allowedFields.forEach(field => {
+      if (req.body[field] !== undefined) {
+        updateData[field] = req.body[field];
       }
-    };
+    });
 
-    // Perform the update using findOneAndUpdate with $set
+    // Process array fields safely
+    const arrayFields = ['focusAreas', 'fundingAreas', 'grantSources', 'tags', 'socialMediaLinks'];
+    arrayFields.forEach(field => {
+      if (updateData[field]) {
+        if (Array.isArray(updateData[field])) {
+          updateData[field] = updateData[field]
+            .filter(item => item && item.toString().trim() !== '')
+            .map(item => item.toString().trim());
+        } else if (typeof updateData[field] === 'string') {
+          updateData[field] = updateData[field]
+            .split(',')
+            .map(item => item.trim())
+            .filter(item => item !== '');
+        } else {
+          updateData[field] = [];
+        }
+      } else {
+        updateData[field] = [];
+      }
+    });
+
+    // Handle enum fields with validation
+    const organizationTypeOptions = [
+      'Nonprofit 501(c)(3)',
+      'Nonprofit 501(c)(4)', 
+      'Nonprofit 501(c)(6)',
+      'Government Agency',
+      'Educational Institution',
+      'For-Profit Corporation',
+      'Small Business',
+      'Startup',
+      'Community Organization',
+      'Religious Organization',
+      'Foundation',
+      'Other'
+    ];
+
+    const priorityOptions = ['low', 'medium', 'high', 'critical'];
+    const statusOptions = ['active', 'inactive', 'prospect'];
+    const categoryOptions = [
+      'Education',
+      'Healthcare', 
+      'Environment',
+      'Arts & Culture',
+      'Social Justice',
+      'STEM Education',
+      'Clean Energy',
+      'Other'
+    ];
+
+    // Validate and normalize enum fields
+    if (updateData.organizationType && !organizationTypeOptions.includes(updateData.organizationType)) {
+      return res.status(400).json({
+        success: false,
+        message: `Invalid organization type. Must be one of: ${organizationTypeOptions.join(', ')}`,
+        field: 'organizationType',
+        value: updateData.organizationType,
+        allowedValues: organizationTypeOptions
+      });
+    }
+
+    if (updateData.priority && !priorityOptions.includes(updateData.priority)) {
+      return res.status(400).json({
+        success: false,
+        message: `Invalid priority. Must be one of: ${priorityOptions.join(', ')}`,
+        field: 'priority',
+        value: updateData.priority,
+        allowedValues: priorityOptions
+      });
+    }
+
+    if (updateData.status && !statusOptions.includes(updateData.status)) {
+      return res.status(400).json({
+        success: false,
+        message: `Invalid status. Must be one of: ${statusOptions.join(', ')}`,
+        field: 'status',
+        value: updateData.status,
+        allowedValues: statusOptions
+      });
+    }
+
+    if (updateData.category && !categoryOptions.includes(updateData.category)) {
+      return res.status(400).json({
+        success: false,
+        message: `Invalid category. Must be one of: ${categoryOptions.join(', ')}`,
+        field: 'category',
+        value: updateData.category,
+        allowedValues: categoryOptions
+      });
+    }
+
+    // Validate required fields
+    if (updateData.organizationName !== undefined && !updateData.organizationName) {
+      return res.status(400).json({
+        success: false,
+        message: 'Organization name is required',
+        field: 'organizationName'
+      });
+    }
+
+    if (updateData.primaryContactName !== undefined && !updateData.primaryContactName) {
+      return res.status(400).json({
+        success: false,
+        message: 'Primary contact name is required',
+        field: 'primaryContactName'
+      });
+    }
+
+    if (updateData.emailAddress !== undefined) {
+      const emailRegex = /^\w+([.-]?\w+)*@\w+([.-]?\w+)*(\.\w{2,3})+$/;
+      if (!updateData.emailAddress) {
+        return res.status(400).json({
+          success: false,
+          message: 'Email address is required',
+          field: 'emailAddress'
+        });
+      }
+      if (!emailRegex.test(updateData.emailAddress)) {
+        return res.status(400).json({
+          success: false,
+          message: 'Please enter a valid email address',
+          field: 'emailAddress',
+          value: updateData.emailAddress
+        });
+      }
+    }
+
+    // Validate number fields
+    if (updateData.grantsSubmitted !== undefined) {
+      const grantsSubmitted = parseInt(updateData.grantsSubmitted);
+      if (isNaN(grantsSubmitted) || grantsSubmitted < 0) {
+        return res.status(400).json({
+          success: false,
+          message: 'Grants submitted must be a non-negative number',
+          field: 'grantsSubmitted',
+          value: updateData.grantsSubmitted
+        });
+      }
+      updateData.grantsSubmitted = grantsSubmitted;
+    }
+
+    if (updateData.grantsAwarded !== undefined) {
+      const grantsAwarded = parseInt(updateData.grantsAwarded);
+      if (isNaN(grantsAwarded) || grantsAwarded < 0) {
+        return res.status(400).json({
+          success: false,
+          message: 'Grants awarded must be a non-negative number',
+          field: 'grantsAwarded',
+          value: updateData.grantsAwarded
+        });
+      }
+      updateData.grantsAwarded = grantsAwarded;
+    }
+
+    // Validate grants awarded doesn't exceed grants submitted
+    if (updateData.grantsAwarded !== undefined && updateData.grantsSubmitted !== undefined) {
+      if (updateData.grantsAwarded > updateData.grantsSubmitted) {
+        return res.status(400).json({
+          success: false,
+          message: 'Grants awarded cannot exceed grants submitted',
+          field: 'grantsAwarded',
+          grantsAwarded: updateData.grantsAwarded,
+          grantsSubmitted: updateData.grantsSubmitted
+        });
+      }
+    }
+
+    console.log('🧹 Processed and validated update data:', {
+      organizationName: updateData.organizationName,
+      category: updateData.category,
+      priority: updateData.priority,
+      status: updateData.status,
+      focusAreas: updateData.focusAreas,
+      organizationType: updateData.organizationType
+    });
+
+    // Perform the update WITH VALIDATION ENABLED
     const updatedClient = await Client.findOneAndUpdate(
-      { _id: req.params.id, userId: req.user.id }, // Query
-      updateObject,                                // Update object using $set
-      { new: true, runValidators: true }          // Options: return updated doc, run validation
+      { _id: req.params.id, userId: req.user.id },
+      { 
+        $set: {
+          ...updateData,
+          updatedAt: new Date()
+        }
+      },
+      { 
+        new: true,
+        runValidators: true, // VALIDATION ENABLED
+        context: 'query'
+      }
     );
 
     if (!updatedClient) {
-      // This should ideally not happen if the client was found above,
-      // but good to check.
       return res.status(404).json({
         success: false,
         message: 'Client not found after update attempt'
       });
     }
 
-    console.log('✅ Client updated successfully in DB, new category:', updatedClient.category);
+    console.log('✅ Client updated successfully with validation:', {
+      id: updatedClient._id,
+      organizationName: updatedClient.organizationName,
+      category: updatedClient.category,
+      priority: updatedClient.priority,
+      status: updatedClient.status
+    });
 
     res.json({
       success: true,
       message: 'Client updated successfully',
-      client: updatedClient // Send back the updated client object
+      client: updatedClient
     });
 
   } catch (error) {
     console.error('❌ Update client error:', error);
 
+    // Enhanced error logging for validation
     if (error.name === 'ValidationError') {
-      const errors = Object.values(error.errors).map(err => err.message);
-      console.error('Validation Errors:', errors);
+      const errors = Object.values(error.errors).map(err => ({
+        field: err.path,
+        message: err.message,
+        value: err.value,
+        kind: err.kind
+      }));
+      
+      console.error('🔴 Validation Errors Details:', errors);
+      
       return res.status(400).json({
         success: false,
         message: 'Validation error',
-        errors: errors
+        errors: errors,
+        errorType: 'ValidationError'
+      });
+    }
+
+    if (error.name === 'CastError') {
+      return res.status(400).json({
+        success: false,
+        message: 'Invalid data format',
+        field: error.path,
+        value: error.value,
+        errorType: 'CastError'
+      });
+    }
+
+    if (error.code === 11000) {
+      return res.status(400).json({
+        success: false,
+        message: 'Duplicate entry found - organization name or email already exists',
+        errorType: 'DuplicateKeyError'
       });
     }
 
     res.status(500).json({
       success: false,
       message: 'Failed to update client',
+      error: error.message,
+      errorType: error.name
+    });
+  }
+});
+
+// EMERGENCY UPDATE - NO VALIDATION (Keep as backup)
+router.patch('/:id/emergency-update', authMiddleware, async (req, res) => {
+  try {
+    console.log('🚨 EMERGENCY UPDATE /api/clients/:id/emergency-update - Client:', req.params.id);
+    
+    const result = await Client.updateOne(
+      { _id: req.params.id, userId: req.user.id },
+      { 
+        $set: {
+          ...req.body,
+          updatedAt: new Date()
+        }
+      }
+    );
+
+    if (result.matchedCount === 0) {
+      return res.status(404).json({
+        success: false,
+        message: 'Client not found'
+      });
+    }
+
+    // Fetch the updated client
+    const updatedClient = await Client.findOne({ _id: req.params.id, userId: req.user.id });
+
+    console.log('✅ Emergency update successful');
+    
+    res.json({
+      success: true,
+      message: 'Client updated successfully (emergency mode)',
+      client: updatedClient
+    });
+
+  } catch (error) {
+    console.error('❌ Emergency update error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Emergency update failed',
       error: error.message
     });
   }
@@ -645,7 +979,7 @@ router.get('/debug/category-test', authMiddleware, async (req, res) => {
   }
 });
 
-// Debug - test client creation
+// Debug - test client creation WITH NOTIFICATION
 router.post('/debug/test-create', authMiddleware, async (req, res) => {
   try {
     console.log('🧪 DEBUG /api/clients/debug/test-create - User:', req.user.id);
@@ -665,6 +999,28 @@ router.post('/debug/test-create', authMiddleware, async (req, res) => {
 
     const client = new Client(testClientData);
     const savedClient = await client.save();
+
+    console.log('✅ Test client created successfully:', savedClient.organizationName);
+
+    // 🔔 NOTIFICATION INTEGRATION - Send test client creation notification
+    try {
+      console.log('📢 Attempting to create notification for test client...');
+      
+      const notification = await notificationService.createClientNotification(
+        req.user.id,
+        savedClient.organizationName,
+        savedClient._id.toString()
+      );
+      
+      console.log('✅ Test client notification sent successfully:', {
+        notificationId: notification._id,
+        clientName: savedClient.organizationName
+      });
+      
+    } catch (notificationError) {
+      console.error('❌ Failed to create test client notification:', notificationError);
+      // Don't fail the test client creation if notification fails
+    }
 
     res.json({
       success: true,
@@ -693,6 +1049,446 @@ router.get('/debug/auth-test', authMiddleware, (req, res) => {
       email: req.user.email
     }
   });
+});
+
+// Debug - notification test specifically for clients
+router.post('/debug/notification-test', authMiddleware, async (req, res) => {
+  try {
+    console.log('🔔 DEBUG /api/clients/debug/notification-test - User:', req.user.id);
+
+    const { clientName = 'Test Client' } = req.body;
+
+    // Test notification creation directly
+    const notification = await notificationService.createClientNotification(
+      req.user.id,
+      clientName,
+      'test-client-id-' + Date.now()
+    );
+
+    console.log('✅ Client notification test successful:', {
+      notificationId: notification._id,
+      clientName: clientName,
+      userId: req.user.id
+    });
+
+    res.json({
+      success: true,
+      message: 'Client notification test successful',
+      notification: {
+        id: notification._id,
+        title: notification.title,
+        message: notification.message,
+        type: notification.type,
+        createdAt: notification.createdAt
+      }
+    });
+
+  } catch (error) {
+    console.error('❌ Client notification test error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Client notification test failed',
+      error: error.message
+    });
+  }
+});
+
+// Debug - test validation for specific client
+router.post('/debug/validate-client', authMiddleware, async (req, res) => {
+  try {
+    console.log('🧪 DEBUG /api/clients/debug/validate-client - User:', req.user.id);
+    
+    const testData = {
+      ...req.body,
+      userId: req.user.id
+    };
+
+    console.log('📦 Test data for validation:', testData);
+
+    // Try to create a client instance to test validation
+    const testClient = new Client(testData);
+    
+    // Manually validate
+    const validationError = testClient.validateSync();
+    
+    if (validationError) {
+      const errors = Object.values(validationError.errors).map(err => ({
+        field: err.path,
+        message: err.message,
+        value: err.value
+      }));
+      
+      console.log('❌ Validation failed:', errors);
+      
+      return res.json({
+        success: false,
+        message: 'Validation failed',
+        errors: errors
+      });
+    }
+
+    console.log('✅ Validation passed');
+    
+    res.json({
+      success: true,
+      message: 'Validation passed'
+    });
+
+  } catch (error) {
+    console.error('❌ Validation test error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Validation test failed',
+      error: error.message
+    });
+  }
+});
+
+// Debug - test update with specific data
+router.post('/debug/test-update/:id', authMiddleware, async (req, res) => {
+  try {
+    console.log('🧪 DEBUG /api/clients/debug/test-update/:id - Client:', req.params.id, 'User:', req.user.id);
+
+    const existingClient = await Client.findOne({ _id: req.params.id, userId: req.user.id });
+
+    if (!existingClient) {
+      return res.status(404).json({
+        success: false,
+        message: 'Client not found'
+      });
+    }
+
+    const updateData = {
+      ...req.body,
+      updatedAt: new Date()
+    };
+
+    console.log('📦 Test update data:', updateData);
+
+    const updatedClient = await Client.findOneAndUpdate(
+      { _id: req.params.id, userId: req.user.id },
+      { $set: updateData },
+      { 
+        new: true, 
+        runValidators: true,
+        context: 'query'
+      }
+    );
+
+    if (!updatedClient) {
+      return res.status(404).json({
+        success: false,
+        message: 'Client not found after update'
+      });
+    }
+
+    console.log('✅ Test update successful:', {
+      id: updatedClient._id,
+      organizationName: updatedClient.organizationName,
+      category: updatedClient.category
+    });
+
+    res.json({
+      success: true,
+      message: 'Test update successful',
+      client: updatedClient
+    });
+
+  } catch (error) {
+    console.error('❌ Test update error:', error);
+
+    if (error.name === 'ValidationError') {
+      const errors = Object.values(error.errors).map(err => ({
+        field: err.path,
+        message: err.message,
+        value: err.value
+      }));
+      
+      return res.status(400).json({
+        success: false,
+        message: 'Validation error in test update',
+        errors: errors
+      });
+    }
+
+    res.status(500).json({
+      success: false,
+      message: 'Test update failed',
+      error: error.message
+    });
+  }
+});
+
+// NEW: Client document management routes
+router.post('/:id/documents', authMiddleware, async (req, res) => {
+  try {
+    console.log('📄 POST /api/clients/:id/documents - Client:', req.params.id, 'User:', req.user.id);
+
+    const client = await Client.findOne({ _id: req.params.id, userId: req.user.id });
+
+    if (!client) {
+      return res.status(404).json({
+        success: false,
+        message: 'Client not found'
+      });
+    }
+
+    const documentData = {
+      ...req.body,
+      uploadedBy: req.user.id
+    };
+
+    await client.addDocument(documentData);
+    await client.updateDocumentStats();
+
+    console.log('✅ Document added to client:', client.organizationName);
+
+    res.status(201).json({
+      success: true,
+      message: 'Document added successfully',
+      document: client.documents[client.documents.length - 1]
+    });
+
+  } catch (error) {
+    console.error('❌ Add document error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to add document',
+      error: error.message
+    });
+  }
+});
+
+// GET client documents
+router.get('/:id/documents', authMiddleware, async (req, res) => {
+  try {
+    console.log('📄 GET /api/clients/:id/documents - Client:', req.params.id, 'User:', req.user.id);
+
+    const client = await Client.findOne({ _id: req.params.id, userId: req.user.id });
+
+    if (!client) {
+      return res.status(404).json({
+        success: false,
+        message: 'Client not found'
+      });
+    }
+
+    res.json({
+      success: true,
+      documents: client.documents,
+      documentStats: client.documentStats
+    });
+
+  } catch (error) {
+    console.error('❌ Get documents error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to fetch documents',
+      error: error.message
+    });
+  }
+});
+
+// DELETE client document
+router.delete('/:id/documents/:docId', authMiddleware, async (req, res) => {
+  try {
+    console.log('🗑️ DELETE /api/clients/:id/documents/:docId - Client:', req.params.id, 'Document:', req.params.docId);
+
+    const client = await Client.findOne({ _id: req.params.id, userId: req.user.id });
+
+    if (!client) {
+      return res.status(404).json({
+        success: false,
+        message: 'Client not found'
+      });
+    }
+
+    await client.removeDocument(req.params.docId);
+    await client.updateDocumentStats();
+
+    console.log('✅ Document deleted from client:', client.organizationName);
+
+    res.json({
+      success: true,
+      message: 'Document deleted successfully'
+    });
+
+  } catch (error) {
+    console.error('❌ Delete document error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to delete document',
+      error: error.message
+    });
+  }
+});
+
+// NEW: Client bulk operations
+router.post('/bulk/update-status', authMiddleware, async (req, res) => {
+  try {
+    console.log('🔄 POST /api/clients/bulk/update-status - User:', req.user.id);
+    
+    const { clientIds, status } = req.body;
+
+    if (!clientIds || !Array.isArray(clientIds) || clientIds.length === 0) {
+      return res.status(400).json({
+        success: false,
+        message: 'Client IDs array is required'
+      });
+    }
+
+    if (!status || !['active', 'inactive', 'prospect'].includes(status)) {
+      return res.status(400).json({
+        success: false,
+        message: 'Valid status is required'
+      });
+    }
+
+    const result = await Client.updateMany(
+      { _id: { $in: clientIds }, userId: req.user.id },
+      { $set: { status, updatedAt: new Date() } }
+    );
+
+    console.log('✅ Bulk status update successful:', {
+      matched: result.matchedCount,
+      modified: result.modifiedCount
+    });
+
+    res.json({
+      success: true,
+      message: `Status updated for ${result.modifiedCount} clients`,
+      stats: {
+        matched: result.matchedCount,
+        modified: result.modifiedCount
+      }
+    });
+
+  } catch (error) {
+    console.error('❌ Bulk update status error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to update client statuses',
+      error: error.message
+    });
+  }
+});
+
+// NEW: Client export data
+router.get('/export/data', authMiddleware, async (req, res) => {
+  try {
+    console.log('📤 GET /api/clients/export/data - User:', req.user.id);
+
+    const clients = await Client.find({ userId: req.user.id })
+      .select('-communicationHistory -documents -__v')
+      .sort({ organizationName: 1 });
+
+    // Set headers for file download
+    res.setHeader('Content-Type', 'application/json');
+    res.setHeader('Content-Disposition', 'attachment; filename=clients-export.json');
+
+    res.json({
+      success: true,
+      exportDate: new Date().toISOString(),
+      totalClients: clients.length,
+      clients: clients
+    });
+
+  } catch (error) {
+    console.error('❌ Client export error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to export client data',
+      error: error.message
+    });
+  }
+});
+
+// NEW: Client import validation
+router.post('/import/validate', authMiddleware, async (req, res) => {
+  try {
+    console.log('🔍 POST /api/clients/import/validate - User:', req.user.id);
+
+    const { clients } = req.body;
+
+    if (!clients || !Array.isArray(clients)) {
+      return res.status(400).json({
+        success: false,
+        message: 'Clients array is required'
+      });
+    }
+
+    const validationResults = {
+      valid: [],
+      invalid: [],
+      duplicates: []
+    };
+
+    for (const clientData of clients) {
+      try {
+        const testClient = new Client({
+          ...clientData,
+          userId: req.user.id
+        });
+
+        const validationError = testClient.validateSync();
+        
+        if (validationError) {
+          validationResults.invalid.push({
+            client: clientData,
+            errors: Object.values(validationError.errors).map(err => ({
+              field: err.path,
+              message: err.message
+            }))
+          });
+        } else {
+          // Check for duplicates
+          const existingClient = await Client.findOne({
+            userId: req.user.id,
+            $or: [
+              { organizationName: clientData.organizationName },
+              { emailAddress: clientData.emailAddress }
+            ]
+          });
+
+          if (existingClient) {
+            validationResults.duplicates.push({
+              client: clientData,
+              existingClient: {
+                id: existingClient._id,
+                organizationName: existingClient.organizationName
+              }
+            });
+          } else {
+            validationResults.valid.push(clientData);
+          }
+        }
+      } catch (error) {
+        validationResults.invalid.push({
+          client: clientData,
+          errors: [{ field: 'general', message: error.message }]
+        });
+      }
+    }
+
+    res.json({
+      success: true,
+      validation: validationResults,
+      summary: {
+        total: clients.length,
+        valid: validationResults.valid.length,
+        invalid: validationResults.invalid.length,
+        duplicates: validationResults.duplicates.length
+      }
+    });
+
+  } catch (error) {
+    console.error('❌ Import validation error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to validate import data',
+      error: error.message
+    });
+  }
 });
 
 module.exports = router;

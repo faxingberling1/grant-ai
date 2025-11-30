@@ -2,29 +2,74 @@ import React, { useState } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import './DashboardSidebar.css'
 
+// Helper function to generate initials from name
+const getInitials = (name) => {
+  if (!name) return 'U';
+  
+  const names = name.trim().split(' ');
+  if (names.length === 1) {
+    return names[0].charAt(0).toUpperCase();
+  }
+  
+  return (names[0].charAt(0) + names[names.length - 1].charAt(0)).toUpperCase();
+};
+
+// Helper function to generate a consistent color based on name
+const getAvatarColor = (name) => {
+  if (!name) return '#6b8c6d';
+  
+  const colors = [
+    '#3498db', '#2ecc71', '#e74c3c', '#f39c12', '#9b59b6',
+    '#1abc9c', '#34495e', '#d35400', '#c0392b', '#16a085'
+  ];
+  
+  const index = name.length % colors.length;
+  return colors[index];
+};
+
 const DashboardSidebar = ({ isOpen, activePage, onPageChange, onToggle }) => {
   const { currentUser } = useAuth();
   const [openDropdown, setOpenDropdown] = useState('communication'); // Open by default
 
+  // Generate user initials and color
+  const userInitials = getInitials(currentUser?.name);
+  const userAvatarColor = getAvatarColor(currentUser?.name);
+
   const menuItems = [
     { id: 'dashboard', icon: 'fas fa-home', label: 'Dashboard', badge: null },
-    { id: 'clients', icon: 'fas fa-users', label: 'Clients', badge: '3' },
-    { id: 'grants', icon: 'fas fa-file-alt', label: 'Grants', badge: '24' },
-    { id: 'submissions', icon: 'fas fa-paper-plane', label: 'Submissions', badge: '18' },
+    { id: 'clients', icon: 'fas fa-users', label: 'Clients', badge: null },
+    { id: 'grants', icon: 'fas fa-file-alt', label: 'Grants', badge: null },
+    { id: 'submissions', icon: 'fas fa-paper-plane', label: 'Submissions', badge: null },
     { id: 'sources', icon: 'fas fa-database', label: 'Grant Sources', badge: null },
-    { id: 'matching', icon: 'fas fa-robot', label: 'AI Matching', badge: 'New' },
+    { id: 'matching', icon: 'fas fa-robot', label: 'AI Matching', badge: null },
     { id: 'ai-writing', icon: 'fas fa-pen-fancy', label: 'AI Writing', badge: null },
     { 
       id: 'calendar', 
       icon: 'fas fa-calendar-alt', 
       label: 'Calendar', 
-      badge: '5',
+      badge: null,
       hasDropdown: true,
       children: [
         { id: 'calendar', icon: 'fas fa-calendar-alt', label: 'Calendar View' },
-        { id: 'upcoming', icon: 'fas fa-list', label: 'Upcoming Meetings', badge: '5' },
-        { id: 'list', icon: 'fas fa-th-list', label: 'All Meetings', badge: '12' },
+        { id: 'upcoming', icon: 'fas fa-list', label: 'Upcoming Meetings', badge: null },
+        { id: 'list', icon: 'fas fa-th-list', label: 'All Meetings', badge: null },
         { id: 'schedule-meeting', icon: 'fas fa-plus', label: 'Schedule Meeting' }
+      ]
+    },
+    { 
+      id: 'documents', 
+      icon: 'fas fa-folder', 
+      label: 'Documents', 
+      badge: null,
+      hasDropdown: true,
+      children: [
+        { id: 'all-documents', icon: 'fas fa-files', label: 'All Documents' },
+        { id: 'recent-documents', icon: 'fas fa-clock', label: 'Recent Documents' },
+        { id: 'shared-documents', icon: 'fas fa-share-alt', label: 'Shared with Me' },
+        { id: 'my-documents', icon: 'fas fa-user', label: 'My Documents' },
+        { id: 'upload-document', icon: 'fas fa-upload', label: 'Upload New' },
+        { id: 'document-templates', icon: 'fas fa-copy', label: 'Templates' },
+        { id: 'archived-documents', icon: 'fas fa-archive', label: 'Archived' }
       ]
     },
     { 
@@ -36,12 +81,12 @@ const DashboardSidebar = ({ isOpen, activePage, onPageChange, onToggle }) => {
       children: [
         { id: 'email-templates', icon: 'fas fa-file-alt', label: 'Email Templates' },
         { id: 'email-composer', icon: 'fas fa-edit', label: 'Compose New Email' },
-        { id: 'inbox', icon: 'fas fa-inbox', label: 'Inbox', badge: '5' },
+        { id: 'inbox', icon: 'fas fa-inbox', label: 'Inbox', badge: null },
         { id: 'sent', icon: 'fas fa-paper-plane', label: 'Sent' },
         { id: 'starred', icon: 'fas fa-star', label: 'Starred' },
         { id: 'spam', icon: 'fas fa-exclamation-triangle', label: 'Spam' },
         { id: 'trash', icon: 'fas fa-trash', label: 'Trash' },
-        { id: 'drafts', icon: 'fas fa-file', label: 'Drafts', badge: '2' }
+        { id: 'drafts', icon: 'fas fa-file', label: 'Drafts', badge: null }
       ]
     },
     { id: 'reports', icon: 'fas fa-chart-bar', label: 'Reports', badge: null },
@@ -53,7 +98,7 @@ const DashboardSidebar = ({ isOpen, activePage, onPageChange, onToggle }) => {
       id: 'user-management', 
       icon: 'fas fa-user-shield', 
       label: 'User Management', 
-      badge: 'New',
+      badge: null,
       adminOnly: true
     }
   ];
@@ -84,6 +129,10 @@ const DashboardSidebar = ({ isOpen, activePage, onPageChange, onToggle }) => {
     .find(item => item.id === 'calendar')
     ?.children?.some(child => child.id === activePage);
 
+  const isDocumentsActive = activePage && menuItems
+    .find(item => item.id === 'documents')
+    ?.children?.some(child => child.id === activePage);
+
   // Check if user is admin
   const isAdmin = currentUser?.role === 'admin' || currentUser?.email === 'admin@deleuxedesign.com';
 
@@ -102,7 +151,12 @@ const DashboardSidebar = ({ isOpen, activePage, onPageChange, onToggle }) => {
 
       {/* User Profile */}
       <div className="sidebar-profile">
-        <img src={currentUser?.avatar} alt={currentUser?.name} className="profile-avatar" />
+        <div 
+          className="profile-avatar-initials"
+          style={{ backgroundColor: userAvatarColor }}
+        >
+          {userInitials}
+        </div>
         <div className="profile-info">
           <div className="profile-name">{currentUser?.name}</div>
           <div className="profile-role">
@@ -123,7 +177,8 @@ const DashboardSidebar = ({ isOpen, activePage, onPageChange, onToggle }) => {
                 <button
                   className={`nav-link ${activePage === item.id || 
                     (item.id === 'communication' && isCommunicationActive) || 
-                    (item.id === 'calendar' && isCalendarActive) ? 'active' : ''}`}
+                    (item.id === 'calendar' && isCalendarActive) ||
+                    (item.id === 'documents' && isDocumentsActive) ? 'active' : ''}`}
                   onClick={() => item.hasDropdown ? handleDropdownToggle(item.id) : onPageChange(item.id)}
                 >
                   <i className={item.icon}></i>
@@ -140,6 +195,30 @@ const DashboardSidebar = ({ isOpen, activePage, onPageChange, onToggle }) => {
                 
                 {/* Dropdown Menu for Calendar */}
                 {item.hasDropdown && item.id === 'calendar' && openDropdown === item.id && (
+                  <div className="dropdown-container">
+                    <ul className="dropdown-menu">
+                      {item.children.map((child) => (
+                        <li key={child.id} className="dropdown-item">
+                          <button
+                            className={`dropdown-link ${activePage === child.id ? 'active' : ''}`}
+                            onClick={() => handleSubItemClick(child.id)}
+                          >
+                            <i className={child.icon}></i>
+                            <span className="dropdown-text">{child.label}</span>
+                            {child.badge && (
+                              <span className="dropdown-badge">
+                                {child.badge}
+                              </span>
+                            )}
+                          </button>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+                
+                {/* Dropdown Menu for Documents */}
+                {item.hasDropdown && item.id === 'documents' && openDropdown === item.id && (
                   <div className="dropdown-container">
                     <ul className="dropdown-menu">
                       {item.children.map((child) => (

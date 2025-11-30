@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import ClientList from './ClientList';
-import ClientForm from './ClientForm'; // This is your updated form
+import ClientForm from './ClientForm';
 import ClientDetails from './ClientDetails';
 import ClientEmails from './ClientEmails';
 import ClientCommunication from './ClientCommunication';
@@ -128,12 +128,21 @@ const Clients = () => {
     }
   }, [clients]);
 
-  // Transform function to handle data from ClientForm correctly
+  // Enhanced transform function that preserves _id properly
   const transformClientForComponents = (client) => {
     if (!client) return null;
 
+    // Preserve the original _id field - this is critical for updates
+    const clientId = client._id || client.id;
+    
+    if (!clientId) {
+      console.warn('⚠️ Client missing ID:', client);
+    }
+
     return {
-      _id: typeof client._id === 'object' && client._id.$oid ? client._id.$oid : client._id,
+      // CRITICAL: Preserve the MongoDB _id field
+      _id: clientId,
+      id: clientId, // Also set id for components that expect it
       userId: client.userId,
 
       // Basic info
@@ -141,7 +150,6 @@ const Clients = () => {
       primaryContactName: client.primaryContactName || '',
       titleRole: client.titleRole || '',
       emailAddress: client.emailAddress || '',
-      // IMPORTANT: ClientForm sends phoneNumbers as a STRING
       phoneNumbers: client.phoneNumbers || '',
       mailingAddress: client.mailingAddress || '',
       website: client.website || '',
@@ -212,6 +220,54 @@ const Clients = () => {
     return null;
   };
 
+  // FIXED: Enhanced data cleaning for MongoDB schema validation
+  const cleanClientDataForMongoDB = (clientData) => {
+    const cleaned = {
+      ...clientData,
+      organizationName: clientData.organizationName?.trim() || '',
+      primaryContactName: clientData.primaryContactName?.trim() || '',
+      titleRole: clientData.titleRole?.trim() || '',
+      emailAddress: clientData.emailAddress?.trim() || '',
+      phoneNumbers: clientData.phoneNumbers?.trim() || '',
+      mailingAddress: clientData.mailingAddress?.trim() || '',
+      website: clientData.website?.trim() || '',
+      additionalContactName: clientData.additionalContactName?.trim() || '',
+      additionalContactTitle: clientData.additionalContactTitle?.trim() || '',
+      additionalContactEmail: clientData.additionalContactEmail?.trim() || '',
+      additionalContactPhone: clientData.additionalContactPhone?.trim() || '',
+      taxIdEIN: clientData.taxIdEIN?.trim() || '',
+      organizationType: clientData.organizationType?.trim() || '',
+      missionStatement: clientData.missionStatement?.trim() || '',
+      serviceArea: clientData.serviceArea?.trim() || '',
+      annualBudget: clientData.annualBudget?.trim() || '',
+      notes: clientData.notes?.trim() || '',
+      focusAreas: Array.isArray(clientData.focusAreas) ? clientData.focusAreas : [],
+      tags: Array.isArray(clientData.tags) ? clientData.tags : [],
+      fundingAreas: Array.isArray(clientData.fundingAreas) ? clientData.fundingAreas : [],
+      grantSources: Array.isArray(clientData.grantSources) ? clientData.grantSources : [],
+      socialMediaLinks: Array.isArray(clientData.socialMediaLinks) ? clientData.socialMediaLinks : []
+    };
+
+    // 🔥 CRITICAL FIX: Handle enum fields - convert empty strings to undefined
+    // This prevents MongoDB schema validation errors for enum fields
+    if (cleaned.category === '') cleaned.category = undefined;
+    if (cleaned.staffCount === '') cleaned.staffCount = undefined;
+    if (cleaned.referralSource === '') cleaned.referralSource = undefined;
+    if (cleaned.grantPotential === '') cleaned.grantPotential = undefined;
+    if (cleaned.priority === '') cleaned.priority = 'medium';
+    if (cleaned.status === '') cleaned.status = 'active';
+
+    console.log('🧹 Cleaned data for MongoDB:', {
+      category: cleaned.category,
+      staffCount: cleaned.staffCount,
+      referralSource: cleaned.referralSource,
+      grantPotential: cleaned.grantPotential,
+      organizationName: cleaned.organizationName
+    });
+
+    return cleaned;
+  };
+
   const debugCategoryData = () => {
     console.log('🔍 DEBUGGING CATEGORY DATA:');
     console.log('Raw clients from MongoDB:', clients);
@@ -227,7 +283,8 @@ const Clients = () => {
         
         const transformed = transformClientForComponents(client);
         console.log(`Client ${index + 1} transformed:`, {
-          category: transformed.category
+          category: transformed.category,
+          _id: transformed._id
         });
       });
     }
@@ -300,7 +357,7 @@ const Clients = () => {
         console.log('🎯 CLIENT CATEGORY DATA SAMPLE:');
         clientsData.slice(0, 3).forEach((client, index) => {
           console.log(`Client ${index + 1}:`, {
-            id: client._id,
+            _id: client._id,
             organizationName: client.organizationName,
             category: client.category,
             tags: client.tags,
@@ -378,7 +435,23 @@ const Clients = () => {
     setView('form');
   };
 
+  // Enhanced handleEditClient with proper ID handling
   const handleEditClient = (client) => {
+    console.log('🔍 DEBUG handleEditClient received:', {
+      client: client,
+      client_id: client._id,
+      client_id_type: typeof client._id,
+      client_keys: Object.keys(client),
+      has_underscore_id: '_id' in client
+    });
+
+    // Ensure we have a client with valid _id
+    if (!client._id) {
+      console.error('❌ Cannot edit client: No valid _id found');
+      setError('Cannot edit client: Invalid client data');
+      return;
+    }
+
     setSelectedClient(client);
     setView('form');
   };
@@ -407,7 +480,7 @@ const Clients = () => {
     setView('communication-hub');
   };
 
-  // FIXED: Enhanced handleSaveClient that correctly handles phoneNumbers as string
+  // FIXED: Enhanced handleSaveClient with MongoDB schema validation fixes
   const handleSaveClient = async (clientData) => {
     setLoading(true);
     setError(null);
@@ -415,11 +488,20 @@ const Clients = () => {
     try {
       console.log('💾 Saving client data to MongoDB:', {
         organizationName: clientData.organizationName,
-        category: clientData.category, // This will now be saved correctly!
+        category: clientData.category,
         focusAreas: clientData.focusAreas,
         tags: clientData.tags,
-        phoneNumbers: clientData.phoneNumbers // This is now a string
+        phoneNumbers: clientData.phoneNumbers
       });
+
+      // 🔍 ENHANCED VALIDATION - Check if we're updating and have valid _id
+      if (selectedClient) {
+        if (!selectedClient._id || selectedClient._id === 'undefined') {
+          console.error('❌ CRITICAL: selectedClient._id is invalid:', selectedClient._id);
+          console.log('🔍 selectedClient object:', selectedClient);
+          throw new Error('Cannot update client: Invalid client ID');
+        }
+      }
 
       // Validate required fields
       if (!clientData.organizationName?.trim() || !clientData.emailAddress?.trim()) {
@@ -432,36 +514,8 @@ const Clients = () => {
         throw new Error('Authentication required');
       }
 
-      // Clean up data - handle phoneNumbers as string (from ClientForm)
-      const cleanedData = {
-        ...clientData,
-        organizationName: clientData.organizationName.trim(),
-        primaryContactName: clientData.primaryContactName.trim(),
-        titleRole: clientData.titleRole?.trim() || '',
-        emailAddress: clientData.emailAddress.trim(),
-        // IMPORTANT: Clean phoneNumbers as string, not array
-        phoneNumbers: clientData.phoneNumbers?.trim() || '',
-        // Clean other string fields
-        mailingAddress: clientData.mailingAddress?.trim() || '',
-        website: clientData.website?.trim() || '',
-        additionalContactName: clientData.additionalContactName?.trim() || '',
-        additionalContactTitle: clientData.additionalContactTitle?.trim() || '',
-        additionalContactEmail: clientData.additionalContactEmail?.trim() || '',
-        additionalContactPhone: clientData.additionalContactPhone?.trim() || '',
-        taxIdEIN: clientData.taxIdEIN?.trim() || '',
-        organizationType: clientData.organizationType?.trim() || '',
-        missionStatement: clientData.missionStatement?.trim() || '',
-        serviceArea: clientData.serviceArea?.trim() || '',
-        annualBudget: clientData.annualBudget?.trim() || '',
-        staffCount: clientData.staffCount?.trim() || '',
-        notes: clientData.notes?.trim() || '',
-        // Ensure arrays are arrays and strings are strings
-        focusAreas: Array.isArray(clientData.focusAreas) ? clientData.focusAreas : [],
-        tags: Array.isArray(clientData.tags) ? clientData.tags : [],
-        fundingAreas: Array.isArray(clientData.fundingAreas) ? clientData.fundingAreas : [],
-        grantSources: Array.isArray(clientData.grantSources) ? clientData.grantSources : [],
-        socialMediaLinks: Array.isArray(clientData.socialMediaLinks) ? clientData.socialMediaLinks : []
-      };
+      // 🔥 CRITICAL FIX: Use the enhanced data cleaner for MongoDB
+      const cleanedData = cleanClientDataForMongoDB(clientData);
 
       let response;
       if (selectedClient) {
@@ -477,20 +531,30 @@ const Clients = () => {
       }
 
       console.log('✅ MongoDB response category data:', {
-        category: savedClient.category, // This should now be correctly updated!
+        category: savedClient.category,
         focusAreas: savedClient.focusAreas,
         tags: savedClient.tags
       });
 
+      // 🔄 CRITICAL FIX: Force immediate state update with fresh data from MongoDB
       setClients(prevClients => {
         if (selectedClient) {
-          return prevClients.map(client => 
+          const updatedClients = prevClients.map(client => 
             client._id === selectedClient._id ? savedClient : client
           );
+          console.log('🔄 Clients state updated immediately:', updatedClients);
+          return updatedClients;
         } else {
-          return [savedClient, ...prevClients];
+          const newClients = [savedClient, ...prevClients];
+          console.log('🔄 New client added to state:', newClients);
+          return newClients;
         }
       });
+
+      // 🔄 Force a refresh from MongoDB to ensure data consistency
+      setTimeout(() => {
+        fetchClients();
+      }, 100);
 
       setView('list');
       
@@ -511,11 +575,77 @@ const Clients = () => {
       } else if (error.message.includes('500')) {
         userFriendlyMessage = 'Server error. Please try again later.';
       } else if (error.message.includes('Validation')) {
-        userFriendlyMessage = `Invalid data: ${error.message}`;
+        // Enhanced validation error handling
+        if (error.message.includes('category') || error.message.includes('enum')) {
+          userFriendlyMessage = 'Please select a valid category from the dropdown. Empty category is not allowed.';
+        } else if (error.message.includes('staffCount') || error.message.includes('referralSource') || error.message.includes('grantPotential')) {
+          userFriendlyMessage = 'Please select valid options from the dropdown menus. Empty values are not allowed for some fields.';
+        } else {
+          userFriendlyMessage = `Invalid data: ${error.message}`;
+        }
       }
       
       setError(userFriendlyMessage);
       
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // NEW: Function to update ALL clients with the same category/data
+  const handleUpdateAllClients = async (updateData) => {
+    if (!clients.length) {
+      setError('No clients available to update');
+      return;
+    }
+
+    setLoading(true);
+    setError(null);
+
+    try {
+      console.log(`🔄 Starting bulk update for ${clients.length} clients...`);
+
+      // Clean the data for MongoDB schema validation
+      const cleanedUpdateData = cleanClientDataForMongoDB(updateData);
+
+      // Update each client with the same data (but preserve unique fields)
+      const updatePromises = clients.map(async (client) => {
+        try {
+          const clientUpdateData = {
+            ...cleanedUpdateData,
+            // Preserve client-specific unique fields
+            organizationName: client.organizationName,
+            emailAddress: client.emailAddress,
+            primaryContactName: client.primaryContactName
+          };
+
+          console.log(`📤 Updating client: ${client.organizationName}`);
+          const response = await apiService.updateClient(client._id, clientUpdateData);
+          return extractClientFromResponse(response);
+        } catch (error) {
+          console.error(`❌ Failed to update client ${client.organizationName}:`, error);
+          return client; // Return original if update fails
+        }
+      });
+
+      // Wait for all updates to complete
+      const results = await Promise.all(updatePromises);
+      const successfulUpdates = results.filter(client => client && client._id);
+
+      console.log(`✅ Successfully updated ${successfulUpdates.length} out of ${clients.length} clients`);
+
+      // Update state with all updated clients
+      setClients(successfulUpdates);
+      setError(`Successfully updated ${successfulUpdates.length} clients`);
+
+      // Refresh from server to ensure consistency
+      setTimeout(() => {
+        fetchClients();
+      }, 500);
+
+    } catch (error) {
+      console.error('❌ Bulk update error:', error);
+      setError(`Failed to update all clients: ${error.message}`);
     } finally {
       setLoading(false);
     }
@@ -626,6 +756,12 @@ const Clients = () => {
     }
   };
 
+  // Add force refresh function
+  const forceRefreshClients = async () => {
+    console.log('🔄 Force refreshing clients from MongoDB...');
+    await fetchClients();
+  };
+
   const debugClientAPI = async () => {
     console.log('🧪 DEBUG: Testing MongoDB API with Category Check');
     
@@ -659,8 +795,8 @@ const Clients = () => {
         organizationName: testClient.organizationName,
         primaryContactName: testClient.primaryContactName,
         emailAddress: testClient.emailAddress,
-        phoneNumbers: testClient.phoneNumbers, // Handle as string
-        category: 'Education', // This category will be saved to MongoDB!
+        phoneNumbers: testClient.phoneNumbers,
+        category: 'Education',
         tags: ['education', 'stem', 'test'],
         focusAreas: ['STEM Education', 'Youth Development'],
         fundingAreas: ['Educational Grants'],
@@ -690,8 +826,8 @@ const Clients = () => {
     
     const testData = {
       organizationName: testClient.organizationName,
-      phoneNumbers: testClient.phoneNumbers, // Handle as string
-      category: 'Education', // This category will be saved to MongoDB!
+      phoneNumbers: testClient.phoneNumbers,
+      category: 'Education',
       tags: ['test', 'education', 'debug'],
       focusAreas: ['Youth Education', 'STEM'],
       priority: 'high'
@@ -708,14 +844,33 @@ const Clients = () => {
     }
   };
 
+  // NEW: Test function to update ALL clients
+  const testUpdateAllClients = async () => {
+    if (!clients.length) {
+      setError('No clients available to update');
+      return;
+    }
+
+    const testData = {
+      category: 'Education',
+      tags: ['bulk-update', 'test'],
+      focusAreas: ['Bulk Updated Focus Area'],
+      priority: 'high',
+      referralSource: 'Bulk Update Test',
+      grantPotential: '$10,000 - $50,000'
+    };
+
+    await handleUpdateAllClients(testData);
+  };
+
   const quickCategoryTest = async () => {
     if (!clients.length) return;
     
     const client = clients[0];
     const testData = {
       organizationName: client.organizationName,
-      phoneNumbers: client.phoneNumbers, // Handle as string
-      category: 'Education', // Using one of the valid categories
+      phoneNumbers: client.phoneNumbers,
+      category: 'Education',
       tags: ['test', 'debug'],
       focusAreas: ['Test Focus Area'],
       priority: 'medium'
@@ -725,7 +880,7 @@ const Clients = () => {
       console.log('🧪 Quick category test:', testData);
       const result = await apiService.updateClient(client._id, testData);
       console.log('✅ MongoDB Test result:', result);
-      await fetchClients(); // Refresh to see changes
+      await fetchClients();
     } catch (error) {
       console.error('❌ Quick test failed:', error);
     }
@@ -753,14 +908,31 @@ const Clients = () => {
     console.log('📊 CATEGORY STATISTICS:', categoryCounts);
   };
 
+  // Add real-time debugging to monitor updates
+  useEffect(() => {
+    console.log('🔍 CLIENTS STATE UPDATED:', {
+      total: clients.length,
+      categories: [...new Set(clients.map(c => c.category))],
+      sample: clients.slice(0, 2).map(c => ({
+        _id: c._id,
+        organizationName: c.organizationName,
+        category: c.category,
+        tags: c.tags
+      }))
+    });
+  }, [clients]);
+
   window.debugClientAPI = debugClientAPI;
   window.apiService = apiService;
   window.testCategoryAssignment = testCategoryAssignment;
+  window.testUpdateAllClients = testUpdateAllClients;
   window.quickCategoryTest = quickCategoryTest;
   window.debugCurrentCategories = debugCurrentCategories;
+  window.forceRefreshClients = forceRefreshClients;
+  window.handleUpdateAllClients = handleUpdateAllClients;
 
+  // FIXED: Enhanced filteredClients that preserves ALL fields from MongoDB
   const filteredClients = clients
-    .map(transformClientForComponents)
     .filter(client => {
       const searchLower = searchTerm.toLowerCase();
       return (
@@ -773,7 +945,26 @@ const Clients = () => {
         (client.organizationType || '').toLowerCase().includes(searchLower) ||
         (client.serviceArea || '').toLowerCase().includes(searchLower)
       );
+    })
+    .map(client => {
+      // Only transform for component compatibility, don't lose original data
+      const transformed = transformClientForComponents(client);
+      return {
+        ...client, // Keep original MongoDB data first
+        ...transformed // Override with transformed fields
+      };
     });
+
+  // Debug the data flow to ClientList
+  useEffect(() => {
+    if (filteredClients.length > 0) {
+      console.log('🔍 Clients being passed to ClientList:', filteredClients.map(client => ({
+        _id: client._id,
+        organizationName: client.organizationName,
+        has_underscore_id: '_id' in client
+      })));
+    }
+  }, [filteredClients]);
 
   const CompactConnectionStatus = () => {
     const getStatusConfig = () => {
@@ -820,6 +1011,26 @@ const Clients = () => {
       </div>
     );
   };
+
+  const ManualRefreshButton = () => (
+    <button 
+      onClick={fetchClients}
+      className="compact-debug-btn"
+      style={{
+        marginLeft: '10px',
+        padding: '5px 10px',
+        background: '#007bff',
+        color: 'white',
+        border: 'none',
+        borderRadius: '4px',
+        cursor: 'pointer',
+        fontSize: '12px'
+      }}
+    >
+      <i className="fas fa-sync-alt"></i>
+      Refresh Data
+    </button>
+  );
 
   const CompactDebugPanel = () => {
     const testConnection = async () => {
@@ -871,6 +1082,10 @@ const Clients = () => {
                 <i className="fas fa-tag"></i>
                 Assign Test Category
               </button>
+              <button onClick={testUpdateAllClients} className="compact-debug-btn">
+                <i className="fas fa-users"></i>
+                Update ALL Clients
+              </button>
               <button onClick={quickCategoryTest} className="compact-debug-btn">
                 <i className="fas fa-rocket"></i>
                 Quick Category Test
@@ -882,6 +1097,13 @@ const Clients = () => {
               <button onClick={fetchClients} className="compact-debug-btn">
                 <i className="fas fa-sync-alt"></i>
                 Refresh Clients
+              </button>
+              <button onClick={() => {
+                console.log('🔍 CURRENT CLIENTS STATE:', clients);
+                fetchClients();
+              }} className="compact-debug-btn">
+                <i className="fas fa-bug"></i>
+                Debug State
               </button>
               <button onClick={handleLogout} className="compact-debug-btn danger">
                 <i className="fas fa-sign-out-alt"></i>
@@ -935,6 +1157,7 @@ const Clients = () => {
                   <div><strong>{client.organizationName}</strong></div>
                   <div>Category: {client.category || 'None'}</div>
                   <div>Tags: {client.tags?.join(', ') || 'None'}</div>
+                  <div>ID: {client._id || 'No ID'}</div>
                 </div>
               ))}
             </div>
@@ -1094,21 +1317,27 @@ const Clients = () => {
     switch (view) {
       case 'list':
         return (
-          <ClientList
-            clients={filteredClients}
-            loading={loading}
-            onAddClient={handleAddClient}
-            onEditClient={handleEditClient}
-            onViewClient={handleViewClient}
-            onDeleteClient={handleDeleteClient}
-            onSendEmail={handleSendEmail}
-            onEmails={handleEmails}
-            onCommunication={handleCommunication}
-            onViewHistory={handleViewHistory}
-            onCommunicationHub={handleCommunicationHub}
-            searchTerm={searchTerm}
-            onSearchChange={setSearchTerm}
-          />
+          <div>
+            <div className="clients-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
+              <h2>Clients</h2>
+              <ManualRefreshButton />
+            </div>
+            <ClientList
+              clients={filteredClients}
+              loading={loading}
+              onAddClient={handleAddClient}
+              onEditClient={handleEditClient}
+              onViewClient={handleViewClient}
+              onDeleteClient={handleDeleteClient}
+              onSendEmail={handleSendEmail}
+              onEmails={handleEmails}
+              onCommunication={handleCommunication}
+              onViewHistory={handleViewHistory}
+              onCommunicationHub={handleCommunicationHub}
+              searchTerm={searchTerm}
+              onSearchChange={setSearchTerm}
+            />
+          </div>
         );
       case 'form':
         return (

@@ -91,17 +91,26 @@ export const ClientsProvider = ({ children }) => {
 
     console.log('📥 Extracting client from response:', response);
 
+    // Handle different response formats
+    let clientData = null;
+
     if (response.success && response.client) {
-      return response.client;
+      clientData = response.client;
+    } else if (response.success && response.data) {
+      clientData = response.data;
+    } else if (response._id) {
+      clientData = response;
+    } else if (Array.isArray(response) && response.length > 0) {
+      clientData = response[0];
     }
-    if (response.success && response.data) {
-      return response.data;
-    }
-    if (response._id) {
-      return response;
-    }
-    if (Array.isArray(response) && response.length > 0) {
-      return response[0];
+
+    if (clientData) {
+      console.log('✅ Extracted client data:', {
+        id: clientData._id,
+        name: clientData.organizationName,
+        category: clientData.category
+      });
+      return clientData;
     }
 
     console.warn('⚠️ Unrecognized response format:', response);
@@ -224,8 +233,14 @@ export const ClientsProvider = ({ children }) => {
         category: newClient.category
       });
 
-      setClients(prev => [newClient, ...prev]);
-      return newClient;
+      // Update state with the new client
+      setClients(prev => {
+        const updatedClients = [newClient, ...prev];
+        console.log('🔄 State updated - added client:', updatedClients.length, 'total clients');
+        return updatedClients;
+      });
+
+      return { success: true, client: newClient };
     } catch (error) {
       console.error('❌ Error adding client via context:', error);
       setError(error.message);
@@ -233,7 +248,7 @@ export const ClientsProvider = ({ children }) => {
     }
   };
 
-  // Enhanced update client with comprehensive data handling
+  // FIXED: Enhanced update client with proper state management
   const updateClient = async (clientId, clientData) => {
     try {
       console.log('📝 Updating client via context...', {
@@ -288,7 +303,11 @@ export const ClientsProvider = ({ children }) => {
         socialMediaLinks: Array.isArray(clientData.socialMediaLinks) ? clientData.socialMediaLinks : []
       };
 
+      console.log('🧹 Cleaned data for update:', cleanedData);
+
       const response = await apiService.updateClient(clientId, cleanedData);
+      console.log('📦 API Response:', response);
+      
       const updatedClient = extractClientFromResponse(response);
       
       if (!updatedClient) {
@@ -301,10 +320,38 @@ export const ClientsProvider = ({ children }) => {
         category: updatedClient.category
       });
 
-      setClients(prev => prev.map(client => 
-        client._id === clientId ? updatedClient : client
-      ));
-      return updatedClient;
+      // CRITICAL FIX: Proper state update with immediate refresh
+      setClients(prevClients => {
+        const newClients = prevClients.map(client => 
+          client._id === clientId ? { ...updatedClient } : client
+        );
+        
+        console.log('🔄 State update - Before:', prevClients.length, 'After:', newClients.length);
+        
+        // Log the updated client for verification
+        const updatedClientInState = newClients.find(c => c._id === clientId);
+        if (updatedClientInState) {
+          console.log('📊 Updated client in state:', {
+            id: updatedClientInState._id,
+            name: updatedClientInState.organizationName,
+            category: updatedClientInState.category,
+            updatedAt: updatedClientInState.updatedAt
+          });
+        }
+        
+        return newClients;
+      });
+
+      // Force a complete state refresh to ensure re-render
+      setTimeout(() => {
+        console.log('🔄 Forcing state consistency check...');
+        setClients(prev => {
+          console.log('✅ Final state check:', prev.length, 'clients');
+          return [...prev]; // This creates a new array reference, forcing re-render
+        });
+      }, 50);
+
+      return { success: true, client: updatedClient };
     } catch (error) {
       console.error('❌ Error updating client via context:', error);
       setError(error.message);
@@ -312,12 +359,19 @@ export const ClientsProvider = ({ children }) => {
     }
   };
 
-  // Delete a client
+  // Delete a client with proper state update
   const deleteClient = async (clientId) => {
     try {
       console.log('🗑️ Deleting client via context...', clientId);
       await apiService.deleteClient(clientId);
-      setClients(prev => prev.filter(client => client._id !== clientId));
+      
+      // Update state immediately
+      setClients(prev => {
+        const newClients = prev.filter(client => client._id !== clientId);
+        console.log('🔄 State updated after delete:', newClients.length, 'clients remaining');
+        return newClients;
+      });
+      
       console.log('✅ Client deleted successfully via context');
     } catch (error) {
       console.error('❌ Error deleting client via context:', error);
@@ -326,7 +380,7 @@ export const ClientsProvider = ({ children }) => {
     }
   };
 
-  // Add communication to a client
+  // Add communication to a client with proper state update
   const addCommunication = async (clientId, communication) => {
     try {
       console.log('💬 Adding communication via context...', { clientId, communication });
@@ -337,9 +391,15 @@ export const ClientsProvider = ({ children }) => {
         throw new Error('No client data received after adding communication');
       }
 
-      setClients(prev => prev.map(client => 
-        client._id === clientId ? updatedClient : client
-      ));
+      // Update state with the modified client
+      setClients(prev => {
+        const newClients = prev.map(client => 
+          client._id === clientId ? updatedClient : client
+        );
+        console.log('🔄 State updated after communication:', newClients.length, 'clients');
+        return newClients;
+      });
+      
       console.log('✅ Communication added successfully via context');
       return updatedClient;
     } catch (error) {
@@ -471,9 +531,63 @@ export const ClientsProvider = ({ children }) => {
     console.log('📊 CATEGORY STATISTICS:', categoryStats);
   };
 
-  // Expose debug function globally for testing
+  // Debug state updates
+  const debugStateUpdate = () => {
+    console.log('🔍 CURRENT CLIENTS STATE:');
+    console.log('Total clients:', clients.length);
+    clients.forEach((client, index) => {
+      console.log(`Client ${index + 1}:`, {
+        id: client._id,
+        name: client.organizationName,
+        category: client.category,
+        updatedAt: client.updatedAt
+      });
+    });
+  };
+
+  // Test update function
+  const debugUpdateTest = async (clientId) => {
+    const testClient = clients.find(c => c._id === clientId);
+    if (!testClient) {
+      console.log('❌ Client not found for debug test');
+      return;
+    }
+
+    console.log('🧪 DEBUG UPDATE TEST:');
+    console.log('Before update:', testClient.organizationName);
+    
+    const testData = {
+      ...testClient,
+      organizationName: `${testClient.organizationName} - DEBUG UPDATED`
+    };
+
+    await updateClient(clientId, testData);
+    
+    // Check state after update
+    setTimeout(() => {
+      const updatedClient = clients.find(c => c._id === clientId);
+      console.log('After update:', updatedClient?.organizationName);
+    }, 500);
+  };
+
+  // Expose debug functions globally for testing
   useEffect(() => {
     window.debugClientsContext = debugCategoryData;
+    window.debugClientsState = debugStateUpdate;
+    window.debugUpdateTest = debugUpdateTest;
+  }, [clients]);
+
+  // Debug state changes
+  useEffect(() => {
+    console.log('🔄 Clients state updated - Total clients:', clients.length);
+    if (clients.length > 0) {
+      console.log('📋 First client sample:', {
+        id: clients[0]._id,
+        name: clients[0].organizationName,
+        category: clients[0].category,
+        updatedAt: clients[0].updatedAt
+      });
+    }
   }, [clients]);
 
   // Automatically fetch clients when user logs in
@@ -514,7 +628,9 @@ export const ClientsProvider = ({ children }) => {
     transformClientForComponents,
     
     // Debug functions
-    debugCategoryData
+    debugCategoryData,
+    debugStateUpdate,
+    debugUpdateTest
   };
 
   return (

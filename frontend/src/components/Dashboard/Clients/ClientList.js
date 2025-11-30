@@ -20,12 +20,49 @@ const ClientList = ({
   const [selectedCategory, setSelectedCategory] = useState('all');
   const [categoryStats, setCategoryStats] = useState({});
   const [lastUpdate, setLastUpdate] = useState(Date.now());
+  const [filteredClients, setFilteredClients] = useState([]);
+
+  // FIXED: Enhanced useEffect to properly handle client updates
+  useEffect(() => {
+    console.log('🎯 ClientList clients updated:', clients?.length);
+    
+    if (clients && clients.length > 0) {
+      // Log sample data for debugging
+      console.log('📋 Sample client data:', clients.slice(0, 3).map(client => ({
+        _id: client._id,
+        organizationName: client.organizationName,
+        category: client.category,
+        primaryCategory: client.primaryCategory,
+        status: client.status,
+        totalFunding: client.totalFunding
+      })));
+      
+      // Recalculate stats and filtered clients
+      const stats = calculateCategoryStats();
+      setCategoryStats(stats);
+      
+      // Update filtered clients
+      const filtered = getFilteredClients();
+      setFilteredClients(filtered);
+      
+      // Force UI update
+      setLastUpdate(Date.now());
+    } else {
+      // Reset stats if no clients
+      setCategoryStats({});
+      setFilteredClients([]);
+    }
+  }, [clients, selectedCategory, searchTerm]); // This will trigger whenever clients prop or filters change
 
   // FIXED: Enhanced category stats calculation with better data handling
   const calculateCategoryStats = () => {
     const stats = {};
     
     console.log('🔄 Recalculating category stats for', clients?.length, 'clients');
+    
+    if (!clients || clients.length === 0) {
+      return stats;
+    }
     
     // Get all unique categories from clients
     const allCategories = new Set();
@@ -74,34 +111,7 @@ const ClientList = ({
     return stats;
   };
 
-  // FIXED: Enhanced useEffect to track client changes and force updates
-  useEffect(() => {
-    console.log('🎯 ClientList clients updated:', clients?.length);
-    
-    if (clients && clients.length > 0) {
-      // Log sample data for debugging
-      console.log('📋 Sample client data:', clients.slice(0, 3).map(client => ({
-        id: client._id,
-        organizationName: client.organizationName,
-        category: client.category,
-        primaryCategory: client.primaryCategory,
-        status: client.status,
-        totalFunding: client.totalFunding
-      })));
-      
-      // Recalculate stats
-      const stats = calculateCategoryStats();
-      setCategoryStats(stats);
-      
-      // Force UI update
-      setLastUpdate(Date.now());
-    } else {
-      // Reset stats if no clients
-      setCategoryStats({});
-    }
-  }, [clients]); // This will trigger whenever clients prop changes
-
-  // FIXED: Enhanced category filtering
+  // FIXED: Enhanced category filtering with proper dependency handling
   const getFilteredClients = () => {
     if (!clients || clients.length === 0) return [];
     
@@ -157,10 +167,15 @@ const ClientList = ({
     return allCategories;
   };
 
-  // FIXED: Enhanced category change handler
+  // FIXED: Enhanced category change handler with immediate UI update
   const handleCategoryChange = (category) => {
     console.log(`🎯 Changing category from ${selectedCategory} to ${category}`);
     setSelectedCategory(category);
+    
+    // Update filtered clients immediately
+    const filtered = getFilteredClients();
+    setFilteredClients(filtered);
+    
     // Force immediate UI update
     setLastUpdate(Date.now());
   };
@@ -282,6 +297,45 @@ const ClientList = ({
     return colors[category] || colors['default'];
   };
 
+  // FIXED: Enhanced edit handler with proper ID validation
+  const handleEditClick = (client) => {
+    console.log('🔍 ClientList EDIT BUTTON CLICKED:', {
+      client: client,
+      client_id: client._id,
+      client_id_type: typeof client._id,
+      client_keys: Object.keys(client),
+      has_underscore_id: '_id' in client,
+      has_id: 'id' in client
+    });
+
+    // Ensure we have the client with _id
+    const clientWithId = {
+      ...client,
+      _id: client._id || client.id // Use _id if available, fallback to id
+    };
+
+    if (!clientWithId._id) {
+      console.error('❌ Cannot edit client: No valid _id found in client:', client);
+      return;
+    }
+
+    console.log('🔍 Editing client with ID:', clientWithId._id);
+    onEditClient(clientWithId);
+  };
+
+  // FIXED: Enhanced delete handler with proper ID validation
+  const handleDeleteClick = (client) => {
+    const clientId = client._id || client.id;
+    
+    if (!clientId) {
+      console.error('❌ Cannot delete client: No valid ID found in client:', client);
+      return;
+    }
+
+    console.log('🗑️ Deleting client with ID:', clientId);
+    onDeleteClient(clientId);
+  };
+
   if (loading) {
     return (
       <div className="client-list-loading">
@@ -291,8 +345,7 @@ const ClientList = ({
     );
   }
 
-  // Calculate filtered clients and categories
-  const filteredClients = getFilteredClients();
+  // Calculate categories for display
   const allCategories = getAllCategories();
   const stats = categoryStats;
 
@@ -448,7 +501,7 @@ const ClientList = ({
                       const focusAreas = getClientFocusAreas(client);
                       
                       return (
-                        <tr key={client.id} className="client-list-row">
+                        <tr key={client._id} className="client-list-row">
                           <td className="client-list-col-organization">
                             <div className="client-list-client-info">
                               <div className="client-list-avatar-container">
@@ -601,14 +654,14 @@ const ClientList = ({
                               </button>
                               <button 
                                 className="client-list-btn-icon" 
-                                onClick={() => onEditClient(client)}
+                                onClick={() => handleEditClick(client)}
                                 title="Edit Client"
                               >
                                 <i className="fas fa-edit"></i>
                               </button>
                               <button 
                                 className="client-list-btn-icon danger" 
-                                onClick={() => onDeleteClient(client.id)}
+                                onClick={() => handleDeleteClick(client)}
                                 title="Delete Client"
                               >
                                 <i className="fas fa-trash"></i>

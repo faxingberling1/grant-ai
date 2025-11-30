@@ -227,3 +227,148 @@
     padding: 12px 16px 12px 40px;
   }
 }
+
+/* Initials Avatar Styles for Sidebar */
+.profile-avatar-initials {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  font-size: 18px;
+  color: white;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+  border: 3px solid rgba(255, 255, 255, 0.2);
+  transition: all 0.3s ease;
+}
+
+.sidebar-profile:hover .profile-avatar-initials {
+  transform: scale(1.05);
+  border-color: rgba(255, 255, 255, 0.4);
+}
+
+/* Keep all existing sidebar styles below */
+.dashboard-sidebar .nav-item.has-dropdown {
+  position: relative;
+}
+
+.dashboard-sidebar .nav-link {
+  position: relative;
+  display: flex;
+  align-items: center;
+  width: 100%;
+  padding: 12px 16px;
+  border: none;
+  background: none;
+  color: inherit;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.dashboard-sidebar .nav-link .dropdown-arrow {
+  margin-left: auto;
+  font-size: 12px;
+  transition: transform 0.3s ease;
+}
+
+/* Dropdown container that appears below the parent */
+.dashboard-sidebar .dropdown-container {
+  width: 100%;
+  position: static;
+}
+
+.dashboard-sidebar .dropdown-menu {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  background: rgba(255, 255, 255, 0.05);
+  border-left: 3px solid var(--primary-color, #1a472a);
+  animation: slideDown 0.3s ease;
+  width: 100%;
+  position: static;
+}
+
+.dashboard-sidebar .dropdown-item {
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.dashboard-sidebar .dropdown-item:last-child {
+  border-bottom: none;
+}
+
+.dashboard-sidebar .dropdown-link {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  padding: 10px 16px 10px 32px;
+  border: none;
+  background: none;
+  color: inherit;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  font-size: 14px;
+}
+
+.dashboard-sidebar .dropdown-link:hover {
+  background: rgba(255, 255, 255, 0.1);
+  padding-left: 36px;
+}
+
+.dashboard-sidebar .dropdown-link.active {
+  background: rgba(59, 130, 246, 0.2);
+  color: var(--primary-color, #3b82f6);
+}
+
+.dashboard-sidebar .dropdown-link i {
+  margin-right: 12px;
+  width: 16px;
+  text-align: center;
+}
+
+.dashboard-sidebar .dropdown-text {
+  flex: 1;
+}
+
+.dashboard-sidebar .dropdown-badge {
+  background: #ef4444;
+  color: white;
+  padding: 2px 6px;
+  border-radius: 10px;
+  font-size: 11px;
+  font-weight: 600;
+}
+
+.dashboard-sidebar .nav-link.active .dropdown-arrow {
+  color: var(--primary-color, #3b82f6);
+}
+
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    max-height: 0;
+  }
+  to {
+    opacity: 1;
+    max-height: 500px;
+  }
+}
+
+/* Ensure the dropdown doesn't affect sidebar layout */
+.dashboard-sidebar .nav-menu {
+  display: flex;
+  flex-direction: column;
+}
+
+.dashboard-sidebar .nav-item {
+  display: flex;
+  flex-direction: column;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .dashboard-sidebar .dropdown-link {
+    padding: 12px 16px 12px 40px;
+  }
+}

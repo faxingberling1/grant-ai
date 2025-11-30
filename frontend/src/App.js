@@ -4,8 +4,10 @@ import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-d
 import { AuthProvider, useAuth } from './context/AuthContext';
 import { ClientsProvider } from './context/ClientsContext';
 import { TemplatesProvider } from './context/TemplatesContext';
+import { NotificationProvider } from './context/NotificationContext';
+import { DocumentsProvider } from './context/DocumentsContext';
 import Login from './components/Login/Login';
-import Register from './components/Login/Register'; // ← NEW
+import Register from './components/Login/Register';
 import Dashboard from './components/Dashboard/Dashboard';
 import './App.css';
 
@@ -14,23 +16,27 @@ function App() {
     <AuthProvider>
       <ClientsProvider>
         <TemplatesProvider>
-          <Router>
-            <div className="App">
-              <Routes>
-                <Route path="/login" element={<Login />} />
-                <Route path="/register" element={<Register />} /> {/* ← NEW */}
-                <Route 
-                  path="/dashboard" 
-                  element={
-                    <ProtectedRoute>
-                      <Dashboard />
-                    </ProtectedRoute>
-                  } 
-                />
-                <Route path="/" element={<Navigate to="/login" />} /> {/* Updated */}
-              </Routes>
-            </div>
-          </Router>
+          <NotificationProvider>
+            <DocumentsProvider>
+              <Router>
+                <div className="App">
+                  <Routes>
+                    <Route path="/login" element={<Login />} />
+                    <Route path="/register" element={<Register />} />
+                    <Route 
+                      path="/dashboard/*" 
+                      element={
+                        <ProtectedRoute>
+                          <Dashboard />
+                        </ProtectedRoute>
+                      } 
+                    />
+                    <Route path="/" element={<Navigate to="/dashboard" />} />
+                  </Routes>
+                </div>
+              </Router>
+            </DocumentsProvider>
+          </NotificationProvider>
         </TemplatesProvider>
       </ClientsProvider>
     </AuthProvider>
