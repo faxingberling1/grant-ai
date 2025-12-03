@@ -1,7 +1,9 @@
+/* src/App.css - UPDATED VERSION */
 .App {
   min-height: 100vh;
 }
 
+/* Loading screen styles */
 .loading-screen {
   position: fixed;
   top: 0;
@@ -18,14 +20,35 @@
   font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
 }
 
+.loading-content {
+  text-align: center;
+  padding: 40px;
+  background: rgba(0, 0, 0, 0.2);
+  border-radius: 16px;
+  max-width: 500px;
+  width: 90%;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+  animation: fadeIn 0.5s ease-out;
+}
+
 .loading-content i {
   font-size: 64px;
   margin-bottom: 20px;
+  opacity: 0.9;
 }
 
 .loading-content h2 {
   margin-bottom: 10px;
   font-size: 28px;
+  font-weight: 600;
+  letter-spacing: 0.5px;
+}
+
+.loading-content p {
+  font-size: 16px;
+  opacity: 0.9;
+  margin-bottom: 20px;
+  line-height: 1.5;
 }
 
 .loading-spinner {
@@ -35,10 +58,121 @@
   border-top: 4px solid white;
   border-radius: 50%;
   animation: spin 1s linear infinite;
-  margin-top: 20px;
+  margin: 20px auto;
 }
 
+.loading-tip {
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 10px;
+  padding: 12px 20px;
+  margin-top: 25px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  border-left: 3px solid #ffd700;
+}
+
+.loading-tip i {
+  font-size: 18px;
+  margin: 0;
+  color: #ffd700;
+}
+
+.loading-tip span {
+  font-size: 14px;
+  opacity: 0.9;
+}
+
+/* Button styles for auth error screen */
+.btn {
+  padding: 12px 24px;
+  border: none;
+  border-radius: 8px;
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  text-decoration: none;
+  display: inline-block;
+  text-align: center;
+}
+
+.btn-primary {
+  background: white;
+  color: #1a472a;
+  border: 2px solid white;
+}
+
+.btn-primary:hover {
+  background: rgba(255, 255, 255, 0.9);
+  transform: translateY(-2px);
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+}
+
+.btn-primary:active {
+  transform: translateY(0);
+}
+
+/* Animations */
 @keyframes spin {
   0% { transform: rotate(0deg); }
   100% { transform: rotate(360deg); }
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .loading-content {
+    padding: 30px 20px;
+    margin: 20px;
+  }
+  
+  .loading-content i {
+    font-size: 48px;
+  }
+  
+  .loading-content h2 {
+    font-size: 24px;
+  }
+  
+  .loading-content p {
+    font-size: 15px;
+  }
+}
+
+/* Error message styling */
+.error-container {
+  background: rgba(255, 0, 0, 0.1);
+  border: 1px solid rgba(255, 0, 0, 0.3);
+  border-radius: 8px;
+  padding: 20px;
+  margin: 20px;
+  text-align: center;
+}
+
+.error-container i {
+  font-size: 48px;
+  color: #ff6b6b;
+  margin-bottom: 15px;
+}
+
+.error-container h3 {
+  color: #ff6b6b;
+  margin-bottom: 10px;
+}
+
+.error-container p {
+  opacity: 0.9;
+  margin-bottom: 20px;
 }

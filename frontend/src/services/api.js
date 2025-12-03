@@ -1,11 +1,96 @@
-// src/services/api.js - COMPLETE UPDATED VERSION WITH ALL HTTP METHODS
-const API_BASE_URL = process.env.REACT_APP_API_URL || 'https://grant-ai.onrender.com';
-
+// src/services/api.js - COMPLETE UPDATED WITH TIMEOUT BUG FIXED
 class ApiService {
   constructor() {
-    this.baseURL = API_BASE_URL.replace(/\/$/, '');
+    // SMART URL DETECTION - Works in all environments
+    this.baseURL = this.determineBaseURL();
     this.isBackendAvailable = null;
+    
     console.log('🚀 API Service initialized with:', this.baseURL);
+    console.log('🌍 Environment detected:', this.getEnvironment());
+    console.log('📍 Current host:', typeof window !== 'undefined' ? window.location.hostname : 'server-side');
+  }
+
+  // Smart URL detection method
+  determineBaseURL() {
+    // Priority 1: Environment variable (highest priority)
+    const envUrl = process.env.REACT_APP_API_URL;
+    if (envUrl && envUrl.trim()) {
+      return envUrl.replace(/\/$/, '');
+    }
+
+    // Priority 2: Detect based on current location (browser only)
+    if (typeof window !== 'undefined') {
+      const { hostname, protocol } = window.location;
+      
+      // Development environment (localhost)
+      if (hostname === 'localhost' || hostname === '127.0.0.1') {
+        return 'http://localhost:5000';
+      }
+      
+      // Vercel Preview/Development deployments
+      if (hostname.includes('.vercel.app')) {
+        // Check if it's a preview deployment (not production)
+        const isProductionDeployment = hostname === 'grant-ai-eight.vercel.app';
+        
+        if (isProductionDeployment) {
+          return 'https://grant-ai.onrender.com';
+        } else {
+          // Preview deployments - use production backend or Render
+          return 'https://grant-ai.onrender.com';
+        }
+      }
+      
+      // Production deployment on custom domain
+      if (hostname.includes('grantfunds.com') || hostname.includes('grant-ai')) {
+        return 'https://grant-ai.onrender.com';
+      }
+      
+      // Any other production-like environment
+      if (protocol === 'https:') {
+        return 'https://grant-ai.onrender.com';
+      }
+    }
+
+    // Priority 3: Node.js/SSR environment detection
+    if (typeof process !== 'undefined') {
+      if (process.env.NODE_ENV === 'production') {
+        return 'https://grant-ai.onrender.com';
+      }
+      if (process.env.NODE_ENV === 'development') {
+        return 'http://localhost:5000';
+      }
+    }
+
+    // Priority 4: Default fallbacks
+    if (typeof window !== 'undefined' && window.location.origin) {
+      // Use same origin as frontend for API (if backend is on same domain)
+      return window.location.origin;
+    }
+
+    // Final fallback
+    console.warn('⚠️ Could not determine API URL, using default fallback');
+    return 'https://grant-ai.onrender.com';
+  }
+
+  // Helper to get current environment
+  getEnvironment() {
+    if (typeof window === 'undefined') return 'server';
+    
+    const { hostname } = window.location;
+    
+    if (hostname === 'localhost' || hostname === '127.0.0.1') {
+      return 'development';
+    }
+    
+    if (hostname.includes('.vercel.app')) {
+      return hostname === 'grant-ai-eight.vercel.app' ? 'production' : 'preview';
+    }
+    
+    if (hostname.includes('grantfunds.com') || hostname.includes('grant-ai')) {
+      return 'production';
+    }
+    
+    return 'unknown';
   }
 
   getAuthHeaders() {
@@ -40,14 +125,29 @@ class ApiService {
       config.body = JSON.stringify(options.data);
     }
 
+    // FIX: Declare timeoutId at the beginning of the function scope
+    let timeoutId;
+
     try {
       console.log(`🔄 API ${options.method || 'GET'} Request: ${url}`, {
+        environment: this.getEnvironment(),
+        baseURL: this.baseURL,
         hasAuth: !!config.headers.Authorization,
         data: options.data ? Object.keys(options.data) : 'none',
         endpoint: endpoint
       });
       
+      // Add timeout for production environments
+      const controller = new AbortController();
+      timeoutId = setTimeout(() => controller.abort(), 30000); // 30 second timeout
+      config.signal = controller.signal;
+      
       const response = await fetch(url, config);
+      
+      // Clear timeout if request succeeds
+      if (timeoutId) {
+        clearTimeout(timeoutId);
+      }
 
       // Handle 401 Unauthorized specifically
       if (response.status === 401) {
@@ -91,10 +191,17 @@ class ApiService {
       });
       return data;
     } catch (error) {
+      // FIX: Check if timeoutId exists before clearing it
+      if (timeoutId) {
+        clearTimeout(timeoutId);
+      }
+      
       console.error(`❌ API ${options.method || 'GET'} ${url} failed:`, error.message);
       
       // Mark backend as unavailable for future requests
-      if (error.message.includes('Route not found') || error.message.includes('Failed to fetch')) {
+      if (error.message.includes('Route not found') || 
+          error.message.includes('Failed to fetch') ||
+          error.name === 'AbortError') {
         this.isBackendAvailable = false;
       }
       
@@ -139,6 +246,236 @@ class ApiService {
       method: 'DELETE',
       ...options
     });
+  }
+
+  // ===== EMAIL VERIFICATION METHODS =====
+  async verifyEmail(token) {
+    try {
+      console.log('📧 API: Verifying email with token:', token ? `${token.substring(0, 20)}...` : 'no token');
+      
+      // Try GET first (with query parameter)
+      const encodedToken = encodeURIComponent(token);
+      const result = await this.get(`/api/auth/verify-email?token=${encodedToken}`);
+      
+      console.log('📧 API: Verify email response:', result);
+      
+      if (result.success && result.token) {
+        console.log('✅ API: Email verified successfully, updating token');
+        localStorage.setItem('token', result.token);
+        if (result.user) {
+          localStorage.setItem('user', JSON.stringify(result.user));
+        }
+      }
+      
+      return result;
+    } catch (error) {
+      console.error('❌ API: Email verification failed:', error.message);
+      
+      // Try alternative endpoint if first one fails
+      try {
+        console.log('📧 API: Trying alternative verification endpoint...');
+        const result = await this.post('/api/auth/verify-email', { token });
+        if (result.success && result.token) {
+          localStorage.setItem('token', result.token);
+          if (result.user) {
+            localStorage.setItem('user', JSON.stringify(result.user));
+          }
+        }
+        return result;
+      } catch (fallbackError) {
+        console.error('❌ API: Alternative verification also failed:', fallbackError.message);
+      }
+      
+      // If backend is down, use mock verification
+      if (error.message.includes('Route not found') || error.message.includes('Failed to fetch')) {
+        console.warn('⚠️ Using mock email verification');
+        const userStr = localStorage.getItem('user');
+        let mockUser;
+        
+        if (userStr) {
+          mockUser = JSON.parse(userStr);
+          mockUser.emailVerified = true;
+          mockUser.verifiedAt = new Date().toISOString();
+        } else {
+          mockUser = {
+            _id: 'demo-verified-user',
+            name: 'Verified User',
+            email: 'verified@example.com',
+            emailVerified: true,
+            verifiedAt: new Date().toISOString(),
+            approved: true,
+            role: 'user'
+          };
+        }
+        
+        const mockToken = 'demo-verified-token-' + Date.now();
+        
+        localStorage.setItem('token', mockToken);
+        localStorage.setItem('user', JSON.stringify(mockUser));
+        
+        return {
+          success: true,
+          message: 'Email verified successfully (demo mode)',
+          user: mockUser,
+          token: mockToken,
+          alreadyVerified: false
+        };
+      }
+      
+      throw error;
+    }
+  }
+
+  async resendVerificationEmail(email) {
+    try {
+      console.log('📧 API: Resending verification email to:', email);
+      
+      const result = await this.post('/api/auth/resend-verification', { email });
+      
+      return result;
+    } catch (error) {
+      console.error('❌ API: Resend verification email failed:', error.message);
+      
+      // If backend is down, use mock response
+      if (error.message.includes('Route not found') || error.message.includes('Failed to fetch')) {
+        console.warn('⚠️ Using mock resend verification email');
+        return {
+          success: true,
+          message: 'Verification email sent successfully (demo mode). Please check your inbox.',
+          expiresAt: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString()
+        };
+      }
+      
+      throw error;
+    }
+  }
+
+  async sendVerificationEmail() {
+    try {
+      console.log('📧 API: Sending verification email for current user');
+      
+      const result = await this.post('/api/auth/send-verification', {});
+      
+      return result;
+    } catch (error) {
+      console.error('❌ API: Send verification email failed:', error.message);
+      
+      // If backend is down, use mock response
+      if (error.message.includes('Route not found') || error.message.includes('Failed to fetch')) {
+        console.warn('⚠️ Using mock send verification email');
+        return {
+          success: true,
+          message: 'Verification email sent successfully (demo mode)',
+          expiresAt: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString()
+        };
+      }
+      
+      throw error;
+    }
+  }
+
+  async getVerificationStatus() {
+    try {
+      console.log('📧 API: Getting verification status');
+      
+      const result = await this.get('/api/auth/verification-status');
+      
+      return result;
+    } catch (error) {
+      console.error('❌ API: Get verification status failed:', error.message);
+      
+      // If backend is down, use mock status
+      if (error.message.includes('Route not found') || error.message.includes('Failed to fetch')) {
+        console.warn('⚠️ Using mock verification status');
+        const userStr = localStorage.getItem('user');
+        const user = userStr ? JSON.parse(userStr) : null;
+        
+        return {
+          success: true,
+          emailVerified: user?.emailVerified || false,
+          approved: user?.approved || false,
+          active: true,
+          hasActiveVerification: false,
+          verificationHistory: [],
+          nextVerificationAvailable: !user?.emailVerified
+        };
+      }
+      
+      throw error;
+    }
+  }
+
+  // ===== PASSWORD RESET METHODS =====
+  async forgotPassword(email) {
+    try {
+      console.log('🔑 API: Requesting password reset for:', email);
+      
+      const result = await this.post('/api/auth/forgot-password', { email });
+      
+      return result;
+    } catch (error) {
+      console.error('❌ API: Forgot password failed:', error.message);
+      
+      // If backend is down, use mock response
+      if (error.message.includes('Route not found') || error.message.includes('Failed to fetch')) {
+        console.warn('⚠️ Using mock forgot password');
+        return {
+          success: true,
+          message: 'If your email is registered, you will receive password reset instructions shortly. (demo mode)'
+        };
+      }
+      
+      throw error;
+    }
+  }
+
+  async resetPassword(token, password) {
+    try {
+      console.log('🔑 API: Resetting password');
+      
+      const result = await this.post('/api/auth/reset-password', { token, password });
+      
+      return result;
+    } catch (error) {
+      console.error('❌ API: Reset password failed:', error.message);
+      
+      // If backend is down, use mock response
+      if (error.message.includes('Route not found') || error.message.includes('Failed to fetch')) {
+        console.warn('⚠️ Using mock reset password');
+        return {
+          success: true,
+          message: 'Password reset successfully (demo mode)'
+        };
+      }
+      
+      throw error;
+    }
+  }
+
+  async changePassword(currentPassword, newPassword) {
+    try {
+      console.log('🔑 API: Changing password');
+      
+      const result = await this.post('/api/auth/change-password', { 
+        currentPassword, 
+        newPassword 
+      });
+      
+      return result;
+    } catch (error) {
+      console.error('❌ API: Change password failed:', error.message);
+      
+      // If backend is down, use mock response
+      if (error.message.includes('Route not found') || error.message.includes('Failed to fetch')) {
+        console.warn('⚠️ Using mock change password');
+        return {
+          success: true,
+          message: 'Password changed successfully (demo mode)'
+        };
+      }
+      
+      throw error;
+    }
   }
 
   // ===== USER MANAGEMENT METHODS =====
@@ -587,14 +924,14 @@ class ApiService {
         data: credentials,
       });
 
-      if (result.token) {
+      if (result.success && result.token) {
         console.log('✅ API: Login successful, storing token');
         localStorage.setItem('token', result.token);
         if (result.user) {
           localStorage.setItem('user', JSON.stringify(result.user));
         }
       } else {
-        throw new Error('No token received from server');
+        throw new Error(result.message || 'Login failed');
       }
 
       return result;
@@ -610,7 +947,9 @@ class ApiService {
             id: 'demo-user',
             name: 'Demo User',
             email: credentials.email,
-            role: 'user'
+            role: 'user',
+            emailVerified: true,
+            approved: true
           },
           success: true,
           message: 'Logged in successfully (demo mode)'
@@ -632,7 +971,7 @@ class ApiService {
         data: userData,
       });
 
-      if (result.token) {
+      if (result.success && result.token) {
         console.log('✅ API: Registration successful, storing token');
         localStorage.setItem('token', result.token);
         if (result.user) {
@@ -643,6 +982,29 @@ class ApiService {
       return result;
     } catch (error) {
       console.error('❌ API: Registration failed:', error.message);
+      
+      // If backend is down, create demo user
+      if (error.message.includes('Route not found') || error.message.includes('Failed to fetch')) {
+        console.warn('⚠️ Backend registration unavailable - using demo mode');
+        const demoUser = {
+          token: 'demo-token-' + Date.now(),
+          user: {
+            id: 'demo-user-' + Date.now(),
+            name: userData.name,
+            email: userData.email,
+            role: 'user',
+            emailVerified: userData.email === 'demo@grantfunds.com',
+            approved: userData.email === 'demo@grantfunds.com'
+          },
+          success: true,
+          message: 'Registration successful (demo mode)',
+          requiresVerification: userData.email !== 'demo@grantfunds.com'
+        };
+        localStorage.setItem('token', demoUser.token);
+        localStorage.setItem('user', JSON.stringify(demoUser.user));
+        return demoUser;
+      }
+      
       throw error;
     }
   }
@@ -764,6 +1126,7 @@ class ApiService {
         email: 'admin@grantmanager.com',
         role: 'admin',
         approved: true,
+        emailVerified: true,
         isActive: true,
         lastLogin: new Date().toISOString(),
         createdAt: new Date('2024-01-15').toISOString(),
@@ -775,31 +1138,10 @@ class ApiService {
         email: 'john@example.com',
         role: 'user',
         approved: true,
+        emailVerified: true,
         isActive: true,
         lastLogin: new Date('2024-01-18').toISOString(),
         createdAt: new Date('2024-01-16').toISOString(),
-        updatedAt: new Date().toISOString()
-      },
-      {
-        _id: 'user-3',
-        name: 'Jane Smith',
-        email: 'jane@example.com',
-        role: 'user',
-        approved: false,
-        isActive: false,
-        lastLogin: new Date('2024-01-10').toISOString(),
-        createdAt: new Date('2024-01-17').toISOString(),
-        updatedAt: new Date().toISOString()
-      },
-      {
-        _id: 'user-4',
-        name: 'Bob Wilson',
-        email: 'bob@example.com',
-        role: 'user',
-        approved: false,
-        isActive: true,
-        lastLogin: new Date().toISOString(),
-        createdAt: new Date('2024-01-18').toISOString(),
         updatedAt: new Date().toISOString()
       }
     ];
@@ -840,6 +1182,7 @@ class ApiService {
       email: userData.email || 'mock@example.com',
       role: userData.role || 'user',
       approved: userData.approved !== undefined ? userData.approved : false,
+      emailVerified: userData.emailVerified !== undefined ? userData.emailVerified : false,
       isActive: userData.isActive !== undefined ? userData.isActive : true,
       lastLogin: userData.lastLogin || timestamp,
       createdAt: timestamp,
@@ -851,26 +1194,18 @@ class ApiService {
     const timestamp = new Date().toISOString();
     const clientId = id || 'demo-' + Date.now();
     
-    // Enhanced mock client with complete ClientForm data structure
     return {
-      // Core identification
       _id: clientId,
       id: clientId,
-      
-      // Basic information (from clientData or defaults)
       organizationName: clientData.organizationName || 'New Client Organization',
       primaryContactName: clientData.primaryContactName || 'Contact Name',
       titleRole: clientData.titleRole || 'Executive Director',
       emailAddress: clientData.emailAddress || 'email@example.com',
       phoneNumbers: clientData.phoneNumbers || '(555) 123-4567',
-      
-      // Additional Contact Information
       additionalContactName: clientData.additionalContactName || '',
       additionalContactTitle: clientData.additionalContactTitle || '',
       additionalContactEmail: clientData.additionalContactEmail || '',
       additionalContactPhone: clientData.additionalContactPhone || '',
-      
-      // Organization details
       mailingAddress: clientData.mailingAddress || '123 Main St, City, State 12345',
       website: clientData.website || 'https://example.com',
       socialMediaLinks: Array.isArray(clientData.socialMediaLinks) ? clientData.socialMediaLinks : [],
@@ -880,8 +1215,6 @@ class ApiService {
       serviceArea: clientData.serviceArea || 'Local, Regional',
       annualBudget: clientData.annualBudget || '$100,000 - $500,000',
       staffCount: clientData.staffCount || '6-10',
-      
-      // Status and metadata
       status: clientData.status || 'active',
       notes: clientData.notes || 'New client added via demo mode.',
       lastContact: clientData.lastContact || timestamp,
@@ -889,22 +1222,16 @@ class ApiService {
       grantsAwarded: clientData.grantsAwarded || 0,
       totalFunding: clientData.totalFunding || 0,
       avatar: clientData.avatar || '',
-      
-      // ENHANCED CATEGORY FIELDS - Complete ClientForm support
       category: clientData.category || 'Education',
       priority: clientData.priority || 'medium',
       referralSource: clientData.referralSource || 'Website Inquiry',
       grantPotential: clientData.grantPotential || '$10,000 - $50,000',
       nextFollowUp: clientData.nextFollowUp || '',
-      
-      // Enhanced array fields with safety checks and realistic data
       tags: Array.isArray(clientData.tags) && clientData.tags.length > 0 ? clientData.tags : ['nonprofit', 'education', 'community'],
       focusAreas: Array.isArray(clientData.focusAreas) && clientData.focusAreas.length > 0 ? clientData.focusAreas : ['Youth Development', 'Educational Programs'],
       fundingAreas: Array.isArray(clientData.fundingAreas) && clientData.fundingAreas.length > 0 ? clientData.fundingAreas : ['Program Development', 'Capacity Building'],
       grantSources: Array.isArray(clientData.grantSources) && clientData.grantSources.length > 0 ? clientData.grantSources : ['1', '2'],
       communicationHistory: Array.isArray(clientData.communicationHistory) ? clientData.communicationHistory : [],
-      
-      // Timestamps
       createdAt: timestamp,
       updatedAt: timestamp
     };
@@ -925,7 +1252,6 @@ class ApiService {
         totalFunding: '$500,000',
         grantsSubmitted: 5,
         grantsAwarded: 3,
-        // Enhanced category fields
         focusAreas: ['STEM Education', 'Youth Development', 'Technology'],
         fundingAreas: ['Educational Grants', 'STEM Funding'],
         grantSources: ['1', '2'],
@@ -937,62 +1263,6 @@ class ApiService {
         staffCount: '11-25',
         serviceArea: 'National',
         missionStatement: 'Empowering youth through technology education and STEM programs.',
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString()
-      },
-      {
-        _id: 'demo-2',
-        organizationName: 'Green Earth Alliance',
-        primaryContactName: 'Michael Chen',
-        titleRole: 'Program Director',
-        emailAddress: 'michael@greenearth.org',
-        phoneNumbers: '(555) 234-5678',
-        status: 'active',
-        category: 'Environment',
-        organizationType: 'Nonprofit 501(c)(3)',
-        totalFunding: '$750,000',
-        grantsSubmitted: 8,
-        grantsAwarded: 5,
-        // Enhanced category fields
-        focusAreas: ['Conservation', 'Climate Change', 'Sustainability'],
-        fundingAreas: ['Environmental Grants', 'Conservation Funding'],
-        grantSources: ['3', '4'],
-        priority: 'medium',
-        referralSource: 'Partner Organization',
-        grantPotential: '$250,000 - $500,000',
-        tags: ['environment', 'conservation', 'sustainability'],
-        annualBudget: '$1,000,000 - $5,000,000',
-        staffCount: '26-50',
-        serviceArea: 'Regional',
-        missionStatement: 'Protecting our planet through conservation and sustainable practices.',
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString()
-      },
-      {
-        _id: 'demo-3',
-        organizationName: 'Community Health Initiative',
-        primaryContactName: 'Dr. Maria Rodriguez',
-        titleRole: 'Medical Director',
-        emailAddress: 'maria@communityhealth.org',
-        phoneNumbers: '(555) 345-6789',
-        status: 'active',
-        category: 'Healthcare',
-        organizationType: 'Nonprofit 501(c)(3)',
-        totalFunding: '$1,200,000',
-        grantsSubmitted: 12,
-        grantsAwarded: 8,
-        // Enhanced category fields
-        focusAreas: ['Public Health', 'Mental Health', 'Community Wellness'],
-        fundingAreas: ['Healthcare Grants', 'Public Health Funding'],
-        grantSources: ['5', '6'],
-        priority: 'critical',
-        referralSource: 'Referral from Existing Client',
-        grantPotential: 'Over $1,000,000',
-        tags: ['healthcare', 'public-health', 'community'],
-        annualBudget: '$5,000,000 - $10,000,000',
-        staffCount: '51-100',
-        serviceArea: 'Local',
-        missionStatement: 'Improving community health through accessible healthcare services.',
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString()
       }
@@ -1022,33 +1292,6 @@ class ApiService {
           description: 'Federal funding for educational programs and initiatives',
           status: 'active',
           createdAt: new Date().toISOString()
-        },
-        {
-          _id: '2',
-          name: 'STEM Innovation Fund',
-          type: 'Private',
-          category: 'Education',
-          description: 'Private foundation supporting STEM education initiatives',
-          status: 'active',
-          createdAt: new Date().toISOString()
-        },
-        {
-          _id: '3',
-          name: 'Environmental Protection Fund',
-          type: 'Federal',
-          category: 'Environment',
-          description: 'Federal grants for environmental conservation and protection',
-          status: 'active',
-          createdAt: new Date().toISOString()
-        },
-        {
-          _id: '4',
-          name: 'Green Future Foundation',
-          type: 'Foundation',
-          category: 'Environment',
-          description: 'Foundation supporting sustainable environmental projects',
-          status: 'active',
-          createdAt: new Date().toISOString()
         }
       ],
       pagination: {
@@ -1063,13 +1306,19 @@ class ApiService {
   // ===== UTILITY METHODS =====
   async getCurrentUser() {
     try {
-      // Try to get user info from backend
       return await this.request('/api/auth/me');
     } catch (error) {
-      // Fallback to localStorage user data
       const userStr = localStorage.getItem('user');
       if (userStr) {
-        return { success: true, user: JSON.parse(userStr) };
+        const user = JSON.parse(userStr);
+        return { 
+          success: true, 
+          user: {
+            ...user,
+            emailVerified: user.emailVerified !== undefined ? user.emailVerified : true,
+            approved: user.approved !== undefined ? user.approved : true
+          }
+        };
       }
       throw new Error('No user session available');
     }
@@ -1086,7 +1335,6 @@ class ApiService {
     localStorage.removeItem('user');
   }
 
-  // Health check with better error handling
   async checkHealth() {
     try {
       return await this.request('/api/health');
@@ -1103,7 +1351,6 @@ class ApiService {
     }
   }
 
-  // Enhanced connection testing
   async testConnection() {
     try {
       console.log('🔍 Testing API connection...');
@@ -1133,7 +1380,6 @@ class ApiService {
     }
   }
 
-  // Simple auth status check
   async checkAuthStatus() {
     const token = localStorage.getItem('token');
     const user = localStorage.getItem('user');
@@ -1142,9 +1388,8 @@ class ApiService {
       throw new Error('No authentication token found');
     }
     
-    // Try to make a simple API call to verify auth
     try {
-      const result = await this.getClients('', 1, 1); // Get just 1 client to test auth
+      const result = await this.getClients('', 1, 1);
       return {
         success: true,
         message: 'Authentication verified',
@@ -1156,7 +1401,6 @@ class ApiService {
     }
   }
 
-  // Enhanced debug method for operations
   async debugOperation(operation, id = null, data = null) {
     console.log(`🐛 DEBUG: ${operation} operation`, {
       id,
@@ -1210,7 +1454,6 @@ class ApiService {
     }
   }
 
-  // Batch operations for efficiency
   async batchGetClients(clientIds) {
     try {
       return await this.request('/api/clients/batch', {
@@ -1227,7 +1470,6 @@ class ApiService {
     }
   }
 
-  // Search across multiple entities
   async globalSearch(query, types = ['clients', 'users', 'grant-sources']) {
     try {
       return await this.request('/api/search', {
@@ -1257,8 +1499,142 @@ class ApiService {
       return { success: true, results };
     }
   }
+
+  // ===== PROFILE METHODS =====
+  async updateProfile(userData) {
+    try {
+      console.log('👤 API: Updating profile');
+      
+      const result = await this.put('/api/auth/profile', userData);
+      
+      if (result.success && result.user) {
+        localStorage.setItem('user', JSON.stringify(result.user));
+      }
+      
+      return result;
+    } catch (error) {
+      console.error('❌ API: Update profile failed:', error.message);
+      
+      if (error.message.includes('Route not found') || error.message.includes('Failed to fetch')) {
+        console.warn('⚠️ Using mock update profile');
+        const currentUser = JSON.parse(localStorage.getItem('user') || '{}');
+        const updatedUser = {
+          ...currentUser,
+          ...userData,
+          updatedAt: new Date().toISOString()
+        };
+        
+        localStorage.setItem('user', JSON.stringify(updatedUser));
+        
+        return {
+          success: true,
+          message: 'Profile updated successfully (demo mode)',
+          user: updatedUser
+        };
+      }
+      
+      throw error;
+    }
+  }
+
+  checkEmailVerified() {
+    const userStr = localStorage.getItem('user');
+    if (!userStr) return false;
+    
+    try {
+      const user = JSON.parse(userStr);
+      return user.emailVerified === true;
+    } catch (error) {
+      console.error('Error parsing user data:', error);
+      return false;
+    }
+  }
+
+  checkAccountApproved() {
+    const userStr = localStorage.getItem('user');
+    if (!userStr) return false;
+    
+    try {
+      const user = JSON.parse(userStr);
+      return user.approved === true;
+    } catch (error) {
+      console.error('Error parsing user data:', error);
+      return false;
+    }
+  }
+
+  getAccountStatus() {
+    const userStr = localStorage.getItem('user');
+    if (!userStr) return 'not_logged_in';
+    
+    try {
+      const user = JSON.parse(userStr);
+      
+      if (!user.emailVerified) return 'pending_verification';
+      if (!user.approved) return 'pending_approval';
+      if (!user.isActive) return 'inactive';
+      return 'active';
+      
+    } catch (error) {
+      console.error('Error parsing user data:', error);
+      return 'error';
+    }
+  }
+
+  async checkRegistrationStatus(email) {
+    try {
+      const result = await this.post('/api/auth/check-registration', { email });
+      return result;
+    } catch (error) {
+      console.error('❌ API: Check registration status failed:', error.message);
+      
+      if (error.message.includes('Route not found') || error.message.includes('Failed to fetch')) {
+        console.warn('⚠️ Using mock registration status check');
+        return {
+          success: true,
+          exists: false,
+          emailVerified: false,
+          approved: false
+        };
+      }
+      
+      throw error;
+    }
+  }
+
+  // ===== NEW: URL TESTING METHOD =====
+  async testCurrentURL() {
+    console.log('🧪 Testing current API configuration...');
+    console.log('Detected baseURL:', this.baseURL);
+    console.log('Environment:', this.getEnvironment());
+    console.log('Window location:', typeof window !== 'undefined' ? window.location.href : 'N/A');
+    
+    try {
+      const response = await this.request('/api/health');
+      console.log('✅ Backend is reachable at:', this.baseURL);
+      return {
+        success: true,
+        baseURL: this.baseURL,
+        environment: this.getEnvironment(),
+        backendReachable: true,
+        response
+      };
+    } catch (error) {
+      console.error('❌ Backend is NOT reachable at:', this.baseURL);
+      return {
+        success: false,
+        baseURL: this.baseURL,
+        environment: this.getEnvironment(),
+        backendReachable: false,
+        error: error.message
+      };
+    }
+  }
 }
 
 // Create and export singleton instance
 const apiService = new ApiService();
+
+// Export for testing/debugging
+export { ApiService };
 export default apiService;

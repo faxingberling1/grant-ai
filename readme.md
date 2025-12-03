@@ -1,83 +1,3 @@
-backend
-├── .env
-├── .env.production
-├── config
-│   ├── constants.js
-│   ├── database.js
-│   ├── environment.js
-│   ├── index.js
-│   └── mongoAtlas.js
-├── controllers
-│   ├── adminController.js
-│   ├── aiController.js
-│   ├── authController.js
-│   ├── clientController.js
-│   ├── debugController.js
-│   ├── grantController.js
-│   ├── notificationController.js
-│   ├── templateController.js
-│   └── userController.js
-├── middleware
-│   ├── admin.js
-│   ├── auth.js
-│   ├── errorHandler.js
-│   ├── global.js
-│   └── validation.js
-├── models
-│   ├── Client.js
-│   ├── Document.js
-│   ├── EmailVerification.js
-│   ├── Grant.js
-│   ├── GrantSource.js
-│   ├── Meeting.js
-│   ├── Notification.js
-│   ├── PasswordReset.js
-│   ├── Template.js
-│   └── User.js
-├── node_modules
-├── package-lock.json
-├── package.json
-├── routes
-│   ├── admin.js
-│   ├── ai.js
-│   ├── aiRoutes.js
-│   ├── auth.js
-│   ├── clients.js
-│   ├── debug.js
-│   ├── documents.js
-│   ├── grantSources.js
-│   ├── grants.js
-│   ├── health.js
-│   ├── meetings.js
-│   ├── notifications.js
-│   ├── templates.js
-│   └── users.js
-├── seeders
-│   ├── demoData.js
-│   └── templateSeeder.js
-├── server.js
-├── services
-│   ├── AIService.js
-│   ├── AuthService.js
-│   ├── documentService.js
-│   ├── emailService.js
-│   ├── notificationService.js
-│   ├── socketService.js
-│   └── storageService.js
-├── socket
-│   └── notificationSocket.js
-├── test-gmail.js
-├── uploads
-│   ├── documents
-│   │   ├── 6924ecad92ea7088baf36098
-│   │   │   └── doc_1764425482460_865ff7ee2c078b4a______Page_1.docx
-│   │   └── 69253140bf28db131c93f2ac
-│   └── temp
-└── utils
-    ├── ai.js
-    ├── helpers.js
-    └── validators.js
-
 frontend
 ├── .env.example
 ├── .env.local
@@ -93,6 +13,9 @@ frontend
 │   ├── App.css
 │   ├── App.js
 │   ├── components
+│   │   ├── Common
+│   │   │   ├── LoadingScreen.css
+│   │   │   └── LoadingScreen.js
 │   │   ├── Dashboard
 │   │   │   ├── AIWriting
 │   │   │   │   ├── AIWriting.css
@@ -254,11 +177,16 @@ frontend
 │   │   │   └── UserManagement
 │   │   │       ├── UserManagement.css
 │   │   │       └── UserManagement.js
-│   │   └── Login
-│   │       ├── Login.css
-│   │       ├── Login.js
-│   │       ├── Register.css
-│   │       └── Register.js
+│   │   ├── Login
+│   │   │   ├── Login.css
+│   │   │   ├── Login.js
+│   │   │   ├── PendingApproval.css
+│   │   │   ├── PendingApproval.js
+│   │   │   ├── Register.css
+│   │   │   ├── Register.js
+│   │   │   ├── VerifyEmail.css
+│   │   │   └── VerifyEmail.js
+│   │   └── ProtectedRoute.js
 │   ├── config
 │   │   └── api.config.js
 │   ├── context
@@ -280,3 +208,90 @@ frontend
 │       ├── notificationService.js
 │       └── templateService.js
 └── vercel.json
+
+backend
+├── .env
+├── .env.production
+├── config
+│   ├── constants.js
+│   ├── database.js
+│   ├── environment.js
+│   ├── index.js
+│   └── mongoAtlas.js
+├── controllers
+│   ├── adminController.js
+│   ├── aiController.js
+│   ├── authController.js
+│   ├── clientController.js
+│   ├── debugController.js
+│   ├── documentController.js
+│   ├── grantController.js
+│   ├── grantSourceController.js
+│   ├── meetingController.js
+│   ├── notificationController.js
+│   ├── templateController.js
+│   └── userController.js
+├── debug-gridfs.js
+├── middleware
+│   ├── admin.js
+│   ├── auth.js
+│   ├── errorHandler.js
+│   ├── global.js
+│   └── validation.js
+├── models
+│   ├── Client.js
+│   ├── Document.js
+│   ├── EmailVerification.js
+│   ├── Grant.js
+│   ├── GrantSource.js
+│   ├── Meeting.js
+│   ├── Notification.js
+│   ├── PasswordReset.js
+│   ├── Template.js
+│   └── User.js
+├── node_modules
+├── package-lock.json
+├── package.json
+├── routes
+│   ├── admin.js
+│   ├── ai.js
+│   ├── aiRoutes.js
+│   ├── auth.js
+│   ├── clients.js
+│   ├── debug.js
+│   ├── documents.js
+│   ├── grantSources.js
+│   ├── grants.js
+│   ├── health.js
+│   ├── meetings.js
+│   ├── notifications.js
+│   ├── templates.js
+│   └── users.js
+├── seeders
+│   ├── demoData.js
+│   └── templateSeeder.js
+├── server.js
+├── services
+│   ├── AIService.js
+│   ├── AuthService.js
+│   ├── documentService.js
+│   ├── emailService.js
+│   ├── gridfsServerless.js
+│   ├── gridfsService.js
+│   ├── notificationService.js
+│   ├── socketService.js
+│   └── storageService.js
+├── socket
+│   └── notificationSocket.js
+├── test-gmail.js
+├── uploads
+│   ├── backups
+│   ├── documents
+│   │   ├── 6924ecad92ea7088baf36098
+│   │   │   └── doc_1764425482460_865ff7ee2c078b4a______Page_1.docx
+│   │   └── 69253140bf28db131c93f2ac
+│   └── temp
+└── utils
+    ├── ai.js
+    ├── helpers.js
+    └── validators.js

@@ -1,7 +1,6 @@
 // backend/models/User.js
 const mongoose = require('mongoose');
 const bcrypt = require('bcryptjs');
-const crypto = require('crypto');
 
 const userSchema = new mongoose.Schema({
   name: {
@@ -41,14 +40,6 @@ const userSchema = new mongoose.Schema({
   emailVerified: {
     type: Boolean,
     default: false
-  },
-  emailVerificationToken: {
-    type: String,
-    select: false // Don't return in queries by default
-  },
-  emailVerificationExpires: {
-    type: Date,
-    select: false // Don't return in queries by default
   },
   
   role: {
@@ -91,7 +82,7 @@ const userSchema = new mongoose.Schema({
     type: Date
   },
 
-  // Document Storage Fields - NEW
+  // Document Storage Fields
   documents: [{
     _id: {
       type: mongoose.Schema.Types.ObjectId,
@@ -151,10 +142,27 @@ const userSchema = new mongoose.Schema({
       type: mongoose.Schema.Types.ObjectId,
       ref: 'User.documents',
       default: null
-    }
+    },
+    
+    // Sharing permissions for documents
+    sharedWith: [{
+      userId: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'User'
+      },
+      permission: {
+        type: String,
+        enum: ['view', 'download', 'edit', 'manage'],
+        default: 'view'
+      },
+      sharedAt: {
+        type: Date,
+        default: Date.now
+      }
+    }]
   }],
 
-  // Document Storage Limits and Usage - NEW
+  // Document Storage Limits and Usage
   storageUsage: {
     type: Number,
     default: 0 // in bytes
@@ -172,7 +180,7 @@ const userSchema = new mongoose.Schema({
     default: 1000 // Maximum number of documents allowed
   },
 
-  // Document Preferences - NEW
+  // Document Preferences
   documentPreferences: {
     autoCategorize: {
       type: Boolean,
@@ -194,8 +202,30 @@ const userSchema = new mongoose.Schema({
     allowedFileTypes: [{
       type: String,
       enum: ['pdf', 'doc', 'docx', 'xls', 'xlsx', 'ppt', 'pptx', 'txt', 'jpg', 'jpeg', 'png', 'gif', 'zip', 'rar']
-    }]
-  }
+    }],
+    defaultSharingPermission: {
+      type: String,
+      enum: ['view', 'download', 'edit'],
+      default: 'view'
+    }
+  },
+
+  // Email verification tracking (for auditing)
+  verificationHistory: [{
+    verifiedAt: {
+      type: Date,
+      default: Date.now
+    },
+    method: {
+      type: String,
+      enum: ['email', 'admin', 'auto'],
+      default: 'email'
+    },
+    verifiedBy: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'User'
+    }
+  }]
 
 }, {
   timestamps: true // Adds createdAt and updatedAt
@@ -203,17 +233,14 @@ const userSchema = new mongoose.Schema({
 
 // Indexes for better query performance
 userSchema.index({ email: 1 });
-userSchema.index({ emailVerificationToken: 1 });
-userSchema.index({ emailVerificationExpires: 1 });
 userSchema.index({ role: 1 });
 userSchema.index({ approved: 1 });
 userSchema.index({ emailVerified: 1 });
-
-// NEW: Indexes for document queries
 userSchema.index({ 'documents.category': 1 });
 userSchema.index({ 'documents.uploadDate': 1 });
 userSchema.index({ 'documents.tags': 1 });
 userSchema.index({ 'documents.isPublic': 1 });
+userSchema.index({ 'documents.sharedWith.userId': 1 });
 
 // Hash password before saving (only if modified)
 userSchema.pre('save', async function(next) {
@@ -235,7 +262,7 @@ userSchema.pre('save', function(next) {
   next();
 });
 
-// NEW: Update document count and storage usage before saving
+// Update document count and storage usage before saving
 userSchema.pre('save', function(next) {
   if (this.isModified('documents')) {
     this.documentCount = this.documents.length;
@@ -249,36 +276,33 @@ userSchema.methods.correctPassword = async function(candidatePassword) {
   return await bcrypt.compare(candidatePassword, this.password);
 };
 
-// Instance method to generate email verification token
-userSchema.methods.generateVerificationToken = function() {
-  // Generate random token
-  this.emailVerificationToken = crypto.randomBytes(32).toString('hex');
-  // Set expiration to 24 hours from now
-  this.emailVerificationExpires = new Date(Date.now() + 24 * 60 * 60 * 1000);
-  return this.emailVerificationToken;
-};
-
-// Instance method to verify email
-userSchema.methods.verifyEmail = function() {
-  this.emailVerified = true;
-  this.emailVerificationToken = undefined;
-  this.emailVerificationExpires = undefined;
-  this.approved = true; // Auto-approve after email verification
-  return this;
-};
-
-// Instance method to check if verification token is valid
-userSchema.methods.isVerificationTokenValid = function() {
-  return this.emailVerificationExpires && this.emailVerificationExpires > new Date();
-};
-
 // Instance method to update last login
 userSchema.methods.updateLastLogin = function() {
   this.lastLogin = new Date();
   return this.save();
 };
 
-// NEW: Instance methods for document management
+// Instance method to verify email (used after email verification)
+userSchema.methods.markEmailAsVerified = function(method = 'email', verifiedBy = null) {
+  this.emailVerified = true;
+  this.verificationHistory.push({
+    verifiedAt: new Date(),
+    method: method,
+    verifiedBy: verifiedBy
+  });
+  return this.save();
+};
+
+// Instance method to check if user can be auto-approved (after email verification)
+userSchema.methods.autoApproveIfVerified = function() {
+  if (this.emailVerified && !this.approved) {
+    this.approved = true;
+    return this.save();
+  }
+  return Promise.resolve(this);
+};
+
+// Instance methods for document management
 userSchema.methods.addDocument = function(documentData) {
   this.documents.push(documentData);
   return this.save();
@@ -287,7 +311,13 @@ userSchema.methods.addDocument = function(documentData) {
 userSchema.methods.removeDocument = function(documentId) {
   const documentIndex = this.documents.findIndex(doc => doc._id.toString() === documentId);
   if (documentIndex > -1) {
+    const removedDoc = this.documents[documentIndex];
     this.documents.splice(documentIndex, 1);
+    
+    // Update storage usage
+    this.storageUsage -= removedDoc.fileSize || 0;
+    this.documentCount = this.documents.length;
+    
     return this.save();
   }
   throw new Error('Document not found');
@@ -296,6 +326,11 @@ userSchema.methods.removeDocument = function(documentId) {
 userSchema.methods.updateDocument = function(documentId, updates) {
   const document = this.documents.id(documentId);
   if (document) {
+    // Update storage usage if file size changes
+    if (updates.fileSize && updates.fileSize !== document.fileSize) {
+      this.storageUsage = this.storageUsage - document.fileSize + updates.fileSize;
+    }
+    
     Object.assign(document, updates);
     document.lastAccessed = new Date();
     return this.save();
@@ -321,6 +356,51 @@ userSchema.methods.getDocumentsByTag = function(tag) {
   return this.documents.filter(doc => doc.tags.includes(tag));
 };
 
+userSchema.methods.shareDocument = function(documentId, userId, permission = 'view') {
+  const document = this.documents.id(documentId);
+  if (!document) {
+    throw new Error('Document not found');
+  }
+  
+  // Check if already shared with this user
+  const existingShare = document.sharedWith.find(share => 
+    share.userId.toString() === userId.toString()
+  );
+  
+  if (existingShare) {
+    // Update existing permission
+    existingShare.permission = permission;
+    existingShare.sharedAt = new Date();
+  } else {
+    // Add new share
+    document.sharedWith.push({
+      userId: userId,
+      permission: permission,
+      sharedAt: new Date()
+    });
+  }
+  
+  return this.save();
+};
+
+userSchema.methods.revokeDocumentShare = function(documentId, userId) {
+  const document = this.documents.id(documentId);
+  if (!document) {
+    throw new Error('Document not found');
+  }
+  
+  const shareIndex = document.sharedWith.findIndex(share => 
+    share.userId.toString() === userId.toString()
+  );
+  
+  if (shareIndex > -1) {
+    document.sharedWith.splice(shareIndex, 1);
+    return this.save();
+  }
+  
+  throw new Error('Document not shared with this user');
+};
+
 userSchema.methods.hasStorageSpace = function(fileSize) {
   return (this.storageUsage + fileSize) <= this.storageLimit;
 };
@@ -333,12 +413,8 @@ userSchema.methods.getStorageUsagePercentage = function() {
   return (this.storageUsage / this.storageLimit) * 100;
 };
 
-// Static method to find user by verification token
-userSchema.statics.findByVerificationToken = function(token) {
-  return this.findOne({
-    emailVerificationToken: token,
-    emailVerificationExpires: { $gt: new Date() }
-  }).select('+emailVerificationToken +emailVerificationExpires');
+userSchema.methods.isStorageLimitWarning = function(warningThreshold = 80) {
+  return this.getStorageUsagePercentage() >= warningThreshold;
 };
 
 // Static method to find user by email (including password for auth)
@@ -356,7 +432,7 @@ userSchema.statics.emailExists = async function(email) {
   return !!user;
 };
 
-// NEW: Static method to find users with large storage usage
+// Static method to find users with large storage usage
 userSchema.statics.findUsersWithHighStorageUsage = function(thresholdPercentage = 80) {
   return this.find({
     $expr: {
@@ -365,6 +441,36 @@ userSchema.statics.findUsersWithHighStorageUsage = function(thresholdPercentage 
         thresholdPercentage
       ]
     }
+  });
+};
+
+// Static method to find unverified users
+userSchema.statics.findUnverifiedUsers = function(days = 7) {
+  const cutoffDate = new Date(Date.now() - days * 24 * 60 * 60 * 1000);
+  
+  return this.find({
+    emailVerified: false,
+    createdAt: { $gte: cutoffDate }
+  }).sort({ createdAt: -1 });
+};
+
+// Static method to find pending approval users
+userSchema.statics.findPendingApprovalUsers = function() {
+  return this.find({
+    emailVerified: true,
+    approved: false,
+    active: true
+  }).sort({ createdAt: -1 });
+};
+
+// Static method to find users who need verification reminders
+userSchema.statics.findUsersNeedingVerificationReminder = function(hours = 24) {
+  const reminderDate = new Date(Date.now() - hours * 60 * 60 * 1000);
+  
+  return this.find({
+    emailVerified: false,
+    createdAt: { $lte: reminderDate },
+    active: true
   });
 };
 
@@ -381,7 +487,17 @@ userSchema.virtual('isDemo').get(function() {
   return this.email === 'demo@grantfunds.com';
 });
 
-// NEW: Virtuals for document management
+// Virtual for isAdmin
+userSchema.virtual('isAdmin').get(function() {
+  return this.role === 'admin';
+});
+
+// Virtual for isGrantManager
+userSchema.virtual('isGrantManager').get(function() {
+  return this.role === 'Grant Manager';
+});
+
+// Virtuals for document management
 userSchema.virtual('availableStorage').get(function() {
   return this.storageLimit - this.storageUsage;
 });
@@ -403,12 +519,39 @@ userSchema.virtual('storageUsageFormatted').get(function() {
   };
 });
 
+// Virtual for verification status with timestamp
+userSchema.virtual('verificationStatus').get(function() {
+  const latestVerification = this.verificationHistory.length > 0 
+    ? this.verificationHistory[this.verificationHistory.length - 1]
+    : null;
+  
+  return {
+    verified: this.emailVerified,
+    verifiedAt: latestVerification ? latestVerification.verifiedAt : null,
+    method: latestVerification ? latestVerification.method : null,
+    verifiedBy: latestVerification ? latestVerification.verifiedBy : null
+  };
+});
+
 // Transform output to remove sensitive fields
 userSchema.methods.toJSON = function() {
   const user = this.toObject();
   delete user.password;
-  delete user.emailVerificationToken;
-  delete user.emailVerificationExpires;
+  return user;
+};
+
+// Transform for public profile (used when sharing user info)
+userSchema.methods.toPublicJSON = function() {
+  const user = this.toObject();
+  delete user.password;
+  delete user.email;
+  delete user.phone;
+  delete user.documents;
+  delete user.storageUsage;
+  delete user.storageLimit;
+  delete user.documentPreferences;
+  delete user.verificationHistory;
+  delete user.notifications;
   return user;
 };
 

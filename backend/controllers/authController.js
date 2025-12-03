@@ -1,3 +1,4 @@
+// backend/controllers/authController.js
 const AuthService = require('../services/AuthService');
 
 const authService = new AuthService();
@@ -26,10 +27,26 @@ const login = async (req, res) => {
     });
   } catch (error) {
     console.error('❌ Login error:', error);
-    res.status(401).json({ 
+    
+    // Determine appropriate status code
+    let statusCode = 401;
+    let errorCode = 'AUTH_ERROR';
+    
+    if (error.message.includes('verify your email')) {
+      statusCode = 403;
+      errorCode = 'EMAIL_NOT_VERIFIED';
+    } else if (error.message.includes('pending approval')) {
+      statusCode = 403;
+      errorCode = 'ACCOUNT_PENDING_APPROVAL';
+    } else if (error.message.includes('deactivated')) {
+      statusCode = 403;
+      errorCode = 'ACCOUNT_DEACTIVATED';
+    }
+    
+    res.status(statusCode).json({ 
       success: false,
       message: error.message,
-      errorCode: error.message.includes('approved') ? 'ACCOUNT_PENDING_APPROVAL' : 'AUTH_ERROR'
+      errorCode
     });
   }
 };
@@ -53,20 +70,56 @@ const register = async (req, res) => {
 };
 
 const getMe = async (req, res) => {
-  res.json({ 
-    success: true, 
-    user: {
-      id: req.user._id,
-      name: req.user.name,
-      email: req.user.email,
-      role: req.user.role,
-      avatar: req.user.avatar
+  try {
+    const User = require('../models/User');
+    const user = await User.findById(req.user._id);
+    
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        message: 'User not found'
+      });
     }
-  });
+    
+    res.json({ 
+      success: true, 
+      user: {
+        id: user._id,
+        name: user.name,
+        email: user.email,
+        role: user.role,
+        avatar: user.avatar,
+        emailVerified: user.emailVerified,
+        approved: user.approved,
+        company: user.company,
+        phone: user.phone,
+        timezone: user.timezone,
+        notifications: user.notifications,
+        lastLogin: user.lastLogin,
+        // GridFS storage info
+        storageStats: {
+          used: user.storageUsage,
+          limit: user.storageLimit,
+          available: user.storageLimit - user.storageUsage,
+          percentage: ((user.storageUsage / user.storageLimit) * 100).toFixed(1),
+          formatted: user.storageUsageFormatted
+        },
+        documentCount: user.documentCount,
+        documentPreferences: user.documentPreferences
+      }
+    });
+  } catch (error) {
+    console.error('❌ Get me error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Error retrieving user information'
+    });
+  }
 };
 
 const sendVerificationEmail = async (req, res) => {
   try {
+    // This is for logged-in users to request new verification
     const result = await authService.sendVerificationEmail(req.user);
     
     res.json({
@@ -79,6 +132,33 @@ const sendVerificationEmail = async (req, res) => {
     res.status(500).json({
       success: false,
       message: 'Failed to send verification email',
+      error: error.message
+    });
+  }
+};
+
+const resendVerificationEmail = async (req, res) => {
+  try {
+    const { email } = req.body;
+    
+    if (!email) {
+      return res.status(400).json({
+        success: false,
+        message: 'Email is required'
+      });
+    }
+    
+    const result = await authService.resendVerificationEmail(email);
+    
+    res.json({
+      success: true,
+      ...result
+    });
+  } catch (error) {
+    console.error('❌ Resend verification email error:', error);
+    res.status(400).json({
+      success: false,
+      message: error.message,
       error: error.message
     });
   }
@@ -99,7 +179,6 @@ const verifyEmail = async (req, res) => {
     
     res.json({
       success: true,
-      message: 'Email verified successfully',
       ...result
     });
   } catch (error) {
@@ -171,6 +250,7 @@ module.exports = {
   register,
   getMe,
   sendVerificationEmail,
+  resendVerificationEmail,
   verifyEmail,
   forgotPassword,
   resetPassword
