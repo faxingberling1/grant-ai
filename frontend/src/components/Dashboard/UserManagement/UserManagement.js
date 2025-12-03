@@ -46,7 +46,8 @@ const UserManagement = () => {
       
       // Use the admin approve endpoint
       const response = await apiService.request(`/api/admin/users/${userId}/approve`, {
-        method: 'POST'
+        method: 'POST',
+        data: {}
       });
 
       if (response.success) {

@@ -1,41 +1,33 @@
-// backend/services/documentService.js
 const Document = require('../models/Document');
 const User = require('../models/User');
 const Client = require('../models/Client');
-const fs = require('fs');
-const path = require('path');
+const gridfsService = require('./gridfsService');
 const crypto = require('crypto');
 
 class DocumentService {
   constructor() {
-    this.uploadDir = 'uploads/documents';
-    this.maxFileSize = 25 * 1024 * 1024; // 25MB
+    this.maxFileSize = 5 * 1024 * 1024; // 5MB (reduced for free tier)
     this.allowedMimeTypes = [
       'application/pdf',
       'application/msword',
       'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
       'application/vnd.ms-excel',
       'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-      'application/vnd.ms-powerpoint',
-      'application/vnd.openxmlformats-officedocument.presentationml.presentation',
       'text/plain',
       'text/csv',
+      'application/json',
       'image/jpeg',
       'image/png',
-      'image/gif',
-      'image/webp',
-      'application/zip',
-      'application/x-rar-compressed',
-      'application/x-7z-compressed'
+      'image/gif'
     ];
   }
 
   /**
-   * Upload and process a document
+   * Upload and process a document to GridFS
    */
   async uploadDocument(userId, file, documentData = {}) {
     try {
-      console.log(`📄 Starting document upload for user: ${userId}`);
+      console.log(`📄 Starting document upload to GridFS for user: ${userId}`);
       
       // Validate user and storage
       const user = await User.findById(userId);
@@ -47,35 +39,56 @@ class DocumentService {
       await this.validateFile(file);
 
       // Check storage space
-      if (!user.hasStorageSpace(file.size)) {
-        throw new Error(`Insufficient storage space. Available: ${this.formatBytes(user.availableStorage)}`);
+      if (!user.hasStorageSpace || !user.hasStorageSpace(file.size)) {
+        const available = user.availableStorage || (user.storageLimit - (user.storageUsage || 0));
+        throw new Error(`Insufficient storage space. Available: ${this.formatBytes(available)}`);
       }
 
       // Check document count limit
-      if (!user.canUploadMoreDocuments()) {
+      if (user.maxDocumentCount && user.documentCount >= user.maxDocumentCount) {
         throw new Error(`Document limit reached. Maximum ${user.maxDocumentCount} documents allowed.`);
       }
 
-      // Generate secure filename and path
-      const fileInfo = await this.generateFileInfo(file, userId);
-      
-      // Move file to permanent location
-      await this.moveFile(file.path, fileInfo.storagePath);
-
-      // Calculate file checksum
-      const checksum = await this.calculateFileChecksum(fileInfo.storagePath);
-
-      // Create document record
-      const document = new Document({
-        filename: fileInfo.filename,
+      // Prepare metadata for GridFS
+      const metadata = {
+        userId: userId.toString(),
+        userEmail: user.email,
         originalName: file.originalname,
-        fileExtension: path.extname(file.originalname).toLowerCase().substring(1),
+        contentType: file.mimetype,
+        category: documentData.category || 'other',
+        tags: this.parseTags(documentData.tags),
+        description: documentData.description || '',
+        clientId: documentData.clientId || null,
+        grantId: documentData.grantId || null,
+        sensitivityLevel: documentData.sensitivityLevel || 'internal',
+        uploadSource: 'web-upload'
+      };
+
+      console.log(`📁 Uploading file to GridFS: ${file.originalname} (${file.size} bytes)`);
+
+      // Upload to GridFS
+      const uploadResult = await gridfsService.uploadFile(
+        file.buffer,
+        file.originalname,
+        metadata
+      );
+
+      if (!uploadResult || !uploadResult.fileId) {
+        throw new Error('GridFS upload failed - no file ID returned');
+      }
+
+      // Create document record in MongoDB
+      const document = new Document({
+        userId: user._id,
+        filename: file.originalname,
+        originalName: file.originalname,
+        fileExtension: this.getFileExtension(file.originalname),
         fileSize: file.size,
         mimeType: file.mimetype,
-        storagePath: fileInfo.storagePath,
-        storageProvider: 'local',
-        checksum,
-        userId: user._id,
+        storageProvider: 'gridfs',
+        gridfsFileId: uploadResult.fileId,
+        gridfsFilename: uploadResult.gridfsFilename,
+        checksum: uploadResult.checksum,
         clientId: documentData.clientId || null,
         grantId: documentData.grantId || null,
         category: documentData.category || 'other',
@@ -84,7 +97,8 @@ class DocumentService {
         visibility: documentData.visibility || 'private',
         sensitivityLevel: documentData.sensitivityLevel || 'internal',
         documentType: this.getDocumentType(file.mimetype, file.originalname),
-        uploadSource: 'web-upload'
+        uploadSource: 'web-upload',
+        status: 'draft'
       });
 
       await document.save();
@@ -97,32 +111,26 @@ class DocumentService {
         await this.addDocumentToClient(documentData.clientId, document, user._id);
       }
 
-      console.log(`✅ Document uploaded successfully: ${document.originalName}`);
+      console.log(`✅ Document uploaded successfully to GridFS: ${document.originalName}`);
       
       return {
         success: true,
         document,
-        message: 'Document uploaded successfully'
+        message: 'Document uploaded successfully to secure storage'
       };
 
     } catch (error) {
       console.error('❌ Document upload error:', error);
-      
-      // Clean up uploaded file if error occurred
-      if (file && file.path && fs.existsSync(file.path)) {
-        fs.unlinkSync(file.path);
-      }
-      
       throw error;
     }
   }
 
   /**
-   * Upload multiple documents
+   * Upload multiple documents to GridFS
    */
   async uploadMultipleDocuments(userId, files, documentData = {}) {
     try {
-      console.log(`📄 Starting multiple document upload for user: ${userId}`);
+      console.log(`📄 Starting multiple document upload to GridFS for user: ${userId}`);
       
       const user = await User.findById(userId);
       if (!user) {
@@ -133,6 +141,20 @@ class DocumentService {
         successful: [],
         failed: []
       };
+
+      // Check total storage needed
+      const totalSize = files.reduce((sum, file) => sum + file.size, 0);
+      const available = user.availableStorage || (user.storageLimit - (user.storageUsage || 0));
+      
+      if (totalSize > available) {
+        throw new Error(`Insufficient storage space for all files. Available: ${this.formatBytes(available)}, Required: ${this.formatBytes(totalSize)}`);
+      }
+
+      // Check document count
+      const remainingSlots = (user.maxDocumentCount || 100) - (user.documentCount || 0);
+      if (files.length > remainingSlots) {
+        throw new Error(`Document limit would be exceeded. You can upload maximum ${remainingSlots} more documents.`);
+      }
 
       for (const file of files) {
         try {
@@ -169,7 +191,7 @@ class DocumentService {
       const {
         category,
         type,
-        status,
+        status = 'draft',
         clientId,
         grantId,
         search,
@@ -183,9 +205,12 @@ class DocumentService {
       let query = { userId };
 
       // Apply filters
+      if (status !== 'all') {
+        query.status = status;
+      }
+      
       if (category && category !== 'all') query.category = category;
       if (type && type !== 'all') query.documentType = type;
-      if (status && status !== 'all') query.status = status;
       if (clientId) query.clientId = clientId;
       if (grantId) query.grantId = grantId;
 
@@ -257,12 +282,25 @@ class DocumentService {
         throw new Error('Access denied to this document');
       }
 
+      // Get GridFS info if available
+      let gridfsInfo = null;
+      if (document.storageProvider === 'gridfs' && document.gridfsFileId) {
+        try {
+          gridfsInfo = await gridfsService.getFileInfo(document.gridfsFileId);
+        } catch (error) {
+          console.warn('Could not fetch GridFS info:', error.message);
+        }
+      }
+
       // Increment view count
       await document.incrementViewCount();
 
       return {
         success: true,
-        document,
+        document: {
+          ...document.toObject(),
+          gridfsInfo
+        },
         access
       };
 
@@ -293,19 +331,18 @@ class DocumentService {
       const allowedUpdates = {};
       const allowedFields = [
         'filename', 'description', 'category', 'tags', 'visibility', 
-        'sensitivityLevel', 'status', 'workflowStage'
+        'sensitivityLevel', 'status', 'workflowStage', 'clientId', 'grantId'
       ];
 
       allowedFields.forEach(field => {
         if (updates[field] !== undefined) {
-          allowedUpdates[field] = updates[field];
+          if (field === 'tags') {
+            allowedUpdates[field] = this.parseTags(updates[field]);
+          } else {
+            allowedUpdates[field] = updates[field];
+          }
         }
       });
-
-      // Special handling for tags
-      if (updates.tags !== undefined) {
-        allowedUpdates.tags = this.parseTags(updates.tags);
-      }
 
       allowedUpdates.lastModified = new Date();
       allowedUpdates.lastModifiedBy = userId;
@@ -330,7 +367,7 @@ class DocumentService {
   }
 
   /**
-   * Delete document (soft delete) - FIXED
+   * Delete document (soft delete) - Updated for GridFS
    */
   async deleteDocument(documentId, userId) {
     try {
@@ -340,27 +377,30 @@ class DocumentService {
         throw new Error('Document not found');
       }
 
-      // FIXED: Proper ownership check with ObjectId comparison
       console.log('🔐 DELETE - Ownership check:', {
-        documentUserId: document.userId,
-        documentUserIdString: document.userId.toString(),
-        requestUserId: userId,
-        requestUserIdString: userId.toString(),
+        documentUserId: document.userId.toString(),
+        requestUserId: userId.toString(),
         match: document.userId.toString() === userId.toString()
       });
 
-      // Check ownership - FIXED: Use proper string comparison
+      // Check ownership
       if (document.userId.toString() !== userId.toString()) {
-        console.log('❌ DELETE ACCESS DENIED - Ownership mismatch:', {
-          documentOwner: document.userId.toString(),
-          currentUser: userId.toString(),
-          documentId: document._id,
-          documentName: document.originalName
-        });
+        console.log('❌ DELETE ACCESS DENIED - Ownership mismatch');
         throw new Error('Access denied. Only owner can delete document.');
       }
 
       console.log('✅ DELETE ACCESS GRANTED - User owns the document');
+
+      // Delete from GridFS if using GridFS
+      if (document.storageProvider === 'gridfs' && document.gridfsFileId) {
+        try {
+          await gridfsService.deleteFile(document.gridfsFileId);
+          console.log('✅ GridFS file deleted:', document.gridfsFileId);
+        } catch (error) {
+          console.warn('⚠️ Could not delete GridFS file:', error.message);
+          // Continue with database deletion even if GridFS deletion fails
+        }
+      }
 
       // Soft delete by updating status
       const deletedDocument = await Document.findByIdAndUpdate(
@@ -380,7 +420,7 @@ class DocumentService {
         }
       });
 
-      console.log(`✅ Document soft deleted: ${document.originalName}`);
+      console.log(`✅ Document deleted: ${document.originalName}`);
       
       return {
         success: true,
@@ -395,7 +435,7 @@ class DocumentService {
   }
 
   /**
-   * Permanently delete document - FIXED
+   * Permanently delete document - Updated for GridFS
    */
   async permanentlyDeleteDocument(documentId, userId) {
     try {
@@ -405,14 +445,13 @@ class DocumentService {
         throw new Error('Document not found');
       }
 
-      // FIXED: Proper ownership check
       console.log('🔐 PERMANENT DELETE - Ownership check:', {
         documentUserId: document.userId.toString(),
         requestUserId: userId.toString(),
         match: document.userId.toString() === userId.toString()
       });
 
-      // Check ownership or admin role - FIXED: Use proper string comparison
+      // Check ownership or admin role
       const user = await User.findById(userId);
       if (document.userId.toString() !== userId.toString() && user.role !== 'admin') {
         console.log('❌ PERMANENT DELETE ACCESS DENIED');
@@ -421,9 +460,14 @@ class DocumentService {
 
       console.log('✅ PERMANENT DELETE ACCESS GRANTED');
 
-      // Delete physical file
-      if (fs.existsSync(document.storagePath)) {
-        fs.unlinkSync(document.storagePath);
+      // Delete from GridFS
+      if (document.storageProvider === 'gridfs' && document.gridfsFileId) {
+        try {
+          await gridfsService.deleteFile(document.gridfsFileId);
+          console.log('✅ GridFS file deleted:', document.gridfsFileId);
+        } catch (error) {
+          console.warn('⚠️ Could not delete GridFS file:', error.message);
+        }
       }
 
       // Delete document record
@@ -587,124 +631,140 @@ class DocumentService {
   }
 
   /**
- * Get document statistics for user
- */
-async getDocumentStatistics(userId) {
-  try {
-    const mongoose = require('mongoose');
-    const ObjectId = mongoose.Types.ObjectId;
-    
-    const stats = await Document.aggregate([
-      { 
-        $match: { 
-          userId: new ObjectId(userId), 
-          status: { $ne: 'deleted' } 
-        } 
-      },
-      {
-        $facet: {
-          totalStats: [
-            {
-              $group: {
-                _id: null,
-                totalDocuments: { $sum: 1 },
-                totalStorage: { $sum: '$fileSize' },
-                totalViews: { $sum: '$viewCount' },
-                totalDownloads: { $sum: '$downloadCount' }
-              }
-            }
-          ],
-          categoryStats: [
-            {
-              $group: {
-                _id: '$category',
-                count: { $sum: 1 },
-                totalSize: { $sum: '$fileSize' }
-              }
-            }
-          ],
-          typeStats: [
-            {
-              $group: {
-                _id: '$documentType',
-                count: { $sum: 1 }
-              }
-            }
-          ],
-          recentActivity: [
-            { $sort: { lastAccessed: -1 } },
-            { $limit: 10 },
-            {
-              $project: {
-                originalName: 1,
-                fileSize: 1,
-                category: 1,
-                lastAccessed: 1,
-                downloadCount: 1
-              }
-            }
-          ]
-        }
-      }
-    ]);
-
-    const user = await User.findById(userId);
-    if (!user) {
-      throw new Error('User not found');
-    }
-
-    const storageStats = {
-      used: user.storageUsage || 0,
-      limit: user.storageLimit || 1073741824, // 1GB default
-      available: user.availableStorage || 1073741824,
-      percentage: user.getStorageUsagePercentage ? user.getStorageUsagePercentage() : 0
-    };
-
-    // Handle empty results
-    const totalStats = stats[0]?.totalStats[0] || {
-      totalDocuments: 0,
-      totalStorage: 0,
-      totalViews: 0,
-      totalDownloads: 0
-    };
-
-    return {
-      success: true,
-      stats: {
-        overview: totalStats,
-        byCategory: stats[0]?.categoryStats || [],
-        byType: stats[0]?.typeStats || [],
-        recentActivity: stats[0]?.recentActivity || [],
-        storage: storageStats
-      }
-    };
-
-  } catch (error) {
-    console.error('❌ Error getting document statistics:', error);
-    
-    // Return default stats on error
-    return {
-      success: true,
-      stats: {
-        overview: {
-          totalDocuments: 0,
-          totalStorage: 0,
-          totalViews: 0,
-          totalDownloads: 0
+   * Get document statistics for user
+   */
+  async getDocumentStatistics(userId) {
+    try {
+      const mongoose = require('mongoose');
+      const ObjectId = mongoose.Types.ObjectId;
+      
+      const stats = await Document.aggregate([
+        { 
+          $match: { 
+            userId: new ObjectId(userId), 
+            status: { $ne: 'deleted' } 
+          } 
         },
-        byCategory: [],
-        byType: [],
-        recentActivity: [],
-        storage: {
-          used: 0,
-          limit: 1073741824,
-          available: 1073741824,
-          percentage: 0
+        {
+          $facet: {
+            totalStats: [
+              {
+                $group: {
+                  _id: null,
+                  totalDocuments: { $sum: 1 },
+                  totalStorage: { $sum: '$fileSize' },
+                  totalViews: { $sum: '$viewCount' },
+                  totalDownloads: { $sum: '$downloadCount' }
+                }
+              }
+            ],
+            categoryStats: [
+              {
+                $group: {
+                  _id: '$category',
+                  count: { $sum: 1 },
+                  totalSize: { $sum: '$fileSize' }
+                }
+              }
+            ],
+            typeStats: [
+              {
+                $group: {
+                  _id: '$documentType',
+                  count: { $sum: 1 }
+                }
+              }
+            ],
+            recentActivity: [
+              { $sort: { lastAccessed: -1 } },
+              { $limit: 10 },
+              {
+                $project: {
+                  originalName: 1,
+                  fileSize: 1,
+                  category: 1,
+                  lastAccessed: 1,
+                  downloadCount: 1
+                }
+              }
+            ]
+          }
         }
+      ]);
+
+      const user = await User.findById(userId);
+      if (!user) {
+        throw new Error('User not found');
       }
-    };
+
+      const storageStats = {
+        used: user.storageUsage || 0,
+        limit: user.storageLimit || 10 * 1024 * 1024, // 10MB default for free tier
+        available: Math.max(0, (user.storageLimit || 10 * 1024 * 1024) - (user.storageUsage || 0)),
+        percentage: user.storageLimit ? Math.min(100, ((user.storageUsage || 0) / user.storageLimit) * 100) : 0
+      };
+
+      // Get GridFS storage stats
+      let gridfsStats = null;
+      try {
+        gridfsStats = await gridfsService.getStorageStats();
+      } catch (error) {
+        console.warn('Could not fetch GridFS stats:', error.message);
+      }
+
+      // Handle empty results
+      const totalStats = stats[0]?.totalStats[0] || {
+        totalDocuments: 0,
+        totalStorage: 0,
+        totalViews: 0,
+        totalDownloads: 0
+      };
+
+      return {
+        success: true,
+        stats: {
+          overview: {
+            ...totalStats,
+            totalStorageFormatted: this.formatBytes(totalStats.totalStorage)
+          },
+          byCategory: (stats[0]?.categoryStats || []).map(cat => ({
+            ...cat,
+            totalSizeFormatted: this.formatBytes(cat.totalSize)
+          })),
+          byType: stats[0]?.typeStats || [],
+          recentActivity: stats[0]?.recentActivity || [],
+          storage: storageStats,
+          gridfsStats
+        }
+      };
+
+    } catch (error) {
+      console.error('❌ Error getting document statistics:', error);
+      
+      // Return default stats on error
+      return {
+        success: true,
+        stats: {
+          overview: {
+            totalDocuments: 0,
+            totalStorage: 0,
+            totalStorageFormatted: '0 Bytes',
+            totalViews: 0,
+            totalDownloads: 0
+          },
+          byCategory: [],
+          byType: [],
+          recentActivity: [],
+          storage: {
+            used: 0,
+            limit: 10 * 1024 * 1024,
+            available: 10 * 1024 * 1024,
+            percentage: 0
+          }
+        }
+      };
+    }
   }
-}
 
   /**
    * Search documents with advanced filters
@@ -728,7 +788,12 @@ async getDocumentStatistics(userId) {
 
       // Text search
       if (query) {
-        searchQuery.$text = { $search: query };
+        searchQuery.$or = [
+          { filename: { $regex: query, $options: 'i' } },
+          { originalName: { $regex: query, $options: 'i' } },
+          { description: { $regex: query, $options: 'i' } },
+          { tags: { $regex: query, $options: 'i' } }
+        ];
       }
 
       // Filters
@@ -776,7 +841,7 @@ async getDocumentStatistics(userId) {
   }
 
   /**
-   * Create new version of a document - FIXED
+   * Create new version of a document in GridFS
    */
   async createNewVersion(documentId, userId, newFile, versionData = {}) {
     try {
@@ -786,14 +851,13 @@ async getDocumentStatistics(userId) {
         throw new Error('Original document not found');
       }
 
-      // FIXED: Proper ownership check
       console.log('🔐 CREATE VERSION - Ownership check:', {
         documentUserId: originalDocument.userId.toString(),
         requestUserId: userId.toString(),
         match: originalDocument.userId.toString() === userId.toString()
       });
 
-      // Check ownership - FIXED: Use proper string comparison
+      // Check ownership
       if (originalDocument.userId.toString() !== userId.toString()) {
         console.log('❌ CREATE VERSION ACCESS DENIED');
         throw new Error('Access denied. Only owner can create new versions.');
@@ -804,24 +868,52 @@ async getDocumentStatistics(userId) {
       // Validate new file
       await this.validateFile(newFile);
 
-      // Generate file info for new version
-      const fileInfo = await this.generateFileInfo(newFile, userId);
-      await this.moveFile(newFile.path, fileInfo.storagePath);
+      // Check user storage
+      const user = await User.findById(userId);
+      if (!user.hasStorageSpace || !user.hasStorageSpace(newFile.size)) {
+        throw new Error('Insufficient storage space for new version');
+      }
 
-      // Calculate checksum
-      const checksum = await this.calculateFileChecksum(fileInfo.storagePath);
+      // Prepare metadata for GridFS
+      const metadata = {
+        userId: userId.toString(),
+        userEmail: user.email,
+        originalName: newFile.originalname,
+        contentType: newFile.mimetype,
+        category: originalDocument.category,
+        tags: originalDocument.tags,
+        description: versionData.description || originalDocument.description,
+        clientId: originalDocument.clientId,
+        grantId: originalDocument.grantId,
+        sensitivityLevel: originalDocument.sensitivityLevel,
+        uploadSource: 'version_upload',
+        parentDocumentId: originalDocument._id,
+        version: originalDocument.version + 1
+      };
+
+      // Upload to GridFS
+      const uploadResult = await gridfsService.uploadFile(
+        newFile.buffer,
+        newFile.originalname,
+        metadata
+      );
+
+      if (!uploadResult || !uploadResult.fileId) {
+        throw new Error('GridFS upload failed for new version');
+      }
 
       // Create new version document
       const newVersion = new Document({
-        filename: fileInfo.filename,
+        userId: userId,
+        filename: newFile.originalname,
         originalName: newFile.originalname,
-        fileExtension: path.extname(newFile.originalname).toLowerCase().substring(1),
+        fileExtension: this.getFileExtension(newFile.originalname),
         fileSize: newFile.size,
         mimeType: newFile.mimetype,
-        storagePath: fileInfo.storagePath,
-        storageProvider: 'local',
-        checksum,
-        userId: userId,
+        storageProvider: 'gridfs',
+        gridfsFileId: uploadResult.fileId,
+        gridfsFilename: uploadResult.gridfsFilename,
+        checksum: uploadResult.checksum,
         clientId: originalDocument.clientId,
         grantId: originalDocument.grantId,
         category: originalDocument.category,
@@ -841,10 +933,10 @@ async getDocumentStatistics(userId) {
 
       // Update original document to not be latest version
       originalDocument.isLatestVersion = false;
+      originalDocument.status = 'archived';
       await originalDocument.save();
 
       // Update user storage
-      const user = await User.findById(userId);
       await this.updateUserStorage(user, newFile.size, 1);
 
       // Add to version history
@@ -853,7 +945,9 @@ async getDocumentStatistics(userId) {
         filename: originalDocument.filename,
         fileSize: originalDocument.fileSize,
         storagePath: originalDocument.storagePath,
-        changes: versionData.notes,
+        gridfsFileId: originalDocument.gridfsFileId,
+        storageProvider: originalDocument.storageProvider,
+        changes: versionData.notes || 'New version created',
         createdBy: userId
       });
 
@@ -865,12 +959,6 @@ async getDocumentStatistics(userId) {
 
     } catch (error) {
       console.error('❌ Error creating new version:', error);
-      
-      // Clean up file if error occurred
-      if (newFile && newFile.path && fs.existsSync(newFile.path)) {
-        fs.unlinkSync(newFile.path);
-      }
-      
       throw error;
     }
   }
@@ -882,7 +970,7 @@ async getDocumentStatistics(userId) {
    */
   async validateFile(file) {
     // Check if file exists
-    if (!file) {
+    if (!file || !file.buffer) {
       throw new Error('No file provided');
     }
 
@@ -896,73 +984,15 @@ async getDocumentStatistics(userId) {
       throw new Error(`File type not allowed. Allowed types: ${this.allowedMimeTypes.join(', ')}`);
     }
 
-    // Check if file exists on disk
-    if (!fs.existsSync(file.path)) {
-      throw new Error('Uploaded file not found on server');
-    }
-
     return true;
-  }
-
-  /**
-   * Generate secure file information
-   */
-  async generateFileInfo(file, userId) {
-    const timestamp = Date.now();
-    const randomString = crypto.randomBytes(8).toString('hex');
-    const safeName = file.originalname.replace(/[^a-zA-Z0-9.\-]/g, '_');
-    const filename = `doc_${timestamp}_${randomString}_${safeName}`;
-    
-    // Create user directory if it doesn't exist
-    const userDir = path.join(this.uploadDir, userId.toString());
-    if (!fs.existsSync(userDir)) {
-      fs.mkdirSync(userDir, { recursive: true });
-    }
-
-    const storagePath = path.join(userDir, filename);
-
-    return {
-      filename,
-      storagePath,
-      userDir
-    };
-  }
-
-  /**
-   * Move file to permanent location
-   */
-  async moveFile(tempPath, destinationPath) {
-    return new Promise((resolve, reject) => {
-      fs.rename(tempPath, destinationPath, (error) => {
-        if (error) {
-          reject(new Error(`Failed to move file: ${error.message}`));
-        } else {
-          resolve(true);
-        }
-      });
-    });
-  }
-
-  /**
-   * Calculate file checksum
-   */
-  async calculateFileChecksum(filePath) {
-    return new Promise((resolve, reject) => {
-      const hash = crypto.createHash('md5');
-      const stream = fs.createReadStream(filePath);
-
-      stream.on('data', (data) => hash.update(data));
-      stream.on('end', () => resolve(hash.digest('hex')));
-      stream.on('error', (error) => reject(error));
-    });
   }
 
   /**
    * Update user storage statistics
    */
   async updateUserStorage(user, fileSize, documentCount = 1) {
-    user.storageUsage += fileSize;
-    user.documentCount += documentCount;
+    user.storageUsage = (user.storageUsage || 0) + fileSize;
+    user.documentCount = (user.documentCount || 0) + documentCount;
     await user.save();
   }
 
@@ -981,7 +1011,8 @@ async getDocumentStatistics(userId) {
             mimeType: document.mimeType,
             category: document.category,
             description: document.description,
-            storagePath: document.storagePath,
+            storageProvider: document.storageProvider,
+            gridfsFileId: document.gridfsFileId,
             tags: document.tags,
             version: document.version,
             uploadedBy: userId
@@ -1015,7 +1046,7 @@ async getDocumentStatistics(userId) {
    * Get document type from MIME type and filename
    */
   getDocumentType(mimeType, filename) {
-    const extension = path.extname(filename).toLowerCase();
+    const extension = this.getFileExtension(filename);
     
     if (mimeType.startsWith('image/')) return 'image';
     if (mimeType === 'application/pdf') return 'pdf';
@@ -1028,14 +1059,18 @@ async getDocumentStatistics(userId) {
     if (mimeType.includes('presentation') || mimeType.includes('powerpoint') || ['.ppt', '.pptx'].includes(extension)) {
       return 'presentation';
     }
-    if (mimeType.startsWith('video/')) return 'video';
-    if (mimeType.startsWith('audio/')) return 'audio';
-    if (mimeType.includes('zip') || mimeType.includes('archive') || ['.zip', '.rar', '.7z'].includes(extension)) {
-      return 'archive';
-    }
+    if (mimeType.includes('json')) return 'json';
     if (mimeType.startsWith('text/') || ['.txt', '.md'].includes(extension)) return 'text';
     
     return 'other';
+  }
+
+  /**
+   * Get file extension from filename
+   */
+  getFileExtension(filename) {
+    const parts = filename.split('.');
+    return parts.length > 1 ? `.${parts.pop().toLowerCase()}` : '';
   }
 
   /**
@@ -1060,35 +1095,32 @@ async getDocumentStatistics(userId) {
     try {
       console.log('🧹 Starting orphaned files cleanup...');
       
-      const allDocuments = await Document.find({});
-      const existingPaths = allDocuments.map(doc => doc.storagePath);
+      // Get all GridFS files
+      let gridfsFiles = [];
+      try {
+        gridfsFiles = await gridfsService.listFiles();
+      } catch (error) {
+        console.warn('Could not list GridFS files:', error.message);
+      }
+      
+      // Get all documents from database
+      const allDocuments = await Document.find({ storageProvider: 'gridfs' });
+      const existingGridfsIds = allDocuments.map(doc => doc.gridfsFileId?.toString());
       
       let cleanedCount = 0;
       
-      // Recursively scan upload directory
-      const scanDirectory = (dir) => {
-        if (!fs.existsSync(dir)) return;
-        
-        const items = fs.readdirSync(dir);
-        
-        items.forEach(item => {
-          const fullPath = path.join(dir, item);
-          const stat = fs.statSync(fullPath);
-          
-          if (stat.isFile()) {
-            if (!existingPaths.includes(fullPath)) {
-              // File exists but no document record - orphaned file
-              fs.unlinkSync(fullPath);
-              cleanedCount++;
-              console.log(`🗑️  Cleaned orphaned file: ${fullPath}`);
-            }
-          } else if (stat.isDirectory()) {
-            scanDirectory(fullPath);
+      // Find and delete orphaned GridFS files
+      for (const gridfsFile of gridfsFiles) {
+        if (!existingGridfsIds.includes(gridfsFile._id.toString())) {
+          try {
+            await gridfsService.deleteFile(gridfsFile._id);
+            cleanedCount++;
+            console.log(`🗑️  Cleaned orphaned GridFS file: ${gridfsFile.filename}`);
+          } catch (error) {
+            console.error(`Failed to delete orphaned GridFS file ${gridfsFile._id}:`, error.message);
           }
-        });
-      };
-      
-      scanDirectory(this.uploadDir);
+        }
+      }
       
       console.log(`✅ Orphaned files cleanup completed. Cleaned ${cleanedCount} files.`);
       
@@ -1143,15 +1175,26 @@ async getDocumentStatistics(userId) {
         }
       ]);
 
+      // Get GridFS stats
+      let gridfsStats = null;
+      try {
+        gridfsStats = await gridfsService.getStorageStats();
+      } catch (error) {
+        console.warn('Could not fetch GridFS stats for analytics:', error.message);
+      }
+
       return {
         success: true,
-        analytics: analytics[0] || {
-          totalUsers: 0,
-          totalStorageUsed: 0,
-          totalStorageLimit: 0,
-          totalDocuments: 0,
-          averageUsage: 0,
-          highUsageUsers: 0
+        analytics: {
+          ...(analytics[0] || {
+            totalUsers: 0,
+            totalStorageUsed: 0,
+            totalStorageLimit: 0,
+            totalDocuments: 0,
+            averageUsage: 0,
+            highUsageUsers: 0
+          }),
+          gridfsStats
         }
       };
 

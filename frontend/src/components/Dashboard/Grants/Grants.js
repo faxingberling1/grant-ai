@@ -1,7 +1,8 @@
 // components/Dashboard/Grants/Grants.js
 import React, { useState, useEffect } from 'react';
 import GrantForm from './GrantForm';
-import GrantDraft from './GrantDraft'; // ADD THIS IMPORT
+import GrantDraft from './GrantDraft';
+import GrantsHeader from './GrantsHeader'; // ADD THIS IMPORT
 import './Grants.css';
 
 // Icons
@@ -31,7 +32,7 @@ const Grants = ({ onNavigateToMatching, onNavigateToNewGrant, onNavigateToDrafts
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
   const [dateFilter, setDateFilter] = useState('all');
-  const [activeNav, setActiveNav] = useState('all');
+  const [selectedView, setSelectedView] = useState('all');
 
   // Load grants and drafts on component mount
   useEffect(() => {
@@ -170,6 +171,26 @@ const Grants = ({ onNavigateToMatching, onNavigateToNewGrant, onNavigateToDrafts
     }
   };
 
+  const handleNewGrantSource = () => {
+    console.log('Add New Grant Source');
+    alert('Add New Grant Source functionality would open here');
+  };
+
+  // Handle search from GrantsHeader
+  const handleSearch = (query) => {
+    setSearchQuery(query);
+  };
+
+  // Handle view change from GrantsHeader
+  const handleViewChange = (view) => {
+    setSelectedView(view);
+    if (view === 'draft') {
+      handleViewDrafts();
+    } else {
+      setStatusFilter(view === 'all' ? 'all' : view);
+    }
+  };
+
   // NEW: If we're in drafts view, show the GrantDraft component
   if (currentView === 'drafts') {
     return (
@@ -192,18 +213,6 @@ const Grants = ({ onNavigateToMatching, onNavigateToNewGrant, onNavigateToDrafts
   }
 
   // Rest of your existing functions
-  const handleNavClick = (navItem) => {
-    console.log('Nav click:', navItem);
-    setActiveNav(navItem);
-    if (navItem === 'drafts') {
-      handleViewDrafts(); // UPDATED: Use internal navigation
-    } else if (navItem === 'matching') {
-      handleClientMatching();
-    } else {
-      setStatusFilter(navItem === 'all' ? 'all' : navItem);
-    }
-  };
-
   const handleViewGrant = (grantId) => {
     console.log('View grant:', grantId);
     alert(`Viewing grant ${grantId} - This would open a detailed view`);
@@ -218,10 +227,6 @@ const Grants = ({ onNavigateToMatching, onNavigateToNewGrant, onNavigateToDrafts
     if (window.confirm('Are you sure you want to delete this grant?')) {
       setGrants(prev => prev.filter(grant => grant.id !== grantId));
     }
-  };
-
-  const handleSearch = (e) => {
-    setSearchQuery(e.target.value);
   };
 
   const getStatusBadge = (status) => {
@@ -291,7 +296,7 @@ const Grants = ({ onNavigateToMatching, onNavigateToNewGrant, onNavigateToDrafts
     setSearchQuery('');
     setStatusFilter('all');
     setDateFilter('all');
-    setActiveNav('all');
+    setSelectedView('all');
   };
 
   if (loading) {
@@ -308,105 +313,20 @@ const Grants = ({ onNavigateToMatching, onNavigateToNewGrant, onNavigateToDrafts
   // This is the original Grants component JSX that shows when currentView === 'grants'
   return (
     <div className="grants-page-container">
-      {/* Navigation Bar */}
-      <nav className="grants-page-nav">
-        <div className="grants-page-nav-buttons">
-          <div className="grants-page-nav-section">
-            <button 
-              className={`grants-page-nav-button ${activeNav === 'all' ? 'grants-active' : ''}`}
-              onClick={() => handleNavClick('all')}
-            >
-              <Icon.Document />
-              All Grants
-              {grants.length > 0 && (
-                <span className="grants-page-nav-count">{grants.length}</span>
-              )}
-            </button>
-            <button 
-              className={`grants-page-nav-button ${activeNav === 'active' ? 'grants-active' : ''}`}
-              onClick={() => handleNavClick('active')}
-            >
-              <Icon.Check />
-              Active
-              {stats.active > 0 && (
-                <span className="grants-page-nav-count">{stats.active}</span>
-              )}
-            </button>
-            <button 
-              className={`grants-page-nav-button ${activeNav === 'pending' ? 'grants-active' : ''}`}
-              onClick={() => handleNavClick('pending')}
-            >
-              <Icon.Pending />
-              Pending
-              {stats.pending > 0 && (
-                <span className="grants-page-nav-count">{stats.pending}</span>
-              )}
-            </button>
-            <button 
-              className={`grants-page-nav-button ${activeNav === 'drafts' ? 'grants-active' : ''}`}
-              onClick={() => handleNavClick('drafts')}
-            >
-              <Icon.Draft />
-              Drafts
-              {stats.drafts > 0 && (
-                <span className="grants-page-nav-count grants-page-nav-count-draft">
-                  {stats.drafts}
-                </span>
-              )}
-            </button>
-            <button 
-              className={`grants-page-nav-button ${activeNav === 'matching' ? 'grants-active' : ''}`}
-              onClick={() => handleNavClick('matching')}
-            >
-              <Icon.Match />
-              Client Matching
-              <span className="grants-page-nav-count grants-page-nav-count-match">
-                New
-              </span>
-            </button>
-          </div>
-        </div>
-
-        <div className="grants-page-nav-actions">
-          <button className="grants-page-nav-add-btn" onClick={handleNewGrant}>
-            <Icon.Add />
-            New Grant
-          </button>
-        </div>
-      </nav>
+      {/* Use GrantsHeader Component */}
+      <GrantsHeader 
+        onSearch={handleSearch}
+        onClientMatching={handleClientMatching}
+        onNewGrantSource={handleNewGrantSource}
+        onNewGrantApplication={handleNewGrant}
+        searchQuery={searchQuery}
+        selectedView={selectedView}
+        onViewChange={handleViewChange}
+      />
 
       {/* Main Content */}
       <div className="grants-page-content">
         <div className="grants-page-list">
-          <div className="grants-page-header">
-            <div className="grants-page-header-content">
-              <div className="grants-page-header-title">
-                <h1>Grants Management</h1>
-                <p>Track and manage all grant applications and funding opportunities</p>
-                {activeNav !== 'all' && activeNav !== 'drafts' && activeNav !== 'matching' && (
-                  <div className="grants-page-active-filter">
-                    Currently viewing: <strong>{activeNav.charAt(0).toUpperCase() + activeNav.slice(1)} Grants</strong>
-                    <button 
-                      className="grants-page-clear-filter"
-                      onClick={handleClearFilters}
-                    >
-                      Show All
-                    </button>
-                  </div>
-                )}
-              </div>
-              <div className="grants-page-header-actions">
-                <button 
-                  className="grants-page-btn grants-page-btn-secondary"
-                  onClick={handleDownloadReport}
-                >
-                  <Icon.Download />
-                  Download Report
-                </button>
-              </div>
-            </div>
-          </div>
-
           {/* Summary Cards */}
           <div className="grants-page-summary">
             <div className="grants-page-summary-card">
@@ -490,7 +410,7 @@ const Grants = ({ onNavigateToMatching, onNavigateToNewGrant, onNavigateToDrafts
                 </div>
                 <button 
                   className="grants-page-btn grants-page-btn-secondary"
-                  onClick={handleViewDrafts} // UPDATED: Use internal navigation
+                  onClick={handleViewDrafts}
                 >
                   View Drafts
                 </button>
@@ -506,7 +426,7 @@ const Grants = ({ onNavigateToMatching, onNavigateToNewGrant, onNavigateToDrafts
                 type="text"
                 placeholder="Search grants, clients, or program officers..."
                 value={searchQuery}
-                onChange={handleSearch}
+                onChange={(e) => setSearchQuery(e.target.value)}
               />
               {searchQuery && (
                 <button 
@@ -524,7 +444,7 @@ const Grants = ({ onNavigateToMatching, onNavigateToNewGrant, onNavigateToDrafts
                 value={statusFilter}
                 onChange={(e) => {
                   setStatusFilter(e.target.value);
-                  setActiveNav(e.target.value === 'all' ? 'all' : e.target.value);
+                  setSelectedView(e.target.value === 'all' ? 'all' : e.target.value);
                 }}
               >
                 <option value="all">All Status</option>
@@ -595,7 +515,7 @@ const Grants = ({ onNavigateToMatching, onNavigateToNewGrant, onNavigateToDrafts
                     {stats.drafts > 0 && (
                       <button 
                         className="grants-page-btn grants-page-btn-secondary"
-                        onClick={handleViewDrafts} // UPDATED: Use internal navigation
+                        onClick={handleViewDrafts}
                       >
                         <Icon.Draft />
                         View Drafts ({stats.drafts})

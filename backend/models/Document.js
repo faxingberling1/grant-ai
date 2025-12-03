@@ -2,6 +2,17 @@
 const mongoose = require('mongoose');
 
 const documentSchema = new mongoose.Schema({
+  // ===== GRIDFS SPECIFIC FIELDS =====
+  gridfsFileId: {
+    type: mongoose.Schema.Types.ObjectId,
+    index: true
+  },
+  gridfsFilename: {
+    type: String,
+    trim: true,
+    maxlength: [255, 'GridFS filename cannot exceed 255 characters']
+  },
+  
   // ===== DOCUMENT IDENTIFICATION =====
   filename: {
     type: String,
@@ -35,13 +46,13 @@ const documentSchema = new mongoose.Schema({
   },
   storagePath: {
     type: String,
-    required: [true, 'Storage path is required'],
-    trim: true
+    trim: true,
+    default: null // Will be null for GridFS
   },
   storageProvider: {
     type: String,
-    enum: ['local', 'aws-s3', 'google-cloud', 'azure-blob'],
-    default: 'local'
+    enum: ['local', 'aws-s3', 'google-cloud', 'azure-blob', 'gridfs'],
+    default: 'gridfs' // Changed default to gridfs
   },
   checksum: {
     type: String,
@@ -158,6 +169,9 @@ const documentSchema = new mongoose.Schema({
     filename: String,
     fileSize: Number,
     storagePath: String,
+    gridfsFileId: mongoose.Schema.Types.ObjectId,
+    gridfsFilename: String,
+    storageProvider: String,
     changes: {
       type: String,
       maxlength: [500, 'Change description cannot exceed 500 characters']
@@ -347,6 +361,11 @@ const documentSchema = new mongoose.Schema({
       delete ret._id;
       delete ret.__v;
       delete ret.accessPassword;
+      // Hide GridFS internal fields if not needed
+      if (ret.storageProvider !== 'gridfs') {
+        delete ret.gridfsFileId;
+        delete ret.gridfsFilename;
+      }
       return ret;
     }
   }
@@ -365,15 +384,26 @@ documentSchema.virtual('fileSizeFormatted').get(function() {
 });
 
 documentSchema.virtual('downloadUrl').get(function() {
-  return `/api/documents/${this._id}/download`;
+  if (this.storageProvider === 'gridfs' && this.gridfsFileId) {
+    return `/api/documents/${this._id}/download`;
+  } else if (this.storagePath) {
+    return this.storagePath;
+  }
+  return null;
 });
 
 documentSchema.virtual('previewUrl').get(function() {
-  return `/api/documents/${this._id}/preview`;
+  if (this.storageProvider === 'gridfs' && this.gridfsFileId) {
+    return `/api/documents/${this._id}/preview`;
+  }
+  return null;
 });
 
 documentSchema.virtual('thumbnailUrl').get(function() {
-  return `/api/documents/${this._id}/thumbnail`;
+  if (this.storageProvider === 'gridfs' && this.gridfsFileId && this.isImage) {
+    return `/api/documents/${this._id}/thumbnail`;
+  }
+  return null;
 });
 
 documentSchema.virtual('isImage').get(function() {
@@ -415,6 +445,10 @@ documentSchema.virtual('daysSinceUpload').get(function() {
   return Math.ceil(diffTime / (1000 * 60 * 60 * 24));
 });
 
+documentSchema.virtual('hasGridfsFile').get(function() {
+  return this.storageProvider === 'gridfs' && this.gridfsFileId;
+});
+
 // ===== INDEXES FOR PERFORMANCE =====
 documentSchema.index({ userId: 1, createdAt: -1 });
 documentSchema.index({ userId: 1, category: 1 });
@@ -429,6 +463,8 @@ documentSchema.index({ retentionExpiresAt: 1 });
 documentSchema.index({ lastAccessed: -1 });
 documentSchema.index({ fileSize: -1 });
 documentSchema.index({ downloadCount: -1 });
+documentSchema.index({ storageProvider: 1 });
+documentSchema.index({ gridfsFileId: 1 });
 
 // ===== MIDDLEWARE =====
 documentSchema.pre('save', function(next) {
@@ -463,6 +499,16 @@ documentSchema.pre('save', function(next) {
     }
   }
   
+  // Set filename if not provided
+  if (!this.filename && this.originalName) {
+    this.filename = this.originalName;
+  }
+  
+  // For GridFS, storagePath is not required
+  if (this.storageProvider === 'gridfs') {
+    this.storagePath = null;
+  }
+  
   // Update visibility based on sharing
   if (this.sharedWith && this.sharedWith.length > 0) {
     this.visibility = 'shared';
@@ -471,6 +517,11 @@ documentSchema.pre('save', function(next) {
   // Clean up arrays
   if (this.tags) {
     this.tags = this.tags.filter(tag => tag && tag.trim() !== '');
+  }
+  
+  // If deleted, mark deletedAt
+  if (this.status === 'deleted' && !this.deletedAt) {
+    this.deletedAt = new Date();
   }
   
   next();
@@ -499,9 +550,15 @@ documentSchema.statics.findByUser = function(userId, options = {}) {
   if (options.search) {
     query.or([
       { filename: new RegExp(options.search, 'i') },
+      { originalName: new RegExp(options.search, 'i') },
       { description: new RegExp(options.search, 'i') },
       { tags: new RegExp(options.search, 'i') }
     ]);
+  }
+  
+  // Exclude deleted documents by default
+  if (options.includeDeleted !== true) {
+    query.where('status').ne('deleted');
   }
   
   return query;
@@ -509,7 +566,12 @@ documentSchema.statics.findByUser = function(userId, options = {}) {
 
 documentSchema.statics.getStorageStats = function(userId) {
   return this.aggregate([
-    { $match: { userId: new mongoose.Types.ObjectId(userId) } },
+    { 
+      $match: { 
+        userId: new mongoose.Types.ObjectId(userId),
+        status: { $ne: 'deleted' }
+      } 
+    },
     {
       $group: {
         _id: null,
@@ -526,6 +588,12 @@ documentSchema.statics.getStorageStats = function(userId) {
         byType: {
           $push: {
             documentType: '$documentType',
+            fileSize: '$fileSize'
+          }
+        },
+        byStorageProvider: {
+          $push: {
+            provider: '$storageProvider',
             fileSize: '$fileSize'
           }
         }
@@ -555,9 +623,27 @@ documentSchema.statics.findExpiringRetention = function(days = 30) {
 };
 
 documentSchema.statics.getPopularDocuments = function(userId, limit = 10) {
-  return this.find({ userId })
+  return this.find({ 
+    userId,
+    status: { $ne: 'deleted' }
+  })
     .sort({ downloadCount: -1, viewCount: -1 })
     .limit(limit);
+};
+
+// New static method for GridFS documents
+documentSchema.statics.findGridFSDocuments = function(userId, options = {}) {
+  const query = this.find({ 
+    userId,
+    storageProvider: 'gridfs',
+    status: { $ne: 'deleted' }
+  });
+  
+  if (options.gridfsFileId) {
+    query.where('gridfsFileId', options.gridfsFileId);
+  }
+  
+  return query;
 };
 
 // ===== INSTANCE METHODS =====
@@ -574,11 +660,20 @@ documentSchema.methods.incrementDownloadCount = function() {
 };
 
 documentSchema.methods.addToVersionHistory = function(versionData) {
-  this.versionHistory.push({
-    ...versionData,
+  const historyEntry = {
     version: this.version,
+    filename: this.filename,
+    fileSize: this.fileSize,
+    storagePath: this.storagePath,
+    gridfsFileId: this.gridfsFileId,
+    gridfsFilename: this.gridfsFilename,
+    storageProvider: this.storageProvider,
+    changes: versionData.changes || '',
+    createdBy: versionData.createdBy || this.userId,
     createdAt: new Date()
-  });
+  };
+  
+  this.versionHistory.push(historyEntry);
   return this.save();
 };
 
@@ -586,6 +681,12 @@ documentSchema.methods.createNewVersion = function(newDocumentData) {
   // Archive current version
   this.isLatestVersion = false;
   this.status = 'archived';
+  
+  // Add current version to history
+  this.addToVersionHistory({
+    changes: 'New version created',
+    createdBy: newDocumentData.userId || this.userId
+  });
   
   // Create new version
   const newVersion = this.toObject();
@@ -621,6 +722,11 @@ documentSchema.methods.canUserAccess = function(userId) {
   );
   
   if (sharedAccess) {
+    // Check if share has expired
+    if (sharedAccess.expiresAt && new Date() > sharedAccess.expiresAt) {
+      return { canAccess: false, reason: 'Share expired' };
+    }
+    
     return { 
       canAccess: true, 
       permission: sharedAccess.permission,
@@ -683,6 +789,35 @@ documentSchema.methods.getRelatedDocuments = function(relationshipType = null) {
   return this.relatedDocuments.filter(rel => rel.relationship === relationshipType);
 };
 
+// New instance methods for GridFS
+documentSchema.methods.getGridFSInfo = async function() {
+  if (this.storageProvider !== 'gridfs' || !this.gridfsFileId) {
+    return null;
+  }
+  
+  try {
+    const gridfsService = require('../services/gridfsService');
+    return await gridfsService.getFileInfo(this.gridfsFileId);
+  } catch (error) {
+    console.error('Error getting GridFS info:', error);
+    return null;
+  }
+};
+
+documentSchema.methods.hasValidGridFSFile = async function() {
+  if (this.storageProvider !== 'gridfs' || !this.gridfsFileId) {
+    return false;
+  }
+  
+  try {
+    const gridfsService = require('../services/gridfsService');
+    return await gridfsService.fileExists(this.gridfsFileId);
+  } catch (error) {
+    console.error('Error checking GridFS file:', error);
+    return false;
+  }
+};
+
 // ===== QUERY HELPERS =====
 documentSchema.query.byUser = function(userId) {
   return this.where({ userId });
@@ -708,15 +843,19 @@ documentSchema.query.byStatus = function(status) {
   return this.where({ status });
 };
 
+documentSchema.query.byStorageProvider = function(provider) {
+  return this.where({ storageProvider: provider });
+};
+
 documentSchema.query.search = function(searchTerm) {
   if (!searchTerm) return this;
   
   const regex = new RegExp(searchTerm, 'i');
   return this.or([
     { filename: regex },
+    { originalName: regex },
     { description: regex },
-    { tags: regex },
-    { originalName: regex }
+    { tags: regex }
   ]);
 };
 
@@ -731,4 +870,13 @@ documentSchema.query.largeFiles = function(sizeInMB = 10) {
   return this.where('fileSize').gte(sizeInBytes);
 };
 
+documentSchema.query.active = function() {
+  return this.where('status').ne('deleted');
+};
+
+documentSchema.query.gridfsOnly = function() {
+  return this.where('storageProvider', 'gridfs');
+};
+
+// Export the model
 module.exports = mongoose.model('Document', documentSchema);

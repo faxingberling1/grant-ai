@@ -53,7 +53,8 @@ backend
 │   ├── templates.js
 │   └── users.js
 ├── seeders
-│   └── demoData.js
+│   ├── demoData.js
+│   └── templateSeeder.js
 ├── server.js
 ├── services
 │   ├── AIService.js
@@ -68,14 +69,9 @@ backend
 ├── test-gmail.js
 ├── uploads
 │   ├── documents
+│   │   ├── 6924ecad92ea7088baf36098
+│   │   │   └── doc_1764425482460_865ff7ee2c078b4a______Page_1.docx
 │   │   └── 69253140bf28db131c93f2ac
-│   │       ├── doc_1764354412758_993491add611e302_AIE_Eric_Hicks.pdf
-│   │       ├── doc_1764354715936_30b24beb30261eff_AIE_Eric_Hicks.pdf
-│   │       ├── doc_1764354846029_bae47e0f13b2e604_AIE_Eric_Hicks.pdf
-│   │       ├── doc_1764355290789_e5c0d09b7a2f904f_AIE_Eric_Hicks.pdf
-│   │       ├── doc_1764355371046_b20d8d6df9c21e73_AIE_Eric_Hicks.pdf
-│   │       ├── doc_1764355897105_ed282bf29bd2b315_AIE_Eric_Hicks.pdf
-│   │       └── doc_1764359709013_025897945897bb31_AIE_Eric_Hicks.pdf
 │   └── temp
 └── utils
     ├── ai.js
