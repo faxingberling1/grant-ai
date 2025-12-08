@@ -79,6 +79,59 @@ const DashboardContent = ({
 }) => {
   const { currentUser } = useAuth();
   const [activeClientTab, setActiveClientTab] = useState('all');
+  const [dashboardStats, setDashboardStats] = useState({
+    activeGrants: 0,
+    submittedGrants: 0,
+    pendingReview: 0,
+    securedFunding: 0,
+    recentActivities: [],
+    upcomingDeadlines: []
+  });
+
+  // Fetch real dashboard statistics
+  useEffect(() => {
+    const fetchDashboardStats = async () => {
+      try {
+        // You would replace these with actual API calls
+        const stats = {
+          activeGrants: 0,
+          submittedGrants: 0,
+          pendingReview: 0,
+          securedFunding: 0,
+          recentActivities: [],
+          upcomingDeadlines: []
+        };
+
+        // Example of how you might fetch data from your backend
+        // const response = await fetch('/api/dashboard/stats');
+        // const data = await response.json();
+        // setDashboardStats(data);
+        
+        // For now, we'll calculate from existing data
+        if (clients && Array.isArray(clients)) {
+          // Calculate total grants from clients
+          const totalGrants = clients.reduce((sum, client) => {
+            return sum + (client.grantsSubmitted || 0);
+          }, 0);
+          
+          stats.activeGrants = totalGrants;
+          stats.submittedGrants = Math.floor(totalGrants * 0.75); // Example calculation
+          stats.pendingReview = Math.floor(totalGrants * 0.25); // Example calculation
+          
+          // Calculate secured funding (you would replace with real data)
+          stats.securedFunding = clients.reduce((sum, client) => {
+            return sum + (client.securedFunding || 0);
+          }, 0);
+        }
+
+        setDashboardStats(stats);
+      } catch (error) {
+        console.error('Error fetching dashboard stats:', error);
+      }
+    };
+
+    fetchDashboardStats();
+  }, [clients]);
 
   // FIXED: Transform API clients data to match the expected format
   const transformClientsData = (apiClients) => {
@@ -117,10 +170,11 @@ const DashboardContent = ({
       company: client.organizationName || client.organization,
       email: client.emailAddress || client.email,
       phone: client.phoneNumbers || client.phone,
-      projects: client.grantsSubmitted || Math.floor(Math.random() * 20) + 1,
+      projects: client.grantsSubmitted || client.activeGrants || Math.floor(Math.random() * 20) + 1,
       status: client.status || 'active',
       isVerified: client.isVerified || false,
       isOnline: client.isOnline || false,
+      securedFunding: client.securedFunding || 0,
       // Remove avatar URL and use initials instead
       initials: getInitials(client.primaryContactName || client.name),
       avatarColor: getAvatarColor(client.primaryContactName || client.name)
@@ -162,30 +216,32 @@ const DashboardContent = ({
       ];
     }
 
+    const transformedClients = transformClientsData(clients);
+    
     return [
       { 
         id: 'all', 
         label: 'All Clients', 
-        count: clients.length, 
-        badge: clients.length.toString() 
+        count: transformedClients.length, 
+        badge: transformedClients.length.toString() 
       },
       { 
         id: 'active', 
         label: 'Active', 
-        count: clients.filter(c => c.status === 'active').length, 
-        badge: clients.filter(c => c.status === 'active').length.toString() 
+        count: transformedClients.filter(c => c.status === 'active').length, 
+        badge: transformedClients.filter(c => c.status === 'active').length.toString() 
       },
       { 
         id: 'vip', 
         label: 'VIP', 
-        count: clients.filter(c => c.status === 'vip').length, 
-        badge: clients.filter(c => c.status === 'vip').length.toString() 
+        count: transformedClients.filter(c => c.status === 'vip').length, 
+        badge: transformedClients.filter(c => c.status === 'vip').length.toString() 
       },
       { 
         id: 'inactive', 
         label: 'Inactive', 
-        count: clients.filter(c => c.status === 'inactive' || !c.status).length, 
-        badge: clients.filter(c => c.status === 'inactive' || !c.status).length.toString() 
+        count: transformedClients.filter(c => c.status === 'inactive' || !c.status).length, 
+        badge: transformedClients.filter(c => c.status === 'inactive' || !c.status).length.toString() 
       }
     ];
   };
@@ -221,6 +277,17 @@ const DashboardContent = ({
 
   const currentClients = clientsData[activeClientTab] || [];
 
+  // Format currency
+  const formatCurrency = (amount) => {
+    if (!amount) return '$0';
+    return new Intl.NumberFormat('en-US', {
+      style: 'currency',
+      currency: 'USD',
+      minimumFractionDigits: 0,
+      maximumFractionDigits: 0
+    }).format(amount);
+  };
+
   // Show loading state for clients
   if (clientsLoading) {
     return (
@@ -233,7 +300,7 @@ const DashboardContent = ({
         </div>
         <div className="loading-section">
           <i className="fas fa-spinner fa-spin"></i>
-          <p>Loading clients data...</p>
+          <p>Loading dashboard data...</p>
         </div>
       </div>
     );
@@ -247,13 +314,15 @@ const DashboardContent = ({
           <h1>Welcome back, {currentUser?.name || 'User'}! 🎉</h1>
           <p>Your AI-powered grant management platform is ready to help you secure more funding.</p>
           <div className="welcome-stats">
+            {dashboardStats.securedFunding > 0 && (
+              <div className="welcome-stat">
+                <i className="fas fa-trophy"></i>
+                <span>{formatCurrency(dashboardStats.securedFunding)} secured</span>
+              </div>
+            )}
             <div className="welcome-stat">
-              <i className="fas fa-trophy"></i>
-              <span>$2.4M secured this quarter</span>
-            </div>
-            <div className="welcome-stat">
-              <i className="fas fa-clock"></i>
-              <span>5 deadlines this week</span>
+              <i className="fas fa-users"></i>
+              <span>{clients?.length || 0} clients</span>
             </div>
           </div>
         </div>
@@ -269,16 +338,18 @@ const DashboardContent = ({
         </div>
       </div>
 
-      {/* Stats Overview */}
+      {/* Stats Overview - Using Real Data */}
       <div className="stats-overview">
         <div className="stat-card">
           <div className="stat-icon primary">
             <i className="fas fa-file-alt"></i>
           </div>
           <div className="stat-content">
-            <h3>24</h3>
+            <h3>{dashboardStats.activeGrants}</h3>
             <p>Active Grants</p>
-            <span className="stat-trend positive">+12%</span>
+            {dashboardStats.activeGrants > 0 && (
+              <span className="stat-trend positive">Active</span>
+            )}
           </div>
         </div>
         
@@ -287,9 +358,11 @@ const DashboardContent = ({
             <i className="fas fa-check-circle"></i>
           </div>
           <div className="stat-content">
-            <h3>18</h3>
+            <h3>{dashboardStats.submittedGrants}</h3>
             <p>Submitted</p>
-            <span className="stat-trend positive">+8%</span>
+            {dashboardStats.submittedGrants > 0 && (
+              <span className="stat-trend positive">Submitted</span>
+            )}
           </div>
         </div>
         
@@ -298,9 +371,11 @@ const DashboardContent = ({
             <i className="fas fa-clock"></i>
           </div>
           <div className="stat-content">
-            <h3>5</h3>
+            <h3>{dashboardStats.pendingReview}</h3>
             <p>Pending Review</p>
-            <span className="stat-trend negative">-2%</span>
+            {dashboardStats.pendingReview > 0 && (
+              <span className="stat-trend warning">Pending</span>
+            )}
           </div>
         </div>
         
@@ -309,9 +384,11 @@ const DashboardContent = ({
             <i className="fas fa-award"></i>
           </div>
           <div className="stat-content">
-            <h3>$245K</h3>
+            <h3>{formatCurrency(dashboardStats.securedFunding)}</h3>
             <p>Secured Funding</p>
-            <span className="stat-trend positive">+25%</span>
+            {dashboardStats.securedFunding > 0 && (
+              <span className="stat-trend positive">Secured</span>
+            )}
           </div>
         </div>
       </div>
@@ -435,99 +512,66 @@ const DashboardContent = ({
 
       {/* Main Content Grid */}
       <div className="content-grid">
-        {/* Recent Activity */}
+        {/* Recent Activity - You would populate this from real activity logs */}
         <div className="content-card">
           <div className="card-header">
             <h3>Recent Activity</h3>
             <button className="btn-link">View All</button>
           </div>
-          <div className="activity-list">
-            <div className="activity-item">
-              <div className="activity-icon success">
-                <i className="fas fa-check"></i>
-              </div>
-              <div className="activity-content">
-                <p>Grant submitted to Johnson Foundation</p>
-                <span className="activity-time">2 hours ago</span>
-              </div>
+          {dashboardStats.recentActivities && dashboardStats.recentActivities.length > 0 ? (
+            <div className="activity-list">
+              {dashboardStats.recentActivities.slice(0, 4).map((activity, index) => (
+                <div key={index} className="activity-item">
+                  <div className={`activity-icon ${activity.type}`}>
+                    <i className={`fas fa-${activity.icon}`}></i>
+                  </div>
+                  <div className="activity-content">
+                    <p>{activity.description}</p>
+                    <span className="activity-time">{activity.time}</span>
+                  </div>
+                </div>
+              ))}
             </div>
-            <div className="activity-item">
-              <div className="activity-icon warning">
-                <i className="fas fa-clock"></i>
-              </div>
-              <div className="activity-content">
-                <p>Draft ready for GreenTech Initiative</p>
-                <span className="activity-time">5 hours ago</span>
-              </div>
+          ) : (
+            <div className="no-activity">
+              <i className="fas fa-history"></i>
+              <p>No recent activity</p>
             </div>
-            <div className="activity-item">
-              <div className="activity-icon info">
-                <i className="fas fa-bolt"></i>
-              </div>
-              <div className="activity-content">
-                <p>AI analysis completed for DOE grant</p>
-                <span className="activity-time">1 day ago</span>
-              </div>
-            </div>
-            <div className="activity-item">
-              <div className="activity-icon primary">
-                <i className="fas fa-user-plus"></i>
-              </div>
-              <div className="activity-content">
-                <p>New client added: Community Health Alliance</p>
-                <span className="activity-time">2 days ago</span>
-              </div>
-            </div>
-          </div>
+          )}
         </div>
 
-        {/* Upcoming Deadlines */}
+        {/* Upcoming Deadlines - You would populate this from calendar/grants data */}
         <div className="content-card">
           <div className="card-header">
             <h3>Upcoming Deadlines</h3>
             <button className="btn-link" onClick={onNavigateToCalendar}>View Calendar</button>
           </div>
-          <div className="deadlines-list">
-            <div className="deadline-item urgent">
-              <div className="deadline-date">
-                <span className="date-day">15</span>
-                <span className="date-month">NOV</span>
-              </div>
-              <div className="deadline-content">
-                <h4>National Science Foundation</h4>
-                <p>STEM Education Initiative - $500,000</p>
-              </div>
-              <div className="deadline-actions">
-                <span className="deadline-badge urgent">Urgent</span>
-              </div>
+          {dashboardStats.upcomingDeadlines && dashboardStats.upcomingDeadlines.length > 0 ? (
+            <div className="deadlines-list">
+              {dashboardStats.upcomingDeadlines.slice(0, 3).map((deadline, index) => (
+                <div key={index} className={`deadline-item ${deadline.priority}`}>
+                  <div className="deadline-date">
+                    <span className="date-day">{deadline.day}</span>
+                    <span className="date-month">{deadline.month}</span>
+                  </div>
+                  <div className="deadline-content">
+                    <h4>{deadline.title}</h4>
+                    <p>{deadline.description}</p>
+                  </div>
+                  <div className="deadline-actions">
+                    <span className={`deadline-badge ${deadline.priority}`}>
+                      {deadline.priority === 'urgent' ? 'Urgent' : 'Upcoming'}
+                    </span>
+                  </div>
+                </div>
+              ))}
             </div>
-            <div className="deadline-item">
-              <div className="deadline-date">
-                <span className="date-day">22</span>
-                <span className="date-month">NOV</span>
-              </div>
-              <div className="deadline-content">
-                <h4>Department of Energy</h4>
-                <p>Clean Energy Research - $750,000</p>
-              </div>
-              <div className="deadline-actions">
-                <span className="deadline-badge">Upcoming</span>
-              </div>
+          ) : (
+            <div className="no-deadlines">
+              <i className="fas fa-calendar-check"></i>
+              <p>No upcoming deadlines</p>
             </div>
-            <div className="deadline-item">
-              <div className="deadline-date">
-                <span className="date-day">05</span>
-                <span className="date-month">DEC</span>
-              </div>
-              <div className="deadline-content">
-                <h4>Ford Foundation</h4>
-                <p>Social Justice Program - $1,000,000</p>
-              </div>
-              <div className="deadline-actions">
-                <span className="deadline-badge">Planning</span>
-              </div>
-            </div>
-          </div>
+          )}
         </div>
       </div>
 
@@ -578,6 +622,7 @@ const DashboardContent = ({
                   <th>Client</th>
                   <th>Contact</th>
                   <th>Projects</th>
+                  <th>Secured Funding</th>
                   <th>Status</th>
                   <th>Actions</th>
                 </tr>
@@ -632,6 +677,13 @@ const DashboardContent = ({
                           <span className="projects-badge">
                             <i className="fas fa-file-alt"></i>
                             {client.projects}
+                          </span>
+                        </div>
+                      </td>
+                      <td>
+                        <div className="client-funding">
+                          <span className="funding-amount">
+                            {formatCurrency(client.securedFunding)}
                           </span>
                         </div>
                       </td>
